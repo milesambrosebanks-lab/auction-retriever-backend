@@ -99,7 +99,6 @@ class SubscriptionController extends Controller
             return $this->error([], 'Plan not found', 404);
         }
 
-
         // check if user already has a subscription
         $subscription = $user->subscription('default');
 
