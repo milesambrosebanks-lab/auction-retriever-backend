@@ -2,27 +2,34 @@
 
 namespace App\Services;
 
-use App\Models\Transaction;
+use Stripe\Stripe;
+use Stripe\Customer;
+use Stripe\Subscription;
 
 class StripeService
 {
-    public function success($paymentIntent): void
+    public function __construct()
     {
-        // Transaction::create([
-        //     'user_id'   => $paymentIntent->metadata->user_id,
-        //     'amount'    => $paymentIntent->amount / 100,
-        //     'currency'  => $paymentIntent->currency,
-        //     'trx_id'    => $paymentIntent->id,
-        //     'type'      => 'increment',
-        //     'status'    => 'success',
-        //     'metadata'  => json_encode($paymentIntent->metadata)
-        // ]);
-
-        
+        Stripe::setApiKey(config('services.stripe.secret'));
     }
 
-    public function failure($paymentIntent): void
+    public function createCustomer($user)
     {
-        //? Handle payment failure    
+        return Customer::create([
+            'email' => $user->email,
+            'name' => $user->name
+        ]);
+    }
+
+    public function createSubscription($customerId, $priceId, $paymentMethod, $trialDays)
+    {
+        return Subscription::create([
+            'customer' => $customerId,
+            'items' => [
+                ['price' => $priceId]
+            ],
+            'default_payment_method' => $paymentMethod,
+            'trial_period_days' => $trialDays
+        ]);
     }
 }

@@ -8,12 +8,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Laravel\Cashier\Billable;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles, SoftDeletes;
+    use HasFactory, Notifiable, HasRoles, Billable;
 
     protected $guard_name = ['api', 'web'];
 
@@ -38,6 +37,8 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'otp',
+        'stripe_customer_id',
+        'stripe_account_id',
         'otp_expires_at',
         'last_activity_at',
         'slug'

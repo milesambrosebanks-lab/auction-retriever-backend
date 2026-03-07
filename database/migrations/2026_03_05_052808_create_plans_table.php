@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('subscription_plans', function (Blueprint $table) {
+        Schema::create('plans', function (Blueprint $table) {
             $table->id();
 
             $table->string('name');
@@ -27,6 +27,7 @@ return new class extends Migration
             $table->integer('trial_days')->default(7);
 
             $table->boolean('status')->default(true);
+            $table->boolean('is_active')->default(true);
 
             $table->timestamps();
         });
@@ -37,6 +38,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('subscription_plans');
+        Schema::dropIfExists('plans');
     }
 };

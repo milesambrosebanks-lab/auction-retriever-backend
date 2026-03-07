@@ -13,8 +13,10 @@ use Illuminate\Support\Facades\Hash;
 use App\Mail\OtpMail;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\RegistrationNotification;
+use App\Services\StripeService;
 use Illuminate\Support\Facades\DB;
 use App\Traits\SMS;
+use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
@@ -40,7 +42,7 @@ class RegisterController extends Controller
         try {
             DB::beginTransaction();
             do {
-                $slug = "user_".rand(1000000000, 9999999999);
+                $slug = "user_" . rand(1000000000, 9999999999);
             } while (User::where('slug', $slug)->exists());
 
             $user = User::create([
@@ -69,9 +71,9 @@ class RegisterController extends Controller
             ];
 
             $admins = User::role('admin', 'web')->get();
-            foreach($admins as $admin){
+            foreach ($admins as $admin) {
                 $admin->notify(new RegistrationNotification($notiData));
-                if(config('settings.reverb')  === 'on'){
+                if (config('settings.reverb')  === 'on') {
                     broadcast(new RegistrationNotificationEvent($notiData, $admin->id))->toOthers();
                 }
             }
@@ -96,13 +98,12 @@ class RegisterController extends Controller
                 // 'token'      => $token,
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
                 'data' => [
-                    'name'=>$data->name,
-                    'email'=>$data->email,
-                    'role'=>$data->role,
-                    'otp'=>$data->otp,
+                    'name' => $data->name,
+                    'email' => $data->email,
+                    'role' => $data->role,
+                    'otp' => $data->otp,
                 ]
             ], 200);
-            
         } catch (Exception $e) {
             DB::rollBack();
             return Helper::jsonErrorResponse('User registration failed', 500, [$e->getMessage()]);
@@ -131,22 +132,40 @@ class RegisterController extends Controller
                 return Helper::jsonErrorResponse('OTP has expired. Please request a new OTP.', 422);
             }
 
+
             //* Verify the email
             $user->otp_verified_at   = now();
             $user->otp               = null;
             $user->otp_expires_at    = null;
             $user->save();
+            try {
+                if (!$user->stripe_customer_id) {
 
-            return Helper::jsonResponse(true, 'Email verification successful.', 200,[
-                'status'=>true,
-                'name'=>$user->name,
-                'email'=>$user->email,
-                'role'=>$user->role,
+                    $stripe = new StripeService();
+
+                    $customer = $stripe->createCustomer($user);
+
+                    $user->update([
+                        'stripe_customer_id' => $customer->id
+                    ]);
+                    Log::info($customer->id);
+                }
+            } catch (Exception $e) {
+                Log::info($e->getMessage());
+            }
+
+            return Helper::jsonResponse(true, 'Email verification successful.', 200, [
+                'status' => true,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
             ]);
         } catch (Exception $e) {
             return Helper::jsonErrorResponse($e->getMessage(), $e->getCode());
         }
     }
+
+
 
     public function ResendOtp(Request $request)
     {

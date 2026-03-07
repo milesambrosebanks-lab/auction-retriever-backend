@@ -30,7 +30,7 @@ class ResetPasswordController extends Controller
         ]);
         try {
             $email = $request->input('email');
-            $otp   = rand(1000, 9999);
+            $otp   = rand(100000, 999999);
             $user  = User::where('email', $email)->first();
 
             if ($user) {
@@ -54,7 +54,7 @@ class ResetPasswordController extends Controller
     {
         $request->validate([
             'email' => 'required|email|exists:users,email',
-            'otp'   => 'required|digits:4',
+            'otp'   => 'required|digits:6',
         ]);
         
         try {

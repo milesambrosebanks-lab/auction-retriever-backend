@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\Frontend\SocialLinksController;
 use App\Http\Controllers\Api\Frontend\SubscriberController;
 use App\Http\Controllers\Api\Gateway\Stripe\StripeCallBackController;
 use App\Http\Controllers\Api\PrayerTimesController;
+use App\Http\Controllers\Api\User\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -37,6 +38,22 @@ Route::get('/faq', [FaqController::class, 'index']);
 Route::post('subscriber/store', [SubscriberController::class, 'store'])->name('api.subscriber.store');
 Route::post('subscriber/remove/{token}', [SubscriberController::class, 'remove'])->name('api.subscriber.remove');
 Route::post('pdf-request/store', [SubscriberController::class, 'pdfGuide'])->name('api.pdf.request.store');
+Route::get('/subscription/plans', [SubscriptionController::class, 'getPlanDetails']);
+
+
+Route::middleware('auth:api')->prefix('auth')->group(function () {
+
+    Route::post('/subscription/setup-intent', [SubscriptionController::class, 'createSetupIntent']);
+    Route::post('/subscription/create', [SubscriptionController::class, 'createSubscription']);
+    Route::get('/subscription/plan', [SubscriptionController::class, 'myPlan']);
+
+    Route::post('/subscription/update', [SubscriptionController::class, 'updateSubscription']);
+    Route::post('/subscription/cancel', [SubscriptionController::class, 'cancelSubscription']);
+
+    Route::post('/subscription/resume', [SubscriptionController::class, 'resumeSubscription']);
+
+    Route::get('/subscription/status', [SubscriptionController::class, 'subscriptionStatus']);
+});
 
 /*
 # Post

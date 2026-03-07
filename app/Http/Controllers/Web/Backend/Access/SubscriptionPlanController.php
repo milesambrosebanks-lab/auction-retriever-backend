@@ -55,9 +55,11 @@ class SubscriptionPlanController extends Controller
                 return redirect()->back()->withErrors($validator)->withInput();
             }
             Stripe::setApiKey(config('services.stripe.secret'));
+
             $stripeProduct = StripeProduct::create([
                 'name' => $request->name,
             ]);
+
             $price = Price::create([
                 'product' => $stripeProduct->id,
                 'unit_amount' => $request->price * 100,
@@ -69,7 +71,7 @@ class SubscriptionPlanController extends Controller
 
             $paln = new SubscriptionPlan();
             $paln->name = $request->name;
-            $paln->email = $request->price;
+            $paln->price = $request->price;
             $paln->trial_days = $request->trial_days;
             $paln->interval = 'month';
             $paln->interval_count = 1;
@@ -79,7 +81,7 @@ class SubscriptionPlanController extends Controller
 
             DB::commit();
 
-            return redirect()->route('admin.my_plan.public')->with('t-success', 'Plan created t-successfully');
+            return redirect()->route('admin.my_plan.index')->with('t-success', 'Plan created successfully');
         } catch (Exception $e) {
             DB::rollBack();
             Log::info($e->getMessage());
@@ -91,6 +93,8 @@ class SubscriptionPlanController extends Controller
                     Log::info($cleanupException);
                 }
             }
+            return redirect()->route('admin.my_plan.index')->with('t-error', 'Plan created Failed');
+
         }
     }
 
