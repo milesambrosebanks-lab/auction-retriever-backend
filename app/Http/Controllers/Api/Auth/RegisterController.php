@@ -34,8 +34,8 @@ class RegisterController extends Controller
             'name'       => 'required|string|max:100',
             'email'      => 'required|string|email|max:150|unique:users',
             'password'   => 'required|string|min:6|confirmed',
-            'role'       => 'required|exists:roles,id',
-            'agree'      => 'required|in:true',
+            // 'role'       => 'required|exists:roles,id',
+            // 'agree'      => 'required|in:true',
         ]);
         try {
             DB::beginTransaction();
@@ -48,14 +48,15 @@ class RegisterController extends Controller
                 'slug'               => $slug,
                 'email'              => strtolower($request->input('email')),
                 'password'           => Hash::make($request->input('password')),
-                'otp'                => rand(1000, 9999),
+                'otp'                => rand(100000, 999999),
                 'otp_expires_at'     => Carbon::now()->addMinutes(60),
                 'status'             => 'active',
                 'last_activity_at'   => Carbon::now()
             ]);
 
             DB::table('model_has_roles')->insert([
-                'role_id' => $request->input('role'),
+                // 'role_id' => $request->input('role'),
+                'role_id' => 4,
                 'model_type' => 'App\Models\User',
                 'model_id' => $user->id
             ]);
@@ -92,9 +93,14 @@ class RegisterController extends Controller
                 'message'    => 'User register in successfully.',
                 'code'       => 200,
                 'token_type' => 'bearer',
-                'token'      => $token,
+                // 'token'      => $token,
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
-                'data' => $data
+                'data' => [
+                    'name'=>$data->name,
+                    'email'=>$data->email,
+                    'role'=>$data->role,
+                    'otp'=>$data->otp,
+                ]
             ], 200);
             
         } catch (Exception $e) {
@@ -106,7 +112,7 @@ class RegisterController extends Controller
     {
         $request->validate([
             'email' => 'required|email|exists:users,email',
-            'otp'   => 'required|digits:4',
+            'otp'   => 'required|digits:6',
         ]);
         try {
             $user = User::where('email', $request->input('email'))->first();
@@ -131,7 +137,12 @@ class RegisterController extends Controller
             $user->otp_expires_at    = null;
             $user->save();
 
-            return Helper::jsonResponse(true, 'Email verification successful.', 200);
+            return Helper::jsonResponse(true, 'Email verification successful.', 200,[
+                'status'=>true,
+                'name'=>$user->name,
+                'email'=>$user->email,
+                'role'=>$user->role,
+            ]);
         } catch (Exception $e) {
             return Helper::jsonErrorResponse($e->getMessage(), $e->getCode());
         }
@@ -155,7 +166,7 @@ class RegisterController extends Controller
                 return Helper::jsonErrorResponse('Email already verified.', 409);
             }
 
-            $newOtp               = rand(1000, 9999);
+            $newOtp               = rand(100000, 999999);
             $otpExpiresAt         = Carbon::now()->addMinutes(60);
             $user->otp            = $newOtp;
             $user->otp_expires_at = $otpExpiresAt;

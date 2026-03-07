@@ -1,24 +1,24 @@
-name: Deploy project to our server
+# name: Deploy project to our server
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  ftp-deploy:
-    name: FTP Deploy
-    runs-on: ubuntu-latest
+# jobs:
+#   ftp-deploy:
+#     name: FTP Deploy
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 2
 
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: 93.188.160.207
-          username: nocolon-ftp
-          password: "bZpRmu0KW13imaCTkcaS"
+#       - name: Deploy via FTP
+#         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+#         with:
+#           server: 93.188.160.207
+#           username: nocolon-ftp
+#           password: "bZpRmu0KW13imaCTkcaS"
