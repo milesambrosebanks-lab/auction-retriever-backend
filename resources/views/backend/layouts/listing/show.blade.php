@@ -16,7 +16,7 @@
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{{ url('admin/dashboard') }}"><i
                                         class="fe fe-home me-2 fs-14"></i>Home</a></li>
-                            <li class="breadcrumb-item"><a href="javascript:void(0);">Extraction Log</a></li>
+                            <li class="breadcrumb-item"><a href="javascript:void(0);">Data Listing</a></li>
                             <li class="breadcrumb-item active" aria-current="page">Show</li>
                         </ol>
                     </div>
@@ -33,28 +33,40 @@
                             </div>
                             <div class="card-body">
                                 <table class="table table-bordered table-striped">
-                
+                                    <tr>
+                                        <th>ID</th>
+                                        <td>{{ $listing->id }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Title</th>
+                                        <td>{{ $listing->title ?? 'N/A' }}</td>
+                                    </tr>
                                     <tr>
                                         <th>Source Url</th>
-                                        <td>{{ $order->source ?? 'N/A' }}</td>
+                                        <td>{{ $listing->source_url ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Last Run</th>
-                                        <td>{{ $order->last_successful_run?? 'N/A' }}</td>
+                                        <th>Property Type</th>
+                                        <td>{{ $listing->property_type ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Status</th>
-                                        <td>{{ $order->status }}</td>
+                                        <th>Starting Bid</th>
+                                        <td>{{ $listing->starting_bid }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Auction Date</th>
+                                        <td>{{ $listing->auction_date }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Source Website</th>
+                                        <td>{{ $listing->source_website }}</td>
                                     </tr>
 
                                     <tr>
                                         <th>Created At</th>
-                                        <td>{{ $order->created_at ? $order->created_at : 'N/A' }}</td>
+                                        <td>{{ $listing->created_at ? $listing->created_at : 'N/A' }}</td>
                                     </tr>
-                                    <tr>
-                                        <th>Updated At</th>
-                                        <td>{{ $order->updated_at ? $order->updated_at : 'N/A' }}</td>
-                                    </tr>
+                                   
                                     {{-- <tr>
                                         <th>Action</th>
                                         <td>
@@ -76,4 +88,3 @@
     </div>
     <!-- CONTAINER CLOSED -->
 @endsection
-

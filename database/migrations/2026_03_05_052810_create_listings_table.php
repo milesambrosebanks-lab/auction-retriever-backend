@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::create('listings', function (Blueprint $table) {
             $table->id();
             $table->string('title')->nullable();
-            $table->string('county')->nullable();
+            $table->string('country')->nullable();
             $table->string('state')->nullable();
             $table->string('property_type')->nullable();
             $table->decimal('starting_bid', 12, 2)->nullable();

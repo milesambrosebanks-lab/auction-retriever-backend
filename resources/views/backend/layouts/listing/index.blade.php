@@ -48,12 +48,13 @@
                                     <table class="table table-bordered text-nowrap border-bottom" id="datatable">
                                         <thead>
                                             <tr>
-                                                <th class="bg-transparent border-bottom-0 wp-15">ID</th>
+                                                <th class="bg-transparent border-bottom-0 wp-10">ID</th>
+                                                <th class="bg-transparent border-bottom-0 wp-15">Title</th>
                                                 <th class="bg-transparent border-bottom-0 wp-15">Source Url</th>
-                                                <th class="bg-transparent border-bottom-0 wp-15">Last Run</th>
-                                                <th class="bg-transparent border-bottom-0">Status</th>
-                                                <th class="bg-transparent border-bottom-0">Messssage</th>
-                                                <th class="bg-transparent border-bottom-0">Date</th>
+                                                <th class="bg-transparent border-bottom-0 wp-15">Prpperty Type</th>
+                                                <th class="bg-transparent border-bottom-0">Starting Bid</th>
+                                                <th class="bg-transparent border-bottom-0">Country</th>
+                                                <th class="bg-transparent border-bottom-0">Auction Date</th>
                                                 <th class="bg-transparent border-bottom-0">Action</th>
                                             </tr>
                                         </thead>
@@ -108,7 +109,7 @@
                     pagingType: "full_numbers",
                     dom: "<'row justify-content-between table-topbar'<'col-md-4 col-sm-3'l><'col-md-5 col-sm-5 px-0'f>>tipr",
                     ajax: {
-                        url: "{{ route('admin.extraction.index') }}",
+                        url: "{{ route('admin.listing.index') }}",
                         type: "GET",
                     },
 
@@ -119,33 +120,39 @@
                             searchable: false
                         },
                         {
-                            data: 'product',
-                            name: 'product',
-                            orderable: true,
+                            data: 'title',
+                            name: 'title',
+                            orderable: false,
                             searchable: true
                         },
 
                         {
-                            data: 'customer',
-                            name: 'customer',
+                            data: 'source_url',
+                            name: 'source_url',
                             orderable: true,
                             searchable: true
                         },
                         {
-                            data: 'status',
-                            name: 'status',
+                            data: 'property_type',
+                            name: 'property_type',
                             orderable: true,
                             searchable: true
                         },
                         {
-                            data: 'message',
-                            name: 'message',
+                            data: 'starting_bid',
+                            name: 'starting_bid',
                             orderable: true,
                             searchable: true
                         },
                         {
-                            data: 'datetime',
-                            name: 'datetime',
+                            data: 'country',
+                            name: 'country',
+                            orderable: true,
+                            searchable: true
+                        },
+                        {
+                            data: 'auction_date',
+                            name: 'auction_date',
                             orderable: false,
                             searchable: true
                         },
@@ -179,24 +186,6 @@
             });
         }
 
-        // Status Change
-        function statusChange(id) {
-            NProgress.start();
-            let url = "{{ route('admin.order.status', ':id') }}";
-            $.ajax({
-                type: "GET",
-                url: url.replace(':id', id),
-                success: function(resp) {
-                    NProgress.done();
-                    toastr.success(resp.message);
-                    $('#datatable').DataTable().ajax.reload();
-                },
-                error: function(error) {
-                    NProgress.done();
-                    toastr.error(error.message);
-                }
-            });
-        }
 
         // delete Confirm
         function showDeleteConfirm(id) {
@@ -216,11 +205,11 @@
             });
         }
 
- 
+
 
 
         function goToOpen(id) {
-            let url = "{{ route('admin.extraction.show', ':id') }}";
+            let url = "{{ route('admin.listing.show', ':id') }}";
             window.location.href = url.replace(':id', id);
         }
     </script>

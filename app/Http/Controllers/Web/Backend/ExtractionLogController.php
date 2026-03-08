@@ -69,8 +69,8 @@ class ExtractionLogController extends Controller
 
     public function show(int $id)
     {
-        $order = Order::with(['product', 'user'])->where('id', $id)->first();
-        return view('backend.layouts.order.show', compact('order'));
+        $order = ExtractionLog::find($id);
+        return view('backend.layouts.extraction_log.show', compact('order'));
     }
 
     public function status(int $id): JsonResponse

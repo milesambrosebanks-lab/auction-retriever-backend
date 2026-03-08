@@ -11,7 +11,7 @@ class ListingSeeder extends Seeder
     {
         Listing::create([
             'title' => '3 Bed House in Miami',
-            'county' => 'Miami-Dade',
+            'country' => 'Miami-Dade',
             'state' => 'Florida',
             'property_type' => 'Residential',
             'starting_bid' => 120000,
@@ -22,7 +22,7 @@ class ListingSeeder extends Seeder
 
         Listing::create([
             'title' => 'Commercial Lot in Dallas',
-            'county' => 'Dallas',
+            'country' => 'Dallas',
             'state' => 'Texas',
             'property_type' => 'Commercial',
             'starting_bid' => 250000,
@@ -33,7 +33,7 @@ class ListingSeeder extends Seeder
 
         Listing::create([
             'title' => 'Farm Land Auction',
-            'county' => 'Orange',
+            'country' => 'Orange',
             'state' => 'California',
             'property_type' => 'Land',
             'starting_bid' => 80000,

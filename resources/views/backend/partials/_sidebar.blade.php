@@ -42,8 +42,13 @@
                     </a>
                     <a class="side-menu__item {{ request()->routeIs('admin.extraction.index') ? 'has-link active' : '' }}"
                         href="{{ route('admin.extraction.index') }}">
-                        <i class="fa-brands fa-font-awesome side-menu__icon"></i>
+                        <i class="fa-solid fa-oil-well side-menu__icon"></i>
                         <span class=" side-menu__label">Extraction Log</span>
+                    </a>
+                    <a class="side-menu__item {{ request()->routeIs('admin.listing.index') ? 'has-link active' : '' }}"
+                        href="{{ route('admin.listing.index') }}">
+                        <i class="fa-solid fa-list side-menu__icon"></i>
+                        <span class=" side-menu__label">Auction Listing</span>
                     </a>
                 </li>
                 {{-- <li class="slide">

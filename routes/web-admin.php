@@ -29,6 +29,7 @@ use App\Http\Controllers\Web\Backend\EmailLogController;
 use App\Http\Controllers\Web\Backend\ExtractionLogController;
 use App\Http\Controllers\Web\Backend\FaqController;
 use App\Http\Controllers\Web\Backend\FileManagerController;
+use App\Http\Controllers\Web\Backend\ListingController;
 use App\Http\Controllers\Web\Backend\OrderController;
 use App\Http\Controllers\Web\Backend\ProductController;
 use App\Http\Controllers\Web\Backend\PropertyController;
@@ -77,13 +78,16 @@ Route::group(['middleware' => ['web-admin']], function () {
         Route::get('/', 'index')->name('index');
         Route::get('/show/{id}', 'show')->name('show');
     });
+    Route::controller(ListingController::class)->prefix('listing')->name('listing.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/show/{id}', 'show')->name('show');
+    });
 
 
 
 
 
 
-    
 
 
     Route::controller(SocialLinkController::class)->prefix('social')->name('social.')->group(function () {
