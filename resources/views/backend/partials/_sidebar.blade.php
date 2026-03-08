@@ -40,6 +40,11 @@
                         <i class="fa-brands fa-font-awesome side-menu__icon"></i>
                         <span class=" side-menu__label">My Plans</span>
                     </a>
+                    <a class="side-menu__item {{ request()->routeIs('admin.extraction.index') ? 'has-link active' : '' }}"
+                        href="{{ route('admin.extraction.index') }}">
+                        <i class="fa-brands fa-font-awesome side-menu__icon"></i>
+                        <span class=" side-menu__label">Extraction Log</span>
+                    </a>
                 </li>
                 {{-- <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('admin.pdf_request.index') ? 'has-link active' : '' }}"

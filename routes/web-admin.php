@@ -26,6 +26,7 @@ use App\Http\Controllers\Web\Backend\Settings\GoogleMapController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\Backend\DashboardController;
 use App\Http\Controllers\Web\Backend\EmailLogController;
+use App\Http\Controllers\Web\Backend\ExtractionLogController;
 use App\Http\Controllers\Web\Backend\FaqController;
 use App\Http\Controllers\Web\Backend\FileManagerController;
 use App\Http\Controllers\Web\Backend\OrderController;
@@ -71,6 +72,19 @@ Route::group(['middleware' => ['web-admin']], function () {
         Route::get('/show/{id}', 'show')->name('show');
         Route::get('/status/{id}', 'status')->name('status');
     });
+
+    Route::controller(ExtractionLogController::class)->prefix('extraction')->name('extraction.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/show/{id}', 'show')->name('show');
+    });
+
+
+
+
+
+
+    
+
 
     Route::controller(SocialLinkController::class)->prefix('social')->name('social.')->group(function () {
         Route::get('/', 'index')->name('index');

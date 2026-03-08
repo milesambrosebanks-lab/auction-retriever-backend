@@ -1,8 +1,6 @@
 <?php
 
 namespace Database\Seeders;
-
-use App\Models\SubscriptionPlan;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -15,6 +13,10 @@ class DatabaseSeeder extends Seeder
         $this->call(SubscriptionPlanSeeder::class);
         $this->call(UserSeeder::class);
         $this->call(SettingSeeder::class);
+        $this->call(ListingSeeder::class);
+        $this->call(ExtractionLogSeeder::class);
+        $this->call(SavedListingSeeder::class);
+        
         // $this->call(BrandSeeder::class);
         // $this->call(CategorySeeder::class);
         // $this->call(SubcategorySeeder::class);

@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Laravel\Cashier\Billable;
+
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -59,7 +60,7 @@ class User extends Authenticatable implements JWTSubject
         'is_online',
         'balance'
     ];
-    
+
     protected $dates = [
         'trial_ends_at',
     ];
@@ -114,50 +115,65 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(FirebaseTokens::class);
     }
 
-    public function profile() {
+    public function profile()
+    {
         return $this->hasOne(Profile::class);
     }
 
-    public function posts() {
+    public function posts()
+    {
         return $this->hasMany(Post::class);
     }
 
-    public function plan() {
+    public function plan()
+    {
         return $this->belongsTo(Plan::class);
     }
 
-    public function transactions() {
+    public function transactions()
+    {
         return $this->hasMany(Transaction::class);
     }
 
-    public function products() {
+    public function products()
+    {
         return $this->hasMany(Product::class);
     }
 
+    public function savedListings()
+    {
+        return $this->hasMany(SavedListing::class);
+    }
+
+    public function listings()
+    {
+        return $this->belongsToMany(Listing::class, 'saved_listings');
+    }
+
     //chat related methods
-    public function senders()
-    {
-        return $this->hasMany(Chat::class, 'sender_id');
-    }
+    // public function senders()
+    // {
+    //     return $this->hasMany(Chat::class, 'sender_id');
+    // }
 
-    public function receivers()
-    {
-        return $this->hasMany(Chat::class, 'receiver_id');
-    }
+    // public function receivers()
+    // {
+    //     return $this->hasMany(Chat::class, 'receiver_id');
+    // }
 
-    public function roomsAsUserOne()
-    {
-        return $this->hasMany(Room::class, 'user_one_id');
-    }
+    // public function roomsAsUserOne()
+    // {
+    //     return $this->hasMany(Room::class, 'user_one_id');
+    // }
 
-    public function roomsAsUserTwo()
-    {
-        return $this->hasMany(Room::class, 'user_two_id');
-    }
+    // public function roomsAsUserTwo()
+    // {
+    //     return $this->hasMany(Room::class, 'user_two_id');
+    // }
 
-    public function allRooms()
-    {
-        return Room::where('user_one_id', $this->id)->orWhere('user_two_id', $this->id);
-    }
-    
+    // public function allRooms()
+    // {
+    //     return Room::where('user_one_id', $this->id)->orWhere('user_two_id', $this->id);
+    // }
+
 }
