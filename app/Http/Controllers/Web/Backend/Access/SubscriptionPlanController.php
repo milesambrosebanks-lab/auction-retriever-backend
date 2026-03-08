@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Web\Backend\Access;
 
 use App\Http\Controllers\Controller;
+use App\Models\Plan;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Services\StripeService;
 use Exception;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
@@ -41,10 +43,13 @@ class SubscriptionPlanController extends Controller
 
     public function store(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'name'             => 'required|max:250',
             'price'             => 'required|numeric|min:0',
             'trial_days' => 'required|numeric|min:1',
+            'features'      => 'nullable|array',
+            'features.*'    => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -69,7 +74,7 @@ class SubscriptionPlanController extends Controller
                 ],
             ]);
 
-            $paln = new SubscriptionPlan();
+            $paln = new Plan();
             $paln->name = $request->name;
             $paln->price = $request->price;
             $paln->trial_days = $request->trial_days;
@@ -78,6 +83,15 @@ class SubscriptionPlanController extends Controller
             $paln->stripe_price_id = $price->id;
             $paln->stripe_product_id = $stripeProduct->id;
             $paln->save();
+
+            if ($request->has('features')) {
+                collect($request->features)->filter()
+                    ->each(function ($name) use ($paln) {
+                        $paln->features()->create([
+                            'name' => $name
+                        ]);
+                    });
+            }
 
             DB::commit();
 
@@ -94,7 +108,6 @@ class SubscriptionPlanController extends Controller
                 }
             }
             return redirect()->route('admin.my_plan.index')->with('t-error', 'Plan created Failed');
-
         }
     }
 
@@ -107,18 +120,20 @@ class SubscriptionPlanController extends Controller
     public function edit($id)
     {
         // $user = User::find($id);
-        $roles = Role::all();
-        $plan = SubscriptionPlan::find($id);
-        return view('backend.layouts.access.my_plan.edit', compact('roles', 'plan'));
+        // $roles = Role::all();
+        $plan = Plan::find($id);
+        return view('backend.layouts.access.my_plan.edit', compact('plan'));
     }
 
     public function update(Request $request, $id)
     {
+
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'email' => 'required|unique:users,email,' . $id,
-            'roles' => 'required|array',
-            'roles.*' => 'exists:roles,id'
+            'name' => 'required|max:250',
+            'price' => 'required|numeric|min:0',
+            'features'      => 'nullable|array',
+            'features.*'    => 'nullable|string',
+
         ]);
 
         if ($validator->fails()) {
@@ -126,33 +141,94 @@ class SubscriptionPlanController extends Controller
         }
 
         try {
-            $user = User::find($id);
-            $user->update([
+            Stripe::setApiKey(config('services.stripe.secret'));
+
+            $plan = Plan::find($id);
+
+            \Stripe\Product::update(
+                $plan->stripe_product_id, // your product ID
+                [
+                    'name' => $request['name'] ?? $plan->name,
+                ]
+            );
+
+            if ($request->price != $plan->price) {
+
+                \Stripe\Price::update($plan->stripe_price_id, [
+                    'active' => false
+                ]);
+
+                $price = \Stripe\Price::create([
+                    'product'     => $plan->stripe_product_id,
+                    'unit_amount' => (int) round($request->price * 100),
+                    'currency'    => 'usd',
+                    'recurring'   => [
+                        'interval' => 'month',
+                    ],
+                ]);
+
+                $plan->stripe_price_id = $price->id;
+                $plan->price = $request->price;
+            }
+
+
+            $plan->update([
                 'name' => $request->name,
-                'email' => $request->email,
+                'price' => $request->price,
             ]);
 
-            DB::table('model_has_roles')->where('model_id', $id)->delete();
+            $plan->save();
 
-            foreach ($request->roles as $role) {
-                DB::table('model_has_roles')->insert([
-                    'role_id' => $role,
-                    'model_type' => 'App\Models\User',
-                    'model_id' => $user->id
-                ]);
+            $existingIds = $plan->features()->pluck('id')->toArray();
+            $submittedIds = [];
+
+            if ($request->has('features')) {
+                foreach ($request->features as $key => $value) {
+                    if (in_array($key, $existingIds)) {
+                        // ✅ Update existing item
+                        $plan->features()
+                            ->where('id', $key)
+                            ->update(['name' => $value]);
+                        $submittedIds[] = $key;
+                    } else {
+                        // ✅ Create new item
+                        if (!empty($value)) {
+                            $plan->features()->create([
+                                'name' => $value
+                            ]);
+                        }
+                    }
+                }
             }
+            // ✅ Delete removed items
+            $itemsToDelete = array_diff($existingIds, $submittedIds);
+            $plan->features()->whereIn('id', $itemsToDelete)->delete();
+
+            DB::commit();
 
             return redirect()->back()->with('t-success', 'User updated t-successfully');
         } catch (Exception $e) {
+            DB::rollBack();
+
+            Log::info($e->getMessage());
             return redirect()->back()->with('t-error', $e->getMessage());
         }
     }
 
     public function destroy($id)
     {
-        $user = User::find($id);
-        DB::table('model_has_roles')->where('model_id', $id)->delete();
-        $user->delete();
+        $plan = Plan::find($id);
+        $stripe = new StripeService();
+
+        if ($plan->stripe_price_id) {
+            $stripe->archivePrice($plan->stripe_price_id);
+        }
+
+        if ($plan->stripe_product_id) {
+            $stripe->archiveProduct($plan->stripe_product_id);
+        }
+
+        $plan->delete();
         return redirect()->back()->with('t-success', 'User deleted t-successfully');
     }
 

@@ -54,7 +54,7 @@
                                             @enderror
                                         </div>
 
-                                        <div class="mb-3">
+                                        {{-- <div class="mb-3">
                                             <label for="roles" class="form-label">User Roles</label>
                                             <hr />
                                             @foreach ($roles as $role)
@@ -66,7 +66,7 @@
                                             @error('roles')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
-                                        </div>
+                                        </div> --}}
 
 
                                         <button type="submit" class="submit btn btn-primary">Submit</button>

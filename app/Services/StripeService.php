@@ -4,6 +4,8 @@ namespace App\Services;
 
 use Stripe\Stripe;
 use Stripe\Customer;
+use Stripe\Price;
+use Stripe\Product;
 use Stripe\Subscription;
 
 class StripeService
@@ -30,6 +32,22 @@ class StripeService
             ],
             'default_payment_method' => $paymentMethod,
             'trial_period_days' => $trialDays
+        ]);
+    }
+
+        public function archivePrice($priceId)
+    {
+
+        return Price::update($priceId, [
+            'active' => false
+        ]);
+    }
+
+    public function archiveProduct($productId)
+    {
+
+        return Product::update($productId, [
+            'active' => false
         ]);
     }
 }

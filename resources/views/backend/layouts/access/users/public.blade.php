@@ -91,9 +91,9 @@
                                                         <i class="mdi mdi-eye"></i>
                                                     </a>
                                                     
-                                                    <a href="{{ route('admin.users.card', $user->slug) }}" class="btn btn-success">
+                                                    {{-- <a href="{{ route('admin.users.card', $user->slug) }}" class="btn btn-success">
                                                         <i class="mdi mdi-printer"></i>
-                                                    </a>
+                                                    </a> --}}
 
                                                     @can('web_update', $user)
                                                     <a href="{{ route('admin.users.status', $user->id) }}" class="btn btn-warning">

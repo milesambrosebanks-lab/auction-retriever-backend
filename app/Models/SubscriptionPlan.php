@@ -18,4 +18,9 @@ class SubscriptionPlan extends Model
         'trial_days',
         'status'
     ];
+
+    public function features()
+    {
+        return $this->hasMany(Feature::class);
+    }
 }

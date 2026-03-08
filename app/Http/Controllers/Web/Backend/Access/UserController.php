@@ -84,8 +84,8 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'email' => 'required|unique:users,email,' . $id,
-            'roles' => 'required|array',
-            'roles.*' => 'exists:roles,id'
+            // 'roles' => 'required|array',
+            // 'roles.*' => 'exists:roles,id'
         ]);
 
         if ($validator->fails()) {
@@ -99,15 +99,15 @@ class UserController extends Controller
                 'email' => $request->email,
             ]);
 
-            DB::table('model_has_roles')->where('model_id', $id)->delete();
+            // DB::table('model_has_roles')->where('model_id', $id)->delete();
 
-            foreach ($request->roles as $role) {
-                DB::table('model_has_roles')->insert([
-                    'role_id' => $role,
-                    'model_type' => 'App\Models\User',
-                    'model_id' => $user->id
-                ]);
-            }            
+            // foreach ($request->roles as $role) {
+            //     DB::table('model_has_roles')->insert([
+            //         'role_id' => $role,
+            //         'model_type' => 'App\Models\User',
+            //         'model_id' => $user->id
+            //     ]);
+            // }            
 
             return redirect()->back()->with('t-success', 'User updated t-successfully');
         } catch (Exception $e) {

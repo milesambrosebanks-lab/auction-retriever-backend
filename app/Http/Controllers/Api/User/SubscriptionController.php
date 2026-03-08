@@ -35,11 +35,25 @@ class SubscriptionController extends Controller
     {
         // $plan = Plan::with('features')->find($id);
         $plan = Plan::with('features')->where('status', true)->orderBy('id', 'desc')->first();
+        $data = [
+            'id' => $plan->id,
+            'name' => $plan->name,
+            'price' => $plan->price,
+            'interval' => $plan->interval,
+            'trial_days' => $plan->trial_days,
+            'stripe_price_id' => $plan->stripe_price_id,
+            'stripe_product_id' => $plan->stripe_product_id,
+            'features' => $plan->features ? $plan->features->map(function ($item) {
+                return  $item->name;
+
+            }) : [],
+        ];
+
         if (! $plan) {
             return $this->error('Plan not found', 404);
         }
-        return $this->success($plan, 'Plan details retrieved successfully', 200);
-    } 
+        return $this->success($data, 'Plan details retrieved successfully', 200);
+    }
     public function myPlan()
     {
         // $plan = Plan::with('features')->find($id);
@@ -119,7 +133,6 @@ class SubscriptionController extends Controller
             $subscription = $subscriptionBuilder->create($request->payment_method);
 
             return $this->success($subscription, 'Subscription created successfully', 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to create subscription: ' . $e->getMessage(),
@@ -160,7 +173,6 @@ class SubscriptionController extends Controller
             return response()->json([
                 'message' => 'Subscription updated successfully',
             ]);
-
         } catch (\Exception $e) {
             return $this->error([], 'Failed to update subscription: ' . $e->getMessage(), 500);
         }
@@ -185,7 +197,6 @@ class SubscriptionController extends Controller
                 'status'  => 'canceled',
                 'ends_at' => $subscription->ends_at,
             ], 'Subscription canceled successfully', 200);
-
         } catch (\Exception $e) {
             return $this->error('Failed to cancel subscription: ' . $e->getMessage(), 500);
         }
@@ -218,7 +229,5 @@ class SubscriptionController extends Controller
             'ends_at'       => $subscription->ends_at,
             'trial_ends_at' => $subscription->trial_ends_at,
         ], 'Subscription status retrieved', 200);
-
     }
-
 }

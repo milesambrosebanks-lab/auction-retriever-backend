@@ -94,13 +94,13 @@
                                                     @endcan
 
                                                     @can('web_delete', $user)
-                                                    <form action="{{ route('admin.my_plan.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Are you sure?')" style="margin: 0; padding: 0;">
+                                                    {{-- <form action="{{ route('admin.my_plan.destroy', $plan->id) }}" method="POST" onsubmit="return confirm('Are you sure?')" style="margin: 0; padding: 0;">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-danger" style="border-radius: 0; border-top-right-radius: 5px; border-bottom-right-radius: 5px;">
                                                             <i class="mdi mdi-delete"></i>
                                                         </button>
-                                                    </form>
+                                                    </form> --}}
                                                     @endcan
                                                 </div>
 
