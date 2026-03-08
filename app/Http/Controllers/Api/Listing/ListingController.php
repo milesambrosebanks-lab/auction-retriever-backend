@@ -130,18 +130,13 @@ class ListingController extends Controller
         return $this->success($listing, 'Listing saved successfully', 200);
     }
 
-    // Method to delete a specific listing
+    // Method to delete a specific save-listing 
     public function delete($id)
     {
-        // Find the listing by ID
-        $listing = Listing::find($id);
-
-        // Check if the listing exists
+        $listing = SavedListing::where('user_id', auth('api')->user()->id)->where('id', $id)->first();
         if (!$listing) {
             return $this->error([], 'Listing not found');
         }
-
-        // Delete the listing
         $listing->delete();
 
         return $this->success($listing, 'Listing deleted successfully', 200);
