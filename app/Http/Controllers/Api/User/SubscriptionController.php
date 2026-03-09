@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
-use App\Models\SubscriptionPlan;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -22,7 +21,7 @@ class SubscriptionController extends Controller
     // get all plans
     public function getPlans(Request $request)
     {
-        $plans = SubscriptionPlan::with('features')->where('status', true)->get();
+        $plans = Plan::with('features')->where('status', true)->get();
         if ($plans->isEmpty()) {
             return $this->error('No active plans found', 404);
         }

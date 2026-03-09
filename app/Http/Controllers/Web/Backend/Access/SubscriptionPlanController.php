@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Web\Backend\Access;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
-use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\StripeService;
 use Exception;
@@ -32,7 +31,7 @@ class SubscriptionPlanController extends Controller
     {
         $user = Auth::guard('web')->user();
         // $users = User::where('id', '!=', $user->id)->with('roles')->orderBy('id', 'desc')->paginate(25);
-        $plans = SubscriptionPlan::orderBy('id', 'desc')->paginate(25);
+        $plans = Plan::orderBy('id', 'desc')->paginate(25);
         return view('backend.layouts.access.my_plan.public', compact('plans', 'user'));
     }
 
@@ -244,27 +243,4 @@ class SubscriptionPlanController extends Controller
         return view('backend.layouts.access.users.show', compact('user'));
     }
 
-    public function card($slug)
-    {
-
-        $user = User::where('slug', $slug)->first();
-        $logoBase64 = base64_encode(file_get_contents(public_path('default/logo.png')));
-        $whitelogoBase64 = base64_encode(file_get_contents(public_path('default/logo.png')));
-        $backLogoBase64 = base64_encode(file_get_contents(public_path('default/logo.png')));
-
-        $avatarPath = public_path(
-            $user->avatar && file_exists(public_path($user->avatar)) ? $user->avatar : 'default/profile.jpg'
-        );
-
-        $avatarBase64 = base64_encode(file_get_contents($avatarPath));
-
-        //for pdf
-        /* $qrCode = base64_encode(QrCode::size(90)->generate(route('admin.users.card', $user->slug)));
-        $pdf = Pdf::loadView('card.pdf', compact('user', 'logoBase64', 'whitelogoBase64', 'avatarBase64', 'qrCode', 'backLogoBase64'))->setPaper('a4', 'portrait');
-        return $pdf->stream();  */
-
-        //for web
-        $qrCode = QrCode::size(90)->generate(route('admin.users.card', $user->slug));
-        return view('card.web', compact('user', 'logoBase64', 'whitelogoBase64', 'avatarBase64', 'qrCode', 'backLogoBase64'));
-    }
 }

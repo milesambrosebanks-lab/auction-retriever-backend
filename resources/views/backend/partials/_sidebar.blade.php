@@ -136,6 +136,11 @@
                         </a>
                     </li> --}}
                     <li class="slide">
+                        <a class="side-menu__item {{ Request::routeIs('admin.subscriptions.*') ? 'has-link active' : '' }}"
+                            href="{{ route('admin.subscriptions.index') }}">
+                            <i class="fa-solid fa-money-bill-transfer side-menu__icon"></i>
+                            <span class="side-menu__label">Subscriptions</span>
+                        </a>
                         <a class="side-menu__item {{ Request::routeIs('admin.transaction.*') ? 'has-link active' : '' }}"
                             href="{{ route('admin.transaction.index') }}">
                             <i class="fa-solid fa-money-bill-transfer side-menu__icon"></i>

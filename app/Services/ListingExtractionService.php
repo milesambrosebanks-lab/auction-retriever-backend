@@ -28,7 +28,7 @@ class ListingExtractionService
                     ['source_url' => $item['url']],
                     [
                         'title' => $item['title'] ?? null,
-                        'county' => $this->normalizeCounty($item['county'] ?? null),
+                        'county' => $this->normalizeCounty($item['country'] ?? null),
                         'state' => $this->normalizeState($item['state'] ?? null),
                         'property_type' => $item['type'] ?? null,
                         'starting_bid' => $this->normalizeCurrency($item['bid'] ?? null),

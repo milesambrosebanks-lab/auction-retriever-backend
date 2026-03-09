@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Web\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
@@ -19,6 +18,7 @@ class TransactionController extends Controller
 
     public function index(Request $request, $user_id = null)
     {
+
         $data = Transaction::with(['order'])->orderBy('id', 'desc')->get();
 
         if ($request->ajax()) {

@@ -25,7 +25,14 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $user = Auth::guard('web')->user();
-        $users = User::where('id', '!=', $user->id)->with('roles')->orderBy('id', 'desc')->paginate(25);
+        // $users = User::where('id', '!=', $user->id)->with('roles')->orderBy('id', 'desc')->paginate(25);
+        $users = User::where('id', '!=', $user->id)
+            ->whereHas('roles', function ($q) {
+                $q->where('name', 'customer');
+            })
+            ->with('roles')
+            ->orderBy('id', 'desc')
+            ->paginate(25);
 
         return view('backend.layouts.access.users.public', compact('users'));
     }
@@ -54,7 +61,7 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
-        
+
         foreach ($request->roles as $role) {
             DB::table('model_has_roles')->insert([
                 'role_id' => $role,
@@ -153,11 +160,9 @@ class UserController extends Controller
         /* $qrCode = base64_encode(QrCode::size(90)->generate(route('admin.users.card', $user->slug)));
         $pdf = Pdf::loadView('card.pdf', compact('user', 'logoBase64', 'whitelogoBase64', 'avatarBase64', 'qrCode', 'backLogoBase64'))->setPaper('a4', 'portrait');
         return $pdf->stream();  */
-        
+
         //for web
         $qrCode = QrCode::size(90)->generate(route('admin.users.card', $user->slug));
         return view('card.web', compact('user', 'logoBase64', 'whitelogoBase64', 'avatarBase64', 'qrCode', 'backLogoBase64'));
-
     }
-    
 }

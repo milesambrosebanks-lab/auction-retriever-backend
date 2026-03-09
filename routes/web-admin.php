@@ -4,6 +4,7 @@ use App\Http\Controllers\Web\Backend\Access\PermissionController;
 use App\Http\Controllers\Web\Backend\Access\RoleController;
 use App\Http\Controllers\Web\Backend\Access\SubscriptionPlanController;
 use App\Http\Controllers\Web\Backend\Access\UserController;
+use App\Http\Controllers\Web\Backend\AdminSubsciptionController;
 use App\Http\Controllers\Web\Backend\AttributeController;
 use App\Http\Controllers\Web\Backend\BlogController;
 use App\Http\Controllers\Web\Backend\ChatController;
@@ -44,6 +45,7 @@ use App\Http\Controllers\Web\Backend\TransactionController;
 use App\Http\Controllers\Web\Backend\QuizController;
 use App\Http\Controllers\Web\Backend\ReportController;
 use Illuminate\Support\Facades\Artisan;
+
 
 Route::get("dashboard", [DashboardController::class, 'index'])->name('dashboard')->middleware(['role:admin|staff']);
 
@@ -182,12 +184,18 @@ Route::group(['middleware' => ['web-admin']], function () {
     Route::resource('users', UserController::class);
     Route::resource('my_plan', SubscriptionPlanController::class);
 
+    Route::controller(AdminSubsciptionController::class)->prefix('subscriptions')->name('subscriptions.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{id}/view', 'show')->name('show');
+    });
+
     Route::controller(UserController::class)->prefix('users')->name('users.')->group(function () {
         Route::get('/status/{id}', 'status')->name('status');
         Route::get('/new', 'new')->name('new.index');
         Route::get('/ajax/new/count', 'newCount')->name('ajax.new.count');
         Route::get('/card/{slug}', 'card')->name('card');
     });
+
     Route::resource('permissions', PermissionController::class);
     Route::resource('roles', RoleController::class);
 
