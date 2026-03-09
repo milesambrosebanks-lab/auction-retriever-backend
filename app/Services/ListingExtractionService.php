@@ -73,6 +73,7 @@ class ListingExtractionService
         ExtractionLog::create([
             'source' => $sourceUrl,
             'status' => false,
+            'last_successful_run' => now(),
             'message' => 'Extraction failed after retries'
         ]);
     }

@@ -20,10 +20,10 @@ Route::controller(StripeProductCallBackController::class)->prefix('payment/strip
 });
 
 //stripe webhook
-Route::controller(StripeDonationWebHookController::class)->prefix('payment/stripe')->name('payment.stripe.')->group(function () {
-    Route::post('/intent', 'intent')->middleware(['auth:api']);
-    Route::post('/webhook', 'webhook');
-});
+// Route::controller(StripeDonationWebHookController::class)->prefix('payment/stripe')->name('payment.stripe.')->group(function () {
+//     Route::post('/intent', 'intent')->middleware(['auth:api']);
+//     Route::post('/webhook', 'webhook');
+// });
 
 
 

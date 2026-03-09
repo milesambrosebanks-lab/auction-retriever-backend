@@ -24,7 +24,6 @@ use App\Http\Controllers\Api\Frontend\SocialLinksController;
 use App\Http\Controllers\Api\Frontend\SubscriberController;
 use App\Http\Controllers\Api\Gateway\Stripe\StripeCallBackController;
 use App\Http\Controllers\Api\Listing\ListingController;
-use App\Http\Controllers\Api\PrayerTimesController;
 use App\Http\Controllers\Api\User\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 

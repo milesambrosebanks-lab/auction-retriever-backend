@@ -12,6 +12,7 @@ use App\Http\Middleware\ApiRetailerMiddleware;
 use App\Http\Middleware\WebStaffMiddleware;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -35,9 +36,6 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['web'])->prefix('ajax')->name('ajax.')->group(base_path('routes/ajax.php'));
             Route::middleware(['web', 'web-developer'])->prefix('developer')->name('developer.')->group(base_path('routes/web-developer.php'));
             Route::middleware(['web'])->prefix('admin')->name('admin.')->group(base_path('routes/web-admin.php'));
-            // Route::middleware(['api', 'api-admin'])->prefix('api.admin')->name('api.admin.')->group(base_path('routes/api-admin.php'));
-            // Route::middleware(['api', 'api-retailer'])->prefix('api/retailer')->name('api.retailer.')->group(base_path('routes/api-retailer.php'));
-            // Route::middleware(['api', 'otp', 'api-customer'])->prefix('api/customer')->name('api.customer.')->group(base_path('routes/api-customer.php'));
             Route::middleware(['api'])->group(base_path('routes/api-stripe.php'));
             require base_path('routes/cmd.php');
             require base_path('routes/plugins.php');
@@ -88,11 +86,17 @@ return Application::configure(basePath: dirname(__DIR__))
                     return Helper::jsonErrorResponse($e->getMessage(), 403);
                 }
                 // Dynamically determine the status code if available
-                $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+                $statusCode = method_exists($e, 'getStatusCode') ? $e->getCode() : 500;
 
                 return Helper::jsonErrorResponse($e->getMessage(), $statusCode);
             } else {
                 return null;
             }
         });
-    })->create();
+    })->withSchedule(function (Schedule $schedule) {
+        // $schedule->command('bookings:expire')->everyMinute();
+        $schedule->command('weekly:digest')->weekly();
+    })
+    ->withCommands([
+        __DIR__ . '/../app/Console/Commands',
+    ])->create();

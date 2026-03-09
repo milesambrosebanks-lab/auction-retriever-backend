@@ -34,15 +34,15 @@
                 <div class="row">
                     <div class="col-12 col-sm-12">
                         <div class="card product-sales-main">
-                            {{-- <div class="card-header border-bottom">
+                            <div class="card-header border-bottom">
                                 <div class="btn-group" role="group" aria-label="Basic mixed styles example">
-                                    <button type="button" class="btn btn-danger"><a href="#">Import</a></button>
-                                    <button type="button" class="btn btn-warning"><a href="#">Export</a></button>
+                                    <button type="button" class=""><a class="btn btn-info" href="{{ route('admin.extraction.run') }}">Run Extraction</a></button>
+                                    {{-- <button type="button" class="btn btn-warning"><a href="#">Export</a></button> --}}
                                 </div>
-                                <div class="card-options ms-auto">
+                                {{-- <div class="card-options ms-auto">
                                     <a href="#" class="btn btn-primary btn-sm">Add</a>
-                                </div>
-                            </div> --}}
+                                </div> --}}
+                            </div>
                             <div class="card-body">
                                 <div class="">
                                     <table class="table table-bordered text-nowrap border-bottom" id="datatable">

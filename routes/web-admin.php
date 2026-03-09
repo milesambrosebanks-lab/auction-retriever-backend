@@ -77,6 +77,7 @@ Route::group(['middleware' => ['web-admin']], function () {
     Route::controller(ExtractionLogController::class)->prefix('extraction')->name('extraction.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/show/{id}', 'show')->name('show');
+        Route::get('/run/extraction', 'runExtraction')->name('run');
     });
     Route::controller(ListingController::class)->prefix('listing')->name('listing.')->group(function () {
         Route::get('/', 'index')->name('index');

@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\ExtractionLog;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Str;
@@ -30,11 +32,11 @@ class ExtractionLogController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('product', function ($data) {
-                    $title = $data->source? Str::limit($data->source, 20) : '-';
-                    return "<a href='" .$data->source . "'>" . $title . "</a>";
+                    $title = $data->source ? Str::limit($data->source, 20) : '-';
+                    return "<a href='" . $data->source . "'>" . $title . "</a>";
                 })
                 ->addColumn('customer', function ($data) {
-                    $status = '<span title="' . e($data->last_successful_run). '">' . e($data->last_successful_run)  . '</span>';
+                    $status = '<span title="' . e($data->last_successful_run) . '">' . e($data->last_successful_run)  . '</span>';
                     return $status;
                 })
                 ->addColumn('status', function ($data) {
@@ -47,7 +49,7 @@ class ExtractionLogController extends Controller
                     return $status;
                 })
                 ->addColumn('message', function ($data) {
-                    return '<span class="text-gray">' . ($data->message ? $data->message: 'N/A') . '</span>';
+                    return '<span class="text-gray">' . ($data->message ? $data->message : 'N/A') . '</span>';
                 })
                 ->addColumn('datetime', function ($data) {
                     return '<span class="badge bg-primary">' . ($data->created_at ? $data->created_at->format('d M Y') : 'N/A') . '</span>';
@@ -61,7 +63,7 @@ class ExtractionLogController extends Controller
 
                             </div>';
                 })
-                ->rawColumns(['product', 'customer', 'status', 'message','datetime', 'action'])
+                ->rawColumns(['product', 'customer', 'status', 'message', 'datetime', 'action'])
                 ->make();
         }
         return view("backend.layouts.extraction_log.index");
@@ -88,5 +90,20 @@ class ExtractionLogController extends Controller
             'status' => 't-success',
             'message' => 'Your action was successful!',
         ]);
+    }
+
+
+    public function runExtraction(Request $request)
+    {
+        $exitCode = Artisan::call('extract:listings');
+
+        if ($exitCode === 0) {
+            Log::info($exitCode. "success run");
+            return response()->json(['message' => 'Extraction successful']);
+        } else {
+            Log::info($exitCode. "failed run");
+
+            return response()->json(['message' => 'Extraction failed'], 500);
+        }
     }
 }
