@@ -66,7 +66,7 @@
                                                     <td>{{ $sn++ }}</td>
                                                     <td>{{ $user->name }}</td>
                                                     <td>{{ $user->slug }}</td>
-                                                    <td>{{ $user->stripe_customer_id ?? null }}</td>
+                                                    <td>{{ $user->stripe_id ?? null }}</td>
 
                                                     <td>{{ $user->last_activity_at ? \Carbon\Carbon::parse($user->last_activity_at)->format('d-m-Y') : null }}
                                                     </td>
