@@ -146,7 +146,7 @@ class RegisterController extends Controller
                     $customer = $stripe->createCustomer($user);
 
                     $user->update([
-                        'stripe_customer_id' => $customer->id
+                        'stripe_id' => $customer->id
                     ]);
                     Log::info($customer->id);
                 }

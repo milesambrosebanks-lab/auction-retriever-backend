@@ -62,6 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->validateCsrfTokens(except: [
             'payment/stripe/webhook',
+            'stripe/webhook',
             'graphql',
         ]);
         $middleware->api([

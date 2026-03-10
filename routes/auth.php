@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\Web\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Web\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Web\Auth\EmailVerificationNotificationController;
@@ -51,3 +52,5 @@ Route::middleware(['check'])->group(function () {
     Route::get('verify/otp/resend/page', [RegisteredUserController::class, 'otpResendPage'])->name('verify.otp.resend.page');
     Route::post('verify/otp/resend', [RegisteredUserController::class, 'otpResend'])->name('verify.otp.resend');
 });
+
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);

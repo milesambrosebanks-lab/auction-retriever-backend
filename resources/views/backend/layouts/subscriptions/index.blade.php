@@ -22,7 +22,7 @@
                 <div class="ms-auto pageheader-btn">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{ url("admin/dashboard") }}"><i class="fe fe-home me-2 fs-14"></i>Home</a></li>
-                        <li class="breadcrumb-item"><a href="javascript:void(0);">Transaction</a></li>
+                        <li class="breadcrumb-item"><a href="javascript:void(0);">Subscriptions</a></li>
                         <li class="breadcrumb-item active" aria-current="page">Index</li>
                     </ol>
                 </div>
@@ -33,16 +33,16 @@
             <div class="row">
                 <div class="col-12 col-sm-12">
                     <div class="card transaction-sales-main">
-                        <div class="card-header border-bottom">
+                        {{-- <div class="card-header border-bottom">
                             <div class="btn-group" role="group" aria-label="Basic mixed styles example">
                                 <button type="button" class="btn btn-danger"><a href="#">Import</a></button>
                                 <button type="button" class="btn btn-warning"><a href="#">Export</a></button>
                             </div>
                             <div class="card-options ms-auto">
-                                {{-- <h3 class="card-title mb-0">Balance: {{ $user->balance . "$" }}</h3> --}}
+                                <h3 class="card-title mb-0">Balance: {{ $user->balance . "$" }}</h3>
                                
                             </div>
-                        </div>
+                        </div> --}}
                         <div class="card-body">
                             <div class="">
                                 <table class="table table-bordered text-nowrap border-bottom" id="datatable">

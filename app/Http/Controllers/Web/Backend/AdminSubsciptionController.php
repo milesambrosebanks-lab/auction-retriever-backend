@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Web\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Subscription;
-use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Str;
+
 use Yajra\DataTables\Facades\DataTables;
 
 class AdminSubsciptionController extends Controller
@@ -20,17 +19,9 @@ class AdminSubsciptionController extends Controller
     public function index(Request $request, $user_id = null)
     {
 
-        // \Stripe\Stripe::setApiKey(config('cashier.secret'));
+        $data = Subscription::with('user')->orderBy('id', 'desc')->get();
 
-        // $invoices = \Stripe\Invoice::all([
-        //     'limit' => 20,
-        // ]);
-        // dd($invoices);
-        $data = Subscription::with('user')
-            ->orderBy('id', 'desc')
-            ->get();
-
-
+// dd($data);
         if ($request->ajax()) {
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -74,6 +65,6 @@ class AdminSubsciptionController extends Controller
             return redirect()->route('admin.subscriptions.index')->with('error', 'Subscription not found');
         }
 
-        return view("backend.layouts.subscriptions.show", compact('transaction'));
+        return view("backend.layouts.subscriptions.show", compact('subscriptions'));
     }
 }

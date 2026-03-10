@@ -15,14 +15,15 @@ return new class extends Migration
             $table->id();
             $table->string('trx_id')->unique();
             $table->string('title')->nullable();
+            $table->string('invoice_id')->nullable();
+            $table->string('customer_id')->nullable();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
-            // $table->foreignId('order_id')->nullable()->constrained()->onDelete('set null');
             $table->decimal('amount', 15, 2)->default(0);
             $table->string('currency')->default('USD');
-            $table->string('type')->nullable();
-            $table->string('gateway')->nullable();
+            $table->string('hosted_invoice_url')->nullable();
+            $table->string('invoice_pdf')->nullable();
             $table->json('metadata')->nullable();
-            $table->string('status')->default('pending');
+            $table->string('status')->nullable();
             $table->timestamps();
         });
     }

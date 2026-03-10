@@ -10,10 +10,15 @@ class Transaction extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'customer_id', 'stripe_id');
     }
-     public function order()
+    // public function order()
+    // {
+    //     return $this->belongsTo(Order::class);
+    // }
+
+    public function subscription()
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(Subscription::class);
     }
 }

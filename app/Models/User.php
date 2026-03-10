@@ -38,6 +38,7 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'otp',
+        'stripe_id',
         'stripe_customer_id',
         'stripe_account_id',
         'otp_expires_at',
@@ -58,7 +59,7 @@ class User extends Authenticatable implements JWTSubject
     protected $appends = [
         'role',
         'is_online',
-        'balance'
+        // 'balance'
     ];
 
     protected $dates = [
@@ -98,12 +99,12 @@ class User extends Authenticatable implements JWTSubject
         return $this->last_activity_at > now()->subMinutes(5);
     }
 
-    public function getBalanceAttribute()
-    {
-        $increment = $this->transactions()->where('type', 'increment')->sum('amount');
-        $decrement = $this->transactions()->where('type', 'decrement')->sum('amount');
-        return $increment - $decrement;
-    }
+    // public function getBalanceAttribute()
+    // {
+    //     $increment = $this->transactions()->where('type', 'increment')->sum('amount');
+    //     $decrement = $this->transactions()->where('type', 'decrement')->sum('amount');
+    //     return $increment - $decrement;
+    // }
 
     public function getRoleAttribute()
     {
@@ -132,7 +133,12 @@ class User extends Authenticatable implements JWTSubject
 
     public function transactions()
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Transaction::class, 'customer_id', 'stripe_id');
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
     }
 
     public function products()

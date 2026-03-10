@@ -19,7 +19,11 @@ class StripeService
     {
         return Customer::create([
             'email' => $user->email,
-            'name' => $user->name
+            'name' => $user->name,
+            //remove meta if any error
+            'metadata' => [
+                'app' => config('app.name')
+            ]
         ]);
     }
 
@@ -35,7 +39,7 @@ class StripeService
         ]);
     }
 
-        public function archivePrice($priceId)
+    public function archivePrice($priceId)
     {
 
         return Price::update($priceId, [

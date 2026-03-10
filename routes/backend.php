@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\Web\Backend\Access\PermissionController;
 use App\Http\Controllers\Web\Backend\Access\RoleController;
 use App\Http\Controllers\Web\Backend\Access\UserController;

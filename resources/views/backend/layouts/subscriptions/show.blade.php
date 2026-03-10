@@ -1,4 +1,4 @@
-@extends('backend.app', ['title' => 'Show Transaction'])
+@extends('backend.app', ['title' => 'Show Subscriptions'])
 
 @section('content')
 
@@ -16,7 +16,7 @@
                 <div class="ms-auto pageheader-btn">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{ url("admin/dashboard") }}"><i class="fe fe-home me-2 fs-14"></i>Home</a></li>
-                        <li class="breadcrumb-item"><a href="javascript:void(0);">Transaction</a></li>
+                        <li class="breadcrumb-item"><a href="javascript:void(0);">Subscriptions</a></li>
                         <li class="breadcrumb-item active" aria-current="page">Show</li>
                     </ol>
                 </div>
@@ -32,57 +32,62 @@
                             </div>
                         </div>
                         <div class="card-header border-bottom">
-                            <h3 class="card-title mb-0">{{ Str::limit($transaction->title, 50) }}</h3>
+                            {{-- <h3 class="card-title mb-0">{{ Str::limit($subscriptions->title, 50) }}</h3> --}}
                         </div>
                         <div class="card-body">
                             <table class="table table-bordered table-striped">
-                                @if ($transaction->title != null)
+                                @if ($subscriptions->title != null)
                                     <tr>
                                     <th>Title</th>
-                                    <td>{{ $transaction->title ?? 'N/A' }}</td>
+                                    <td>{{ $subscriptions->title ?? 'N/A' }}</td>
                                 </tr>
                                 @endif
                                 <tr>
-                                    <th>Transaction ID</th>
-                                    <td>{{ $transaction->trx_id ?? 'N/A' }}</td>
+                                    <th>User ID</th>
+                                    <td>{{ $subscriptions->user_id ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
-                                    <th>User</th>
-                                    <td>{{ $transaction->order->customer->email ?? 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Amount</th>
-                                    <td>{{ $transaction->amount ?? 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Gateway</th>
-                                    <td>{{ $transaction->gateway ?? 'N/A' }}</td>
+                                    <th>User Email</th>
+                                    <td>{{ $subscriptions->user->email ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Type</th>
-                                    <td>{{ $transaction->type ?? 'N/A' }}</td>
+                                    <td>{{ $subscriptions->type ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Status</th>
-                                    <td>{{ $transaction->status ?? 'N/A' }}</td>
+                                    <th>Stripe ID</th>
+                                    <td>{{ $subscriptions->stripe_id ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Stripe Status</th>
+                                    <td>{{ $subscriptions->stripe_status ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Stripe Price</th>
+                                    <td>{{ $subscriptions->stripe_price ?? 'N/A' }}</td>
+                                </tr>
+                                 <tr>
+                                    <th>Quantity</th>
+                                    <td>{{ $subscriptions->quantity ?? 'N/A' }}</td>
+                                </tr>
+                                 <tr>
+                                    <th>Trial Ends At</th>
+                                    <td>{{ $subscriptions->trial_ends_at ?? 'N/A' }}</td>
+                                </tr>
+                                 <tr>
+                                    <th>Ends At</th>
+                                    <td>{{ $subscriptions->ends_at ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Created At</th>
-                                    <td>{{ $transaction->created_at ? $transaction->created_at : 'N/A' }}</td>
+                                    <td>{{ $subscriptions->created_at ? $subscriptions->created_at : 'N/A' }}</td>
                                 </tr>
-                                <tr>
-                                    <th>Metadata</th>
-                                    <td>
-                                        @if($transaction->metadata != null)
-                                        <pre>{{ json_encode(json_decode($transaction->metadata), JSON_PRETTY_PRINT) }}</pre>
-                                        @endif
-                                    </td>
-                                </tr>
-                                <tr>
+                                
+                                {{-- <tr>
                                     <th>Action</th>
                                     <td>
-                                        @if($transaction->metadata_json != null)
-                                        @foreach($transaction->metadata_json as $key => $value)
+                                        @if($subscriptions->metadata_json != null)
+                                        @foreach($subscriptions->metadata_json as $key => $value)
                                             @if($key == 'product' && $value != null)
                                             <a href="{{ route('admin.product.show', $value) }}" class="btn btn-primary">View Product</a>
                                             @endif
@@ -92,13 +97,11 @@
                                             @if($key == 'customer' && $value != null)
                                             <a href="{{ route('admin.users.show', $value) }}" class="btn btn-primary">View Customer</a>
                                             @endif
-                                            @if($key == 'booking' && $value != null)
-                                            <a href="{{ route('admin.booking.show', $value) }}" class="btn btn-primary">View Booking</a>
-                                            @endif
+                                          
                                         @endforeach
                                         @endif
                                     </td>
-                                </tr>
+                                </tr> --}}
                             </table>
                         </div>
                     </div>
