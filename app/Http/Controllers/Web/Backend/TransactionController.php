@@ -16,7 +16,7 @@ class TransactionController extends Controller
 {
     public function __construct()
     {
-        View::share('crud', 'transaction');
+        View::share('crud', 'Transactions');
     }
     public function index(Request $request, $user_id = null)
     {
