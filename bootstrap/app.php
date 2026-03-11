@@ -38,7 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['web'])->prefix('admin')->name('admin.')->group(base_path('routes/web-admin.php'));
             Route::middleware(['api'])->group(base_path('routes/api-stripe.php'));
             require base_path('routes/cmd.php');
-            require base_path('routes/plugins.php');
+            // require base_path('routes/plugins.php');
         }
     )
     ->withBroadcasting(
