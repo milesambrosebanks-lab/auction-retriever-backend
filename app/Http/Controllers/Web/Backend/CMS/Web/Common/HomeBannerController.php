@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Web\Backend\CMS\Web\Common
+namespace App\Http\Controllers\Web\Backend\CMS\Web\Common;
 
 use App\Http\Controllers\Controller;
 use App\Enums\PageEnum;
@@ -14,7 +14,7 @@ use Yajra\DataTables\DataTables;
 use App\Http\Requests\CmsRequest;
 use App\Services\CmsService;
 
-class HomeBannerControllerCopy extends Controller
+class HomeBannerController extends Controller
 {
     protected $cmsService;
 
