@@ -2,9 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\User;
+use Laravel\Cashier\SubscriptionItem;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Cashier\Subscription as CashierSubscription;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Subscription extends Model
+class Subscription extends CashierSubscription
 {
     protected $table = "subscriptions";
     protected $fillable = [
@@ -18,8 +23,13 @@ class Subscription extends Model
         'ends_at',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
+
+    // public function items(): HasMany
+    // {
+    //     return $this->hasMany(SubscriptionItem::class);
+    // }
 }
