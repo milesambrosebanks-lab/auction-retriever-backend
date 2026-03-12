@@ -2,6 +2,9 @@
 
 @push('styles')
     <link href="{{ asset('default/datatable.css') }}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 @endpush
 
 
@@ -78,6 +81,22 @@
 
 
 @push('scripts')
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <script>
         $(document).ready(function() {
 
@@ -94,20 +113,23 @@
                         [10, 25, 50, 100, "All"]
                     ],
                     processing: true,
+                    serverSide: false,
                     responsive: true,
-                    serverSide: true,
+                    autoWidth: false,
 
                     language: {
-                        processing: `<div class="text-center">
-                        <img src="{{ asset('default/loader.gif') }}" alt="Loader" style="width: 50px;">
-                        </div>`
+                        // processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                        lengthMenu: "_MENU_",
                     },
 
                     scroller: {
                         loadingIndicator: false
                     },
                     pagingType: "full_numbers",
-                    dom: "<'row justify-content-between table-topbar'<'col-md-4 col-sm-3'l><'col-md-5 col-sm-5 px-0'f>>tipr",
+                   dom: "<'row mb-3'<'col-md-6'l><'col-md-6 text-end'f>>" +
+                    "<'row mb-2'<'col-md-12'B>>" +
+                    "<'row'<'col-md-12'tr>>" +
+                    "<'row mt-3'<'col-md-5'i><'col-md-7'p>>",
                     ajax: {
                         url: "{{ route('admin.listing.index') }}",
                         type: "GET",
@@ -122,8 +144,6 @@
                         {
                             data: 'title',
                             name: 'title',
-                            orderable: false,
-                            searchable: true
                         },
 
                         {
@@ -153,8 +173,6 @@
                         {
                             data: 'auction_date',
                             name: 'auction_date',
-                            orderable: false,
-                            searchable: true
                         },
                         {
                             data: 'action',
@@ -164,6 +182,25 @@
                             className: 'dt-center text-center'
                         },
                     ],
+                    order: [
+                        [6, 'desc']
+                    ],
+                    buttons: [{
+                            extend: 'excel',
+                            className: 'btn btn-success btn-sm',
+                            text: 'Excel'
+                        },
+                        {
+                            extend: 'csv',
+                            className: 'btn btn-info btn-sm',
+                            text: 'CSV'
+                        },
+                        {
+                            extend: 'print',
+                            className: 'btn btn-primary btn-sm',
+                            text: 'Print'
+                        }
+                    ]
                 });
             }
         });

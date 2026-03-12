@@ -16,13 +16,10 @@ class ListingController extends Controller
     {
         View::share('crud', 'Auction Listing');
     }
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index(Request $request)
     {
-        $data = Listing::orderBy('id', 'desc')->get();
-        //  dd($data);
+        $data = Listing::orderBy('id', 'desc');
 
         if ($request->ajax()) {
             return DataTables::of($data)

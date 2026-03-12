@@ -35,7 +35,7 @@
                     <div class="card product-sales-main">
                         <div class="card-header border-bottom">
                             {{-- <div class="btn-group" role="group" aria-label="Basic mixed styles example">
-                               
+
                                 <button type="submit" class="btn btn-danger"><a href="javascript:void(0);">Back</a>
                                 <button type="button" class="btn btn-warning"><a href="#">Export</a></button>
                             </div> --}}
@@ -82,8 +82,8 @@
                                                     {{-- <a href="{{ route('admin.my_plan.show', $plan->id) }}" class="btn btn-info">
                                                         <i class="mdi mdi-eye"></i>
                                                     </a> --}}
-                                                    
-                                                    @can('web_update', $user)
+
+                                                    {{-- @can('web_update', $user)
                                                     <a href="{{ route('admin.my_plan.status', $plan->id) }}" class="btn btn-warning">
                                                         @if ($user->status == 'active')
                                                         <i class="fa-solid fa-lock-open"></i>
@@ -91,16 +91,16 @@
                                                         <i class="fa-solid fa-lock"></i>
                                                         @endif
                                                     </a>
-                                                    @endcan
+                                                    @endcan --}}
 
-                                                    @can('web_delete', $user)
-                                                    {{-- <form action="{{ route('admin.my_plan.destroy', $plan->id) }}" method="POST" onsubmit="return confirm('Are you sure?')" style="margin: 0; padding: 0;">
+                                                    @can('web delete', $user)
+                                                    <form action="{{ route('admin.my_plan.destroy', $plan->id) }}" method="POST" onsubmit="return confirm('Are you sure?')" style="margin: 0; padding: 0;">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-danger" style="border-radius: 0; border-top-right-radius: 5px; border-bottom-right-radius: 5px;">
                                                             <i class="mdi mdi-delete"></i>
                                                         </button>
-                                                    </form> --}}
+                                                    </form>
                                                     @endcan
                                                 </div>
 

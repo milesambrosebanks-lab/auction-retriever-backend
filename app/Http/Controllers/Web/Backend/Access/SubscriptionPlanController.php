@@ -30,6 +30,8 @@ class SubscriptionPlanController extends Controller
     public function index(Request $request)
     {
         $user = Auth::guard('web')->user();
+        $permissions = $user->getAllPermissions(); // collection of Permission models
+    //    dd($permissions);
         // $users = User::where('id', '!=', $user->id)->with('roles')->orderBy('id', 'desc')->paginate(25);
         $plans = Plan::orderBy('id', 'desc')->paginate(25);
         return view('backend.layouts.access.my_plan.public', compact('plans', 'user'));
@@ -242,5 +244,4 @@ class SubscriptionPlanController extends Controller
         session()->put('t-success', 'Status updated successfully');
         return view('backend.layouts.access.users.show', compact('user'));
     }
-
 }

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
@@ -25,7 +26,39 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $user = Auth::guard('web')->user();
-        // $users = User::where('id', '!=', $user->id)->with('roles')->orderBy('id', 'desc')->paginate(25);
+
+         $user = User::where('id', '!=', $user->id)
+            ->whereHas('roles', function ($q) {
+                $q->where('name', 'customer');
+            })->with('roles');
+
+        if ($request->ajax()) {
+            return DataTables::of($user)
+                ->addIndexColumn()
+                ->addColumn('last_activity', fn($user) => $user->last_activity_at ? $user->last_activity_at : null)
+                ->addColumn('created', fn($user) => $user->created_at)
+                ->addColumn('action', function ($user) {
+                    $btn = '<div class="btn-group" role="group">';
+                    $btn .= '<a href="' . route('admin.users.edit', $user->id) . '" class="btn btn-primary"><i class="fa-solid fa-pencil"></i></a>';
+                    $btn .= '<a href="' . route('admin.users.show', $user->id) . '" class="btn btn-info"><i class="fa-solid fa-eye"></i></a>';
+
+                    $btn .= '<form action="' . route('admin.users.destroy', $user->id) . '" method="POST" style="display:inline;" onsubmit="return confirm(\'Are you sure?\')">';
+                    $btn .= csrf_field() . method_field('DELETE');
+                    $btn .= '<button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i></button>';
+                    $btn .= '</form>';
+
+                    $btn .= '</div>';
+                    return $btn;
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+        return view('backend.layouts.access.users.index', compact('user'));
+    }
+
+    public function index2(Request $request)
+    {
+        $user = Auth::guard('web')->user();
         $users = User::where('id', '!=', $user->id)
             ->whereHas('roles', function ($q) {
                 $q->where('name', 'customer');
@@ -114,7 +147,7 @@ class UserController extends Controller
             //         'model_type' => 'App\Models\User',
             //         'model_id' => $user->id
             //     ]);
-            // }            
+            // }
 
             return redirect()->back()->with('t-success', 'User updated t-successfully');
         } catch (Exception $e) {
