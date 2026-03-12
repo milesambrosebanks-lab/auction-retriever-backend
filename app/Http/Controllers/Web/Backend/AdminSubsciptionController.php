@@ -19,7 +19,7 @@ class AdminSubsciptionController extends Controller
     public function index(Request $request, $user_id = null)
     {
 
-        $data = Subscription::with('user')->orderBy('id', 'desc')->get();
+        $data = Subscription::with('user')->orderBy('id', 'desc');
 
 // dd($data);
         if ($request->ajax()) {
