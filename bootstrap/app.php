@@ -97,6 +97,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })->withSchedule(function (Schedule $schedule) {
         // $schedule->command('bookings:expire')->everyMinute();
         $schedule->command('weekly:digest')->weekly();
+        $schedule->command('scrape:bid4assets')->dailyAt('02:00');
     })
     ->withCommands([
         __DIR__ . '/../app/Console/Commands',
