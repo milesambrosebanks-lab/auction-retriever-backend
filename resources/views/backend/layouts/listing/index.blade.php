@@ -129,7 +129,7 @@
                     },
                     pagingType: "full_numbers",
                    dom: "<'row mb-3'<'col-md-6'l><'col-md-6 text-end'f>>" +
-                    "<'row mb-2'<'col-md-12'B>>" +
+                    // "<'row mb-2'<'col-md-12'B>>" +
                     "<'row'<'col-md-12'tr>>" +
                     "<'row mt-3'<'col-md-5'i><'col-md-7'p>>",
                     ajax: {
