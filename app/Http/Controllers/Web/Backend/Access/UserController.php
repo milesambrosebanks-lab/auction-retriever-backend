@@ -73,20 +73,24 @@ class UserController extends Controller
         if ($request->filled('status')) {
             $status = $request->status;
 
-            if ($status === 'trialing') {
-                $query->where('subscription_status', 'trialing');
-            } elseif ($status === 'active') {
-                $query->where('subscription_status', 'active');
-            } elseif ($status === 'canceled') {
-                $query->where('subscription_status', 'canceled');
-            } elseif ($status === 'expired') {
-                $query->where('subscription_status', 'expired');
+            // stripe_status mapping
+            $stripeStatus = match ($status) {
+                'trialing' => 'trialing',
+                'active'   => 'active',
+                'canceled' => 'canceled',
+                'expired'  => 'past_due',
+                default    => null,
+            };
+
+            if ($stripeStatus) {
+                $query->whereHas('subscriptions', function ($q) use ($stripeStatus) {
+                    $q->where('stripe_status', $stripeStatus);
+                });
             }
         }
-
         // ── Filter by plan ────────────────────────────────────────────
         if ($request->filled('plan')) {
-            $plan = \App\Models\Plan::find($request->plan);
+            $plan = Plan::find($request->plan);
             if ($plan) {
                 $query->whereHas('subscriptions', function ($q) use ($plan) {
                     $q->where('stripe_price', $plan->stripe_price_id);
@@ -119,30 +123,40 @@ class UserController extends Controller
                         </div>';
                 })
                 ->addColumn('status_badge', function ($user) {
-                    $status = $user->subscription_status ?? 'trialing';
+
+                    // activeSubscription থেকে status নিন
+                    $status = $user->activeSubscription?->stripe_status ?? 'N/A';
+
                     $colors = [
                         'trialing' => 'info',
                         'active'   => 'success',
                         'canceled' => 'danger',
-                        'expired'  => 'warning',
+                        'past_due' => 'warning',
                     ];
                     $icons = [
                         'trialing' => 'fa-clock',
                         'active'   => 'fa-check-circle',
                         'canceled' => 'fa-times-circle',
-                        'expired'  => 'fa-exclamation-circle',
+                        'past_due' => 'fa-exclamation-circle',
                     ];
+                    $labels = [
+                        'trialing' => 'Trial',
+                        'active'   => 'Active',
+                        'canceled' => 'Cancelled',
+                        'past_due' => 'Past Due',
+                    ];
+
                     $color = $colors[$status] ?? 'secondary';
                     $icon  = $icons[$status]  ?? 'fa-circle';
-                    $label = $status === 'trialing' ? 'Trial' : ucfirst($status);
+                    $label = $labels[$status] ?? ucfirst($status);
 
                     return '<span class="badge bg-' . $color . '">
-                            <i class="fa ' . $icon . ' me-1"></i>' . $label .
+                <i class="fa ' . $icon . ' me-1"></i>' . $label .
                         '</span>';
                 })
                 ->addColumn('plan_col', function ($user) {
                     if ($user->activeSubscription) {
-                        $plan = \App\Models\Plan::where(
+                        $plan = Plan::where(
                             'stripe_price_id',
                             $user->activeSubscription->stripe_price
                         )->first();
@@ -154,7 +168,7 @@ class UserController extends Controller
                     return '<span class="text-muted">—</span>';
                 })
                 ->addColumn('trial_ends', function ($user) {
-                    // User table এর trial_ends_at অথবা subscription এর trial_ends_at
+
                     $date = $user->trial_ends_at
                         ?? $user->activeSubscription?->trial_ends_at;
 
@@ -198,14 +212,7 @@ class UserController extends Controller
                        class="btn btn-primary" title="Edit">
                         <i class="fa-solid fa-pencil"></i>
                     </a>
-                    <form action="' . route('admin.users.destroy', $user->id) . '"
-                          method="POST" style="display:inline;"
-                          onsubmit="return confirm(\'Are you sure?\')">
-                        ' . csrf_field() . method_field('DELETE') . '
-                        <button type="submit" class="btn btn-danger" title="Delete">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </form>
+
                 </div>';
                 })
                 ->rawColumns([

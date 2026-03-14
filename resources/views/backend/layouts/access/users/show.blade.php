@@ -46,6 +46,15 @@
                                 <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary btn-sm">
                                     <i class="fa fa-arrow-left me-1"></i> Back
                                 </a>
+                                {{-- Delete button ─────────────────────────────── --}}
+                                <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to delete this user?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm w-100">
+                                        <i class="fa fa-trash me-1"></i> Delete User
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
