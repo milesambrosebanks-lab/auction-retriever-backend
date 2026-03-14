@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Web\Backend\Access;
 
 use App\Http\Controllers\Controller;
-use App\Models\SubscriptionPlan;
+use App\Models\Plan;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
@@ -23,11 +22,11 @@ class UserController extends Controller
         View::share('crud', 'user');
     }
 
-    public function index(Request $request)
+    public function index_draft(Request $request)
     {
         $user = Auth::guard('web')->user();
 
-         $user = User::where('id', '!=', $user->id)
+        $user = User::where('id', '!=', $user->id)
             ->whereHas('roles', function ($q) {
                 $q->where('name', 'customer');
             })->with('roles');
@@ -56,18 +55,176 @@ class UserController extends Controller
         return view('backend.layouts.access.users.index', compact('user'));
     }
 
-    public function index2(Request $request)
+    public function index(Request $request)
     {
-        $user = Auth::guard('web')->user();
-        $users = User::where('id', '!=', $user->id)
+        $authUser = Auth::guard('web')->user();
+
+        $query = User::where('id', '!=', $authUser->id)
             ->whereHas('roles', function ($q) {
                 $q->where('name', 'customer');
             })
-            ->with('roles')
-            ->orderBy('id', 'desc')
-            ->paginate(25);
+            ->with([
+                'roles',
+                'activeSubscription',
+                'plan',
+            ]);
 
-        return view('backend.layouts.access.users.public', compact('users'));
+        // ── Filter by subscription status ────────────────────────────
+        if ($request->filled('status')) {
+            $status = $request->status;
+
+            if ($status === 'trialing') {
+                $query->where('subscription_status', 'trialing');
+            } elseif ($status === 'active') {
+                $query->where('subscription_status', 'active');
+            } elseif ($status === 'canceled') {
+                $query->where('subscription_status', 'canceled');
+            } elseif ($status === 'expired') {
+                $query->where('subscription_status', 'expired');
+            }
+        }
+
+        // ── Filter by plan ────────────────────────────────────────────
+        if ($request->filled('plan')) {
+            $plan = \App\Models\Plan::find($request->plan);
+            if ($plan) {
+                $query->whereHas('subscriptions', function ($q) use ($plan) {
+                    $q->where('stripe_price', $plan->stripe_price_id);
+                });
+            }
+        }
+        // ── Filter by signup date ─────────────────────────────────────
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->ajax()) {
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('name_col', function ($user) {
+                    $avatar = $user->avatar
+                        ? asset($user->avatar)
+                        : asset('default/profile.jpg');
+                    return '<div class="d-flex align-items-center gap-2">
+                            <img src="' . $avatar . '" class="rounded-circle"
+                                 style="width:32px;height:32px;object-fit:cover;">
+                            <div>
+                                <div class="fw-500">' . e($user->name) . '</div>
+                                <small class="text-muted">' . e($user->email) . '</small>
+                            </div>
+                        </div>';
+                })
+                ->addColumn('status_badge', function ($user) {
+                    $status = $user->subscription_status ?? 'trialing';
+                    $colors = [
+                        'trialing' => 'info',
+                        'active'   => 'success',
+                        'canceled' => 'danger',
+                        'expired'  => 'warning',
+                    ];
+                    $icons = [
+                        'trialing' => 'fa-clock',
+                        'active'   => 'fa-check-circle',
+                        'canceled' => 'fa-times-circle',
+                        'expired'  => 'fa-exclamation-circle',
+                    ];
+                    $color = $colors[$status] ?? 'secondary';
+                    $icon  = $icons[$status]  ?? 'fa-circle';
+                    $label = $status === 'trialing' ? 'Trial' : ucfirst($status);
+
+                    return '<span class="badge bg-' . $color . '">
+                            <i class="fa ' . $icon . ' me-1"></i>' . $label .
+                        '</span>';
+                })
+                ->addColumn('plan_col', function ($user) {
+                    if ($user->activeSubscription) {
+                        $plan = \App\Models\Plan::where(
+                            'stripe_price_id',
+                            $user->activeSubscription->stripe_price
+                        )->first();
+
+                        if ($plan) {
+                            return '<span class="badge bg-primary">' . e($plan->name) . '</span>';
+                        }
+                    }
+                    return '<span class="text-muted">—</span>';
+                })
+                ->addColumn('trial_ends', function ($user) {
+                    // User table এর trial_ends_at অথবা subscription এর trial_ends_at
+                    $date = $user->trial_ends_at
+                        ?? $user->activeSubscription?->trial_ends_at;
+
+                    if (!$date) return '<span class="text-muted">—</span>';
+
+                    $carbon = \Carbon\Carbon::parse($date);
+                    return '<span class="' . ($carbon->isPast() ? 'text-danger' : 'text-success') . '">'
+                        . $carbon->format('d M Y')
+                        . '</span>';
+                })
+                ->addColumn('sub_ends', function ($user) {
+                    // subscription_ends_at অথবা subscription এর ends_at
+                    $date = $user->subscription_ends_at
+                        ?? $user->activeSubscription?->ends_at;
+
+                    if (!$date) return '<span class="text-muted">—</span>';
+
+                    $carbon = \Carbon\Carbon::parse($date);
+                    return '<span class="' . ($carbon->isPast() ? 'text-danger' : 'text-success') . '">'
+                        . $carbon->format('d M Y')
+                        . '</span>';
+                })
+                ->addColumn('last_login', function ($user) {
+                    if (!$user->last_activity_at) {
+                        return '<span class="text-muted">Never</span>';
+                    }
+                    return \Carbon\Carbon::parse($user->last_activity_at)->diffForHumans();
+                })
+                ->addColumn('created', function ($user) {
+                    return $user->created_at
+                        ? $user->created_at->format('d M Y')
+                        : '—';
+                })
+                ->addColumn('action', function ($user) {
+                    return '<div class="btn-group btn-group-sm">
+                    <a href="' . route('admin.users.show', $user->id) . '"
+                       class="btn btn-info" title="View">
+                        <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <a href="' . route('admin.users.edit', $user->id) . '"
+                       class="btn btn-primary" title="Edit">
+                        <i class="fa-solid fa-pencil"></i>
+                    </a>
+                    <form action="' . route('admin.users.destroy', $user->id) . '"
+                          method="POST" style="display:inline;"
+                          onsubmit="return confirm(\'Are you sure?\')">
+                        ' . csrf_field() . method_field('DELETE') . '
+                        <button type="submit" class="btn btn-danger" title="Delete">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </form>
+                </div>';
+                })
+                ->rawColumns([
+                    'name_col',
+                    'status_badge',
+                    'plan_col',
+                    'trial_ends',
+                    'sub_ends',
+                    'last_login',
+                    'created',
+                    'action'
+                ])
+                ->make(true);
+        }
+
+        // Plan list for filter dropdown
+        $plans = Plan::where('is_active', 1)->orderBy('name')->get(['id', 'name']);
+
+        return view('backend.layouts.access.users.index', compact('plans'));
     }
 
     public function create()
@@ -106,10 +263,41 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('t-success', 'User created t-successfully');
     }
 
-    public function show($id)
+    public function show_draft($id)
     {
         $user = User::with(['profile'])->find($id);
         return view('backend.layouts.access.users.show', compact('user'));
+    }
+    public function show($id)
+    {
+        $user = User::with([
+            'roles',
+            'plan',
+            'subscriptions' => function ($q) {
+                $q->orderBy('created_at', 'desc');
+            },
+        ])->findOrFail($id);
+
+        $payments = collect();
+
+        // Stripe payment history
+        if ($user->stripe_id) {
+            try {
+                \Stripe\Stripe::setApiKey(config('cashier.secret'));
+                $charges  = \Stripe\Charge::all([
+                    'customer' => $user->stripe_id,
+                    'limit'    => 10,
+                ]);
+                $payments = collect($charges->data);
+            } catch (\Exception $e) {
+                // Stripe না থাকলে skip
+            }
+        }
+
+        return view(
+            'backend.layouts.access.users.show',
+            compact('user', 'payments')
+        );
     }
 
     public function edit($id)
@@ -139,16 +327,6 @@ class UserController extends Controller
                 'email' => $request->email,
             ]);
 
-            // DB::table('model_has_roles')->where('model_id', $id)->delete();
-
-            // foreach ($request->roles as $role) {
-            //     DB::table('model_has_roles')->insert([
-            //         'role_id' => $role,
-            //         'model_type' => 'App\Models\User',
-            //         'model_id' => $user->id
-            //     ]);
-            // }
-
             return redirect()->back()->with('t-success', 'User updated t-successfully');
         } catch (Exception $e) {
             return redirect()->back()->with('t-error', $e->getMessage());
@@ -173,29 +351,5 @@ class UserController extends Controller
         $user->save();
         session()->put('t-success', 'Status updated successfully');
         return view('backend.layouts.access.users.show', compact('user'));
-    }
-
-    public function card($slug)
-    {
-
-        $user = User::where('slug', $slug)->first();
-        $logoBase64 = base64_encode(file_get_contents(public_path('default/logo.png')));
-        $whitelogoBase64 = base64_encode(file_get_contents(public_path('default/logo.png')));
-        $backLogoBase64 = base64_encode(file_get_contents(public_path('default/logo.png')));
-
-        $avatarPath = public_path(
-            $user->avatar && file_exists(public_path($user->avatar)) ? $user->avatar : 'default/profile.jpg'
-        );
-
-        $avatarBase64 = base64_encode(file_get_contents($avatarPath));
-
-        //for pdf
-        /* $qrCode = base64_encode(QrCode::size(90)->generate(route('admin.users.card', $user->slug)));
-        $pdf = Pdf::loadView('card.pdf', compact('user', 'logoBase64', 'whitelogoBase64', 'avatarBase64', 'qrCode', 'backLogoBase64'))->setPaper('a4', 'portrait');
-        return $pdf->stream();  */
-
-        //for web
-        $qrCode = QrCode::size(90)->generate(route('admin.users.card', $user->slug));
-        return view('card.web', compact('user', 'logoBase64', 'whitelogoBase64', 'avatarBase64', 'qrCode', 'backLogoBase64'));
     }
 }

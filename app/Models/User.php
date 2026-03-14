@@ -126,9 +126,21 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Post::class);
     }
 
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)
+            ->whereIn('stripe_status', ['active', 'trialing'])
+            ->latest();
+    }
+
     public function plan()
     {
-        return $this->belongsTo(Plan::class);
+        return $this->belongsTo(Plan::class, 'plan_id');
     }
 
     public function transactions()
@@ -136,15 +148,6 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Transaction::class, 'customer_id', 'stripe_id');
     }
 
-    public function subscriptions()
-    {
-        return $this->hasMany(Subscription::class);
-    }
-
-    public function products()
-    {
-        return $this->hasMany(Product::class);
-    }
 
     public function savedListings()
     {
@@ -154,6 +157,30 @@ class User extends Authenticatable implements JWTSubject
     public function listings()
     {
         return $this->belongsToMany(Listing::class, 'saved_listings');
+    }
+
+    // Status badge color
+    public function getStatusColorAttribute(): string
+    {
+        return match ($this->status) {
+            'active'    => 'success',
+            'trial'     => 'info',
+            'cancelled' => 'danger',
+            'past_due'  => 'warning',
+            default     => 'secondary',
+        };
+    }
+
+    // Status badge icon
+    public function getStatusIconAttribute(): string
+    {
+        return match ($this->status) {
+            'active'    => 'fa-check-circle',
+            'trial'     => 'fa-clock',
+            'cancelled' => 'fa-times-circle',
+            'past_due'  => 'fa-exclamation-circle',
+            default     => 'fa-circle',
+        };
     }
 
     //chat related methods
