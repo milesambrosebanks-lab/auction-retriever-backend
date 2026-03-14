@@ -23,9 +23,6 @@ class Plan extends Model
     public function features()
     {
         return $this->hasMany(Feature::class);
-    }   
-    // public function users()
-    // {
-    //     return $this->hasMany(User::class);
-    // }
+    }
+
 }
