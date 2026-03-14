@@ -40,13 +40,13 @@
                         <i class="fa-brands fa-font-awesome side-menu__icon"></i>
                         <span class=" side-menu__label">My Plans</span>
                     </a>
-                    <a class="side-menu__item {{ request()->routeIs('admin.extraction.index') ? 'has-link active' : '' }}"
-                        href="{{ route('admin.extraction.index') }}">
+                    <a class="side-menu__item {{ request()->routeIs('admin.auction.listings.scrape.logs') ? 'has-link active' : '' }}"
+                        href="{{ route('admin.auction.listings.scrape.logs') }}">
                         <i class="fa-solid fa-oil-well side-menu__icon"></i>
-                        <span class=" side-menu__label">Extraction Log</span>
+                        <span class=" side-menu__label">Extraction</span>
                     </a>
-                    <a class="side-menu__item {{ request()->routeIs('admin.listing.index') ? 'has-link active' : '' }}"
-                        href="{{ route('admin.listing.index') }}">
+                    <a class="side-menu__item {{ request()->routeIs('admin.auction.listings.index') ? 'has-link active' : '' }}"
+                        href="{{ route('admin.auction.listings.index') }}">
                         <i class="fa-solid fa-list side-menu__icon"></i>
                         <span class=" side-menu__label">Auction Listing</span>
                     </a>

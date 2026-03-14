@@ -2,70 +2,86 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
+use GuzzleHttp\Cookie\CookieJar;
 use Symfony\Component\DomCrawler\Crawler;
 use App\Models\AuctionListing;
+use App\Models\ScrapeLog;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class Bid4AssetsScraper
 {
-    protected string $baseUrl  = 'https://www.bid4assets.com';
-    protected string $endpoint = '/channel/auctions/get';
-    protected int    $pageSize = 50;
+    protected string $baseUrl   = 'https://www.bid4assets.com';
+    protected string $endpoint  = '/channel/auctions/get';
+    protected int    $pageSize  = 50;
+    protected int    $maxRetry  = 2; // client requirement: minimum 2 retries
+    protected string $source    = 'bid4assets';
 
-    protected string $csrfToken = '';
-    protected string $cookies   = '';
+    protected Client    $client;
+    protected CookieJar $jar;
+    protected string    $token = '';
+    protected ?ScrapeLog $currentLog = null;
 
-    protected array $baseHeaders = [
-        'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language' => 'en-US,en;q=0.9',
-        'Origin'          => 'https://www.bid4assets.com',
-        'Referer'         => 'https://www.bid4assets.com/real-estate-auctions',
-    ];
+    public function __construct()
+    {
+        $this->bootClient();
+    }
 
-    // ── Step 1: site visit করে token + cookie নিন ──────────────────────────
+    protected function bootClient(): void
+    {
+        $this->jar = new CookieJar();
+
+        $this->client = new Client([
+            'base_uri'        => $this->baseUrl,
+            'cookies'         => $this->jar,
+            'allow_redirects' => true,
+            'timeout'         => 30,
+            'verify'          => false,
+            'headers'         => [
+                'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
+                'Accept-Language' => 'en-US,en;q=0.9',
+                'Accept-Encoding' => 'gzip, deflate, br',
+            ],
+        ]);
+    }
+
     protected function initSession(): bool
     {
         try {
-            $response = Http::withHeaders(array_merge($this->baseHeaders, [
-                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            ]))->withOptions(['allow_redirects' => true])
-              ->get($this->baseUrl . '/real-estate-auctions');
+            $response = $this->client->get('/real-estate-auctions', [
+                'headers' => [
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                ],
+            ]);
 
-            if (!$response->successful()) {
-                Log::error('Bid4Assets: Failed to init session. Status: ' . $response->status());
+            $html    = (string) $response->getBody();
+            $crawler = new Crawler($html);
+            $node    = $crawler->filter('input[name="__RequestVerificationToken"]');
+
+            if ($node->count() === 0) {
+                Log::error('Bid4Assets: Token not found — site structure may have changed');
                 return false;
             }
 
-            // Cookie সংগ্রহ করুন
-            $rawCookies = $response->cookies(); // Guzzle CookieJar
-            $cookieStr  = '';
-            foreach ($rawCookies as $cookie) {
-                $cookieStr .= $cookie->getName() . '=' . $cookie->getValue() . '; ';
-            }
-            $this->cookies = rtrim($cookieStr, '; ');
-
-            // CSRF Token সংগ্রহ করুন
-            $html    = $response->body();
-            $crawler = new Crawler($html);
-
-            $tokenNode = $crawler->filter('input[name="__RequestVerificationToken"]');
-            if ($tokenNode->count() > 0) {
-                $this->csrfToken = $tokenNode->first()->attr('value') ?? '';
-                Log::info('Bid4Assets: CSRF token found: ' . substr($this->csrfToken, 0, 20) . '...');
-            } else {
-                Log::warning('Bid4Assets: CSRF token not found in page');
-            }
-
-            Log::info('Bid4Assets: Session initialized. Cookies: ' . substr($this->cookies, 0, 100));
+            $this->token = $node->first()->attr('value') ?? '';
+            Log::info("Bid4Assets: Session ready — " . count($this->jar->toArray()) . " cookies");
             return true;
 
         } catch (\Exception $e) {
-            Log::error('Bid4Assets: initSession error: ' . $e->getMessage());
+            Log::error('Bid4Assets: initSession failed — ' . $e->getMessage());
             return false;
         }
     }
 
+    protected function isValidResponse(string $html): bool
+    {
+        if (str_contains($html, 'Showing 0 Item(s)')) return false;
+        if (!str_contains($html, 'cat-tb')) return false;
+        return true;
+    }
+
+    // ── Main entry point ────────────────────────────────────────────────────
     public function scrapeAll(
         string $channelCode   = '22',
         string $categoryCode  = '',
@@ -73,30 +89,115 @@ class Bid4AssetsScraper
         string $sortDirection = 'DESC',
         string $locatedState  = ''
     ): int {
-        // প্রথমে session init করুন
+        // ── Log: running শুরু ──
+        $this->currentLog = ScrapeLog::create([
+            'source'     => $this->source,
+            'status'     => 'running',
+            'attempt'    => 1,
+            'started_at' => now(),
+        ]);
+
+        $attempt    = 1;
+        $totalSaved = 0;
+
+        while ($attempt <= $this->maxRetry + 1) {
+
+            // attempt update করুন
+            $this->currentLog->update(['attempt' => $attempt]);
+
+            Log::info("Bid4Assets: Attempt $attempt of " . ($this->maxRetry + 1));
+
+            try {
+                $result = $this->runScrape($channelCode, $categoryCode, $sortColumn, $sortDirection, $locatedState);
+
+                if ($result > 0) {
+                    // ── Success ──
+                    $totalSaved = $result;
+
+                    $this->currentLog->update([
+                        'status'        => 'success',
+                        'total_scraped' => $totalSaved,
+                        'finished_at'   => now(),
+                        'error_message' => null,
+                    ]);
+
+                    Cache::put("scrape_last_success_{$this->source}", now()->toDateTimeString(), 86400 * 7);
+                    Cache::put("scrape_last_count_{$this->source}", $totalSaved, 86400 * 7);
+
+                    Log::info("Bid4Assets: SUCCESS on attempt $attempt — $totalSaved items");
+                    break;
+
+                } else {
+                    throw new \Exception("Scrape returned 0 items");
+                }
+
+            } catch (\Exception $e) {
+
+                Log::warning("Bid4Assets: Attempt $attempt failed — " . $e->getMessage());
+
+                if ($attempt > $this->maxRetry) {
+                    // ── Failed ──
+                    $this->currentLog->update([
+                        'status'        => 'failed',
+                        'total_scraped' => 0,
+                        'finished_at'   => now(),
+                        'error_message' => $e->getMessage(),
+                    ]);
+
+                    Cache::put("scrape_last_failed_{$this->source}", now()->toDateTimeString(), 86400 * 7);
+                    Log::error("Bid4Assets: FAILED after {$this->maxRetry} retries — " . $e->getMessage());
+                    break;
+                }
+
+                // Retry এর আগে wait + session refresh
+                $waitSeconds = $attempt * 5; // 5s, 10s...
+                Log::info("Bid4Assets: Waiting {$waitSeconds}s before retry...");
+                sleep($waitSeconds);
+
+                $this->bootClient();
+                $this->initSession();
+                $attempt++;
+            }
+        }
+
+        return $totalSaved;
+    }
+
+    // ── Actual scrape logic ──────────────────────────────────────────────────
+    protected function runScrape(
+        string $channelCode,
+        string $categoryCode,
+        string $sortColumn,
+        string $sortDirection,
+        string $locatedState
+    ): int {
         if (!$this->initSession()) {
-            Log::error('Bid4Assets: Cannot start — session init failed');
-            return 0;
+            throw new \Exception("Session initialization failed");
         }
 
         $page       = 1;
         $totalSaved = 0;
+        $retryPage  = 0;
 
         while (true) {
-            $html = $this->fetchPage(
-                $channelCode, $categoryCode,
-                $page, $sortColumn, $sortDirection, $locatedState
-            );
+            $html = $this->fetchPage($channelCode, $categoryCode, $page, $sortColumn, $sortDirection, $locatedState);
 
-            if (empty($html)) {
-                Log::warning("Bid4Assets: Empty response on page $page");
-                break;
+            if (empty($html) || !$this->isValidResponse($html)) {
+                if ($retryPage >= 2) {
+                    throw new \Exception("Invalid response on page $page after $retryPage retries");
+                }
+                $retryPage++;
+                sleep(3);
+                $this->bootClient();
+                $this->initSession();
+                continue;
             }
 
-            $items = $this->parseHtml($html);
-            $count = count($items);
+            $retryPage = 0;
+            $items     = $this->parseHtml($html);
+            $count     = count($items);
 
-            Log::info("Bid4Assets: Page $page parsed — $count items found");
+            Log::info("Bid4Assets: Page $page — $count items");
 
             if ($count === 0) break;
 
@@ -105,10 +206,13 @@ class Bid4AssetsScraper
                 $totalSaved++;
             }
 
+            // Log আপডেট করুন — progress track
+            $this->currentLog->update(['total_scraped' => $totalSaved]);
+
             if ($count < $this->pageSize) break;
 
             $page++;
-            sleep(1);
+            sleep(rand(1, 3));
         }
 
         return $totalSaved;
@@ -123,46 +227,33 @@ class Bid4AssetsScraper
         string $locatedState
     ): ?string {
         try {
-            $headers = array_merge($this->baseHeaders, [
-                'Accept'           => 'text/html, */*; q=0.01',
-                'X-Requested-With' => 'XMLHttpRequest',
-                'Content-Type'     => 'application/x-www-form-urlencoded; charset=UTF-8',
-            ]);
-
-            // Cookie যোগ করুন
-            if ($this->cookies) {
-                $headers['Cookie'] = $this->cookies;
-            }
-
-            $postData = [
-                'channelCode'               => $channelCode,
-                'categoryCode'              => $categoryCode,
-                'currentPage'               => $page,
-                'pageSize'                  => $this->pageSize,
-                'lev3'                      => '',
-                'sortOrderColumn'           => $sortColumn,
-                'sortOrderDirection'        => $sortDirection,
-                'specialtyChannel'          => '',
-                'locatedState'              => $locatedState,
+            $formData = [
+                'channelCode'        => $channelCode,
+                'categoryCode'       => $categoryCode,
+                'currentPage'        => (string) $page,
+                'pageSize'           => (string) $this->pageSize,
+                'lev3'               => '',
+                'sortOrderColumn'    => $sortColumn,
+                'sortOrderDirection' => $sortDirection,
+                'specialtyChannel'   => '',
+                'locatedState'       => $locatedState,
             ];
 
-            // CSRF token থাকলে যোগ করুন
-            if ($this->csrfToken) {
-                $postData['__RequestVerificationToken'] = $this->csrfToken;
+            if ($this->token) {
+                $formData['__RequestVerificationToken'] = $this->token;
             }
 
-            $response = Http::withHeaders($headers)
-                ->timeout(30)
-                ->post($this->baseUrl . $this->endpoint, $postData);
+            $response = $this->client->post($this->endpoint, [
+                'headers' => [
+                    'Accept'           => 'text/html, */*; q=0.01',
+                    'X-Requested-With' => 'XMLHttpRequest',
+                    'Content-Type'     => 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'Referer'          => $this->baseUrl . '/real-estate-auctions',
+                ],
+                'form_params' => $formData,
+            ]);
 
-            Log::info("Bid4Assets: Page $page — HTTP " . $response->status());
-            Log::info("Bid4Assets: Response preview: " . substr($response->body(), 0, 300));
-
-            if ($response->successful()) {
-                return $response->body();
-            }
-
-            return null;
+            return (string) $response->getBody();
 
         } catch (\Exception $e) {
             Log::error("Bid4Assets fetchPage error: " . $e->getMessage());
@@ -179,30 +270,29 @@ class Bid4AssetsScraper
 
             if ($row->filter('select')->count() > 0) return;
             if ($row->filter('.auction-title')->count() > 0) return;
+            if ($row->filter('td')->count() < 6) return;
 
             try {
-                if ($row->filter('td')->count() < 6) return;
+                $titleNode  = $row->filter('td.w270 span[linktype="channelauction"]');
+                $title      = $titleNode->count() > 0 ? trim($titleNode->text()) : '';
 
-                $titleNode = $row->filter('td.w270 span[linktype="channelauction"]');
-                $title     = $titleNode->count() > 0 ? trim($titleNode->text()) : '';
-
-                $linkNode  = $row->filter('td.w270 a');
-                $href      = $linkNode->count() > 0 ? $linkNode->attr('href') : '';
-                $sourceUrl = $href ? $this->baseUrl . $href : '';
+                $linkNode   = $row->filter('td.w270 a');
+                $href       = $linkNode->count() > 0 ? $linkNode->attr('href') : '';
+                $sourceUrl  = $href ? $this->baseUrl . $href : '';
 
                 preg_match('/\/auction\/(\d+)/i', $href, $matches);
-                $auctionId = $matches[1] ?? '';
+                $auctionId  = $matches[1] ?? '';
 
-                $type = trim($row->filter('td.w140')->count() > 0
-                    ? $row->filter('td.w140')->text() : '');
+                $type       = trim($row->filter('td.w140')->count() > 0
+                                ? $row->filter('td.w140')->text() : '');
 
-                $w100      = $row->filter('td.w100');
+                $w100       = $row->filter('td.w100');
                 $currentBid = $w100->count() > 0 ? trim($w100->eq(0)->text()) : '';
                 $bidCount   = $w100->count() > 1 ? (int) trim($w100->eq(1)->text()) : 0;
                 $timeLeft   = $w100->count() > 2 ? trim($w100->eq(2)->text()) : '';
 
-                $imgNode = $row->filter('td.w40 span.channel-thumbnail-desktop img');
-                $image   = '';
+                $imgNode    = $row->filter('td.w40 span.channel-thumbnail-desktop img');
+                $image      = '';
                 if ($imgNode->count() > 0) {
                     $onload = $imgNode->attr('onload') ?? '';
                     if (preg_match("/imgload\(this,'([^']+)'\)/", $onload, $imgMatch)) {
@@ -226,7 +316,7 @@ class Bid4AssetsScraper
                 }
 
             } catch (\Exception $e) {
-                Log::warning("Bid4Assets parse row error: " . $e->getMessage());
+                Log::warning("Parse row error: " . $e->getMessage());
             }
         });
 

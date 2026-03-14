@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Services\Bid4AssetsScraper;
+use Illuminate\Support\Facades\Cache;
 
 class ScrapeBid4Assets extends Command
 {
@@ -16,14 +17,16 @@ class ScrapeBid4Assets extends Command
 
     public function handle(Bid4AssetsScraper $scraper): void
     {
-        $this->info('Bid4Assets scraper starting...');
+        $this->info('Starting...');
 
-        $total = $scraper->scrapeAll(
-            channelCode:  $this->option('channel'),
-            categoryCode: $this->option('category') ?? '',
-            locatedState: $this->option('state') ?? '',
-        );
+        $total       = $scraper->scrapeAll();
+        $lastSuccess = Cache::get('bid4assets_last_success', 'N/A');
+        $lastCount   = Cache::get('bid4assets_last_count', 0);
 
-        $this->info("Done! Total saved/updated: {$total} listings.");
+        if ($total > 0) {
+            $this->info("✓ Done! Saved: $total listings");
+        } else {
+            $this->error("✗ Failed! Check logs. Last success: $lastSuccess ($lastCount items)");
+        }
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+
 use App\Http\Controllers\Web\Backend\Access\PermissionController;
 use App\Http\Controllers\Web\Backend\Access\RoleController;
 use App\Http\Controllers\Web\Backend\Access\SubscriptionPlanController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\Web\Backend\ExtractionLogController;
 use App\Http\Controllers\Web\Backend\FaqController;
 use App\Http\Controllers\Web\Backend\FileManagerController;
 use App\Http\Controllers\Web\Backend\ListingController;
+use App\Http\Controllers\Web\Backend\AuctionListingController;
 use App\Http\Controllers\Web\Backend\OrderController;
 use App\Http\Controllers\Web\Backend\ProductController;
 use App\Http\Controllers\Web\Backend\PropertyController;
@@ -86,6 +88,13 @@ Route::group(['middleware' => ['web-admin']], function () {
         Route::get('/show/{id}', 'show')->name('show');
     });
 
+    Route::controller(AuctionListingController::class)->prefix('auction-listings')->name('auction.listings.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/show/{id}', 'show')->name('show');
+        Route::post('/scrape', 'scrapeNow')->name('scrape');
+         Route::get('/scrape-logs', 'scrapeLogs')->name('scrape.logs');      // ← page
+        Route::get('/scrape-logs/data', 'scrapeLogsData')->name('scrape.logs.data'); // ← datatable ajax
+    });
 
 
 
@@ -188,6 +197,7 @@ Route::group(['middleware' => ['web-admin']], function () {
         Route::get('/', 'index')->name('index');
         Route::get('/{id}/view', 'show')->name('show');
     });
+
 
     Route::controller(UserController::class)->prefix('users')->name('users.')->group(function () {
         Route::get('/status/{id}', 'status')->name('status');
