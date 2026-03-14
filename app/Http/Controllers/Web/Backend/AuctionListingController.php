@@ -69,28 +69,39 @@ class AuctionListingController extends Controller
                         : '—';
                 })
                 ->addColumn('action', function ($row) {
-                    return '<a href="' . e($row->source_url) . '" target="_blank"
-                               class="btn btn-sm btn-success" title="View on Bid4Assets">
-                                <i class="fa fa-eye"></i>
-                            </a>';
+                    return '<a href="' . route('admin.auction.listings.show', $row->id) . '"
+               class="btn btn-sm btn-success" title="View Detail">
+                <i class="fa fa-eye"></i>
+            </a>';
                 })
                 ->rawColumns(['image', 'title_col', 'type_badge', 'bid_info', 'time_badge', 'scraped', 'action'])
                 ->make();
         }
 
-    $stats = [
+        $stats = [
             'total'        => AuctionListing::count(),
             'land'         => AuctionListing::where('type', 'Land')->count(),
             'financed'     => AuctionListing::where('type', 'Financed')->count(),
             'last_scraped' => Cache::get('bid4assets_last_success', 'Never'),
             'last_count'   => Cache::get('bid4assets_last_count', 0),
             'types'        => AuctionListing::select('type')
-                                ->distinct()
-                                ->whereNotNull('type')
-                                ->pluck('type'),
+                ->distinct()
+                ->whereNotNull('type')
+                ->pluck('type'),
         ];
 
         return view('backend.layouts.auction_listing.index', compact('stats'));
+    }
+
+    public function show(int $id)
+    {
+        $listing = AuctionListing::findOrFail($id);
+
+        $isSaved = auth('web')->check()
+            ? $listing->isSavedBy(auth('web')->id())
+            : false;
+
+        return view('backend.layouts.auction_listing.show', compact('listing', 'isSaved'));
     }
 
     // Manual scrape trigger
