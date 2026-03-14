@@ -79,6 +79,7 @@
                                     {{-- <button id="scrapeNowBtn" class="btn btn-sm btn-warning">
                                         <i class="fa fa-refresh me-1"></i> Scrape Now
                                     </button> --}}
+
                                     <a href="{{ route('admin.auction.listings.scrape.logs') }}"
                                         class="btn btn-sm btn-outline-info ms-2">
                                         <i class="fa fa-history me-1"></i> View Scrape Logs

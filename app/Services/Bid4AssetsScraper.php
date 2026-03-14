@@ -67,7 +67,6 @@ class Bid4AssetsScraper
             $this->token = $node->first()->attr('value') ?? '';
             Log::info("Bid4Assets: Session ready — " . count($this->jar->toArray()) . " cookies");
             return true;
-
         } catch (\Exception $e) {
             Log::error('Bid4Assets: initSession failed — ' . $e->getMessage());
             return false;
@@ -89,11 +88,12 @@ class Bid4AssetsScraper
         string $sortDirection = 'DESC',
         string $locatedState  = ''
     ): int {
-        // ── Log: running শুরু ──
+
         $this->currentLog = ScrapeLog::create([
             'source'     => $this->source,
             'status'     => 'running',
             'attempt'    => 1,
+            'message'    => 'Extraction started — initializing session...',
             'started_at' => now(),
         ]);
 
@@ -102,13 +102,19 @@ class Bid4AssetsScraper
 
         while ($attempt <= $this->maxRetry + 1) {
 
-            // attempt update করুন
-            $this->currentLog->update(['attempt' => $attempt]);
-
-            Log::info("Bid4Assets: Attempt $attempt of " . ($this->maxRetry + 1));
+            $this->currentLog->update([
+                'attempt' => $attempt,
+                'message' => "Attempt $attempt of " . ($this->maxRetry + 1) . " — connecting to source...",
+            ]);
 
             try {
-                $result = $this->runScrape($channelCode, $categoryCode, $sortColumn, $sortDirection, $locatedState);
+                $result = $this->runScrape(
+                    $channelCode,
+                    $categoryCode,
+                    $sortColumn,
+                    $sortDirection,
+                    $locatedState
+                );
 
                 if ($result > 0) {
                     // ── Success ──
@@ -118,44 +124,50 @@ class Bid4AssetsScraper
                         'status'        => 'success',
                         'total_scraped' => $totalSaved,
                         'finished_at'   => now(),
+                        'message'       => "Extraction completed successfully. $totalSaved listings saved on attempt $attempt.",
                         'error_message' => null,
                     ]);
 
                     Cache::put("scrape_last_success_{$this->source}", now()->toDateTimeString(), 86400 * 7);
                     Cache::put("scrape_last_count_{$this->source}", $totalSaved, 86400 * 7);
 
-                    Log::info("Bid4Assets: SUCCESS on attempt $attempt — $totalSaved items");
+                    Log::info("Bid4Assets: SUCCESS — $totalSaved items on attempt $attempt");
                     break;
-
                 } else {
-                    throw new \Exception("Scrape returned 0 items");
+                    throw new \Exception("Source returned 0 items — site may be blocking requests or structure changed");
                 }
-
             } catch (\Exception $e) {
 
-                Log::warning("Bid4Assets: Attempt $attempt failed — " . $e->getMessage());
+                $errorMsg = $e->getMessage();
+                Log::warning("Bid4Assets: Attempt $attempt failed — $errorMsg");
 
                 if ($attempt > $this->maxRetry) {
-                    // ── Failed ──
+                    // ── Final failure ──
                     $this->currentLog->update([
                         'status'        => 'failed',
                         'total_scraped' => 0,
                         'finished_at'   => now(),
-                        'error_message' => $e->getMessage(),
+                        'message'       => "Extraction failed after $attempt attempt(s). No data saved.",
+                        'error_message' => $errorMsg,
                     ]);
 
                     Cache::put("scrape_last_failed_{$this->source}", now()->toDateTimeString(), 86400 * 7);
-                    Log::error("Bid4Assets: FAILED after {$this->maxRetry} retries — " . $e->getMessage());
+                    Log::error("Bid4Assets: FAILED after {$this->maxRetry} retries — $errorMsg");
                     break;
                 }
 
-                // Retry এর আগে wait + session refresh
-                $waitSeconds = $attempt * 5; // 5s, 10s...
-                Log::info("Bid4Assets: Waiting {$waitSeconds}s before retry...");
+                // ── Retry ──
+                $waitSeconds = $attempt * 5;
+
+                $this->currentLog->update([
+                    'message'       => "Attempt $attempt failed — retrying in {$waitSeconds}s... (Error: $errorMsg)",
+                    'error_message' => $errorMsg,
+                ]);
+
+                Log::info("Bid4Assets: Waiting {$waitSeconds}s before retry $attempt...");
                 sleep($waitSeconds);
 
                 $this->bootClient();
-                $this->initSession();
                 $attempt++;
             }
         }
@@ -254,7 +266,6 @@ class Bid4AssetsScraper
             ]);
 
             return (string) $response->getBody();
-
         } catch (\Exception $e) {
             Log::error("Bid4Assets fetchPage error: " . $e->getMessage());
             return null;
@@ -284,7 +295,7 @@ class Bid4AssetsScraper
                 $auctionId  = $matches[1] ?? '';
 
                 $type       = trim($row->filter('td.w140')->count() > 0
-                                ? $row->filter('td.w140')->text() : '');
+                    ? $row->filter('td.w140')->text() : '');
 
                 $w100       = $row->filter('td.w100');
                 $currentBid = $w100->count() > 0 ? trim($w100->eq(0)->text()) : '';
@@ -314,7 +325,6 @@ class Bid4AssetsScraper
                         'source_url'  => $sourceUrl,
                     ];
                 }
-
             } catch (\Exception $e) {
                 Log::warning("Parse row error: " . $e->getMessage());
             }

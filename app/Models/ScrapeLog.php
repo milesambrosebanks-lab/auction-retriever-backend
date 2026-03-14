@@ -8,7 +8,7 @@ class ScrapeLog extends Model
 {
     protected $fillable = [
         'source', 'status', 'total_scraped',
-        'attempt', 'error_message',
+        'attempt', 'error_message', 'message',
         'started_at', 'finished_at',
     ];
 
