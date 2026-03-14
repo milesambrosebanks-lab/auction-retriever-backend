@@ -11,8 +11,9 @@ return new class extends Migration
     {
         Schema::create('saved_listings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id');
-            $table->foreignId('listing_id');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('auction_listing_id')->constrained()->onDelete('cascade');
+            $table->unique(['user_id', 'auction_listing_id']); // duplicate prevent
             $table->timestamps();
         });
     }

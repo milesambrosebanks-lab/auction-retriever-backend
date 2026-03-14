@@ -6,18 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class SavedListing extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'listing_id'
-    ];
+    protected $fillable = ['user_id', 'auction_listing_id'];
+
+    public function listing()
+    {
+        return $this->belongsTo(AuctionListing::class, 'auction_listing_id');
+    }
 
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function listing()
-    {
-        return $this->belongsTo(Listing::class);
     }
 }

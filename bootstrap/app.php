@@ -10,6 +10,7 @@ use App\Http\Middleware\ApiOtpVerifiedMiddleware;
 use App\Http\Middleware\WebOtpVerifiedMiddleware;
 use App\Http\Middleware\ApiRetailerMiddleware;
 use App\Http\Middleware\WebStaffMiddleware;
+use App\Models\ScrapeLog;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Console\Scheduling\Schedule;
@@ -98,7 +99,21 @@ return Application::configure(basePath: dirname(__DIR__))
         // $schedule->command('bookings:expire')->everyMinute();
         $schedule->command('weekly:digest')->weekly();
         $schedule->command('scrape:bid4assets')->dailyAt('02:00');
+        $schedule->command('sync:auction-details --batch=100')->dailyAt('03:00');
+
+        // if running more than 30 minuite then shuild be failed
+        $schedule->call(function () {
+            ScrapeLog::where('status', 'running')
+                ->where('started_at', '<', now()->subMinutes(30))
+                ->update([
+                    'status'        => 'failed',
+                    'message'       => 'Extraction timed out — process may have crashed',
+                    'error_message' => 'Auto-terminated: running for more than 30 minutes',
+                    'finished_at'   => now(),
+                ]);
+        })->everyFifteenMinutes();
     })
     ->withCommands([
         __DIR__ . '/../app/Console/Commands',
+        \App\Console\Commands\SyncAuctionDetails::class,
     ])->create();

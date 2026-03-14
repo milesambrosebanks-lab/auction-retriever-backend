@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\Frontend\SettingsController;
 use App\Http\Controllers\Api\Frontend\SocialLinksController;
 use App\Http\Controllers\Api\Frontend\SubscriberController;
 use App\Http\Controllers\Api\Gateway\Stripe\StripeCallBackController;
+use App\Http\Controllers\Api\Listing\AuctionListingController;
 use App\Http\Controllers\Api\Listing\ListingController;
 use App\Http\Controllers\Api\User\SubscriptionController;
 use Illuminate\Support\Facades\Route;
@@ -55,12 +56,22 @@ Route::middleware('auth:api')->prefix('auth')->group(function () {
     Route::get('/subscription/status', [SubscriptionController::class, 'subscriptionStatus']);
 });
 
+// Route::middleware('auth:api')->prefix('auction')->group(function () {
+//     Route::get('/', [ListingController::class, 'index']);
+//     Route::get('/{id}/view', [ListingController::class, 'view']);
+//     Route::post('/{id}/save', [ListingController::class, 'saveListing']);
+//     Route::get('/save-listing', [ListingController::class, 'saveListingView']);
+//     Route::post('/{id}/delete', [ListingController::class, 'delete']);
+// });
+
 Route::middleware('auth:api')->prefix('auction')->group(function () {
-    Route::get('/', [ListingController::class, 'index']);
-    Route::get('/{id}/view', [ListingController::class, 'view']);
-    Route::post('/{id}/save', [ListingController::class, 'saveListing']);
-    Route::get('/save-listing', [ListingController::class, 'saveListingView']);
-    Route::post('/{id}/delete', [ListingController::class, 'delete']);
+    Route::get('/', [AuctionListingController::class, 'index']);
+    Route::get('/filter-options', [AuctionListingController::class, 'filterOptions']);
+    Route::get('/{id}/view', [AuctionListingController::class, 'show']);
+
+    Route::post('/{id}/save', [AuctionListingController::class, 'save']);
+    Route::get('/saved', [AuctionListingController::class, 'savedListings']);
+    Route::post('/saved/{id}/delete', [AuctionListingController::class, 'delete']);
 });
 
 /*
