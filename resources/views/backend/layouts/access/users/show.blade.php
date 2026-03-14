@@ -98,7 +98,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <p class="text-muted small mb-1">Joined</p>
-                                        <strong>{{ $user->created_at->format('d M Y') }}</strong>
+                                        <strong>{{ $user->created_at ? $user->created_at->format('d M Y') : '—' }}</strong>
                                     </div>
                                 </div>
                             </div>
@@ -207,52 +207,109 @@
                         </div>
 
                         {{-- Payment History --}}
+                        {{-- Payment / Transaction History --}}
                         <div class="card mb-3">
-                            <div class="card-header border-bottom">
+                            <div class="card-header border-bottom d-flex align-items-center justify-content-between">
                                 <h6 class="mb-0">
-                                    <i class="fa fa-money me-1 text-warning"></i>
+                                    <i class="fa fa-credit-card me-1 text-warning"></i>
                                     Payment History
                                 </h6>
+                                <span class="badge bg-secondary">{{ $transactions->count() }} transactions</span>
                             </div>
-                            <div class="card-body">
-                                @if (isset($payments) && $payments->count() > 0)
-                                    <table class="table table-sm table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Amount</th>
-                                                <th>Status</th>
-                                                <th>Date</th>
-                                                <th>Invoice</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($payments as $payment)
+                            <div class="card-body p-0">
+                                @if ($transactions && $transactions->count() > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-0">
+                                            <thead class="table-light">
                                                 <tr>
-                                                    <td>${{ number_format($payment->amount / 100, 2) }}</td>
-                                                    <td>
-                                                        <span
-                                                            class="badge bg-{{ $payment->status === 'succeeded' ? 'success' : 'danger' }}">
-                                                            {{ $payment->status }}
-                                                        </span>
-                                                    </td>
-                                                    <td>{{ \Carbon\Carbon::createFromTimestamp($payment->created)->format('d M Y') }}
-                                                    </td>
-                                                    <td>
-                                                        @if ($payment->invoice)
-                                                            <a href="{{ $payment->invoice }}" target="_blank"
-                                                                class="btn btn-xs btn-outline-primary">
-                                                                <i class="fa fa-download"></i>
-                                                            </a>
-                                                        @else
-                                                            —
-                                                        @endif
+                                                    <th>#</th>
+                                                    <th>Amount</th>
+                                                    <th>Status</th>
+                                                    <th>Invoice</th>
+                                                    <th>Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($transactions as $trx)
+                                                    @php
+                                                        $statusColors = [
+                                                            'paid' => 'success',
+                                                            'succeeded' => 'success',
+                                                            'failed' => 'danger',
+                                                            'pending' => 'warning',
+                                                            'refunded' => 'info',
+                                                        ];
+                                                        $statusColor =
+                                                            $statusColors[strtolower($trx->status ?? '')] ??
+                                                            'secondary';
+                                                    @endphp
+                                                    <tr>
+                                                        <td>
+                                                            <small class="text-muted">
+                                                                {{ \Str::limit($trx->trx_id) }}
+                                                            </small>
+                                                        </td>
+
+                                                        <td>
+                                                            <strong>
+                                                                {{ strtoupper($trx->currency) }}
+                                                                ${{ number_format($trx->amount, 2) }}
+                                                            </strong>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-{{ $statusColor }}">
+                                                                {{ ucfirst($trx->status ?? '—') }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <div class="d-flex gap-1">
+                                                                @if ($trx->hosted_invoice_url)
+                                                                    <a href="{{ $trx->hosted_invoice_url }}"
+                                                                        target="_blank"
+                                                                        class="btn btn-xs btn-outline-primary"
+                                                                        title="View Invoice">
+                                                                        <i class="fa fa-eye"></i>
+                                                                    </a>
+                                                                @endif
+                                                                @if ($trx->invoice_pdf)
+                                                                    <a href="{{ $trx->invoice_pdf }}" target="_blank"
+                                                                        class="btn btn-xs btn-outline-danger"
+                                                                        title="Download PDF">
+                                                                        <i class="fa fa-file-pdf"></i>
+                                                                    </a>
+                                                                @endif
+                                                                @if (!$trx->hosted_invoice_url && !$trx->invoice_pdf)
+                                                                    <span class="text-muted">—</span>
+                                                                @endif
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <small>
+                                                                {{ $trx->created_at ? \Carbon\Carbon::parse($trx->created_at)->format('d M Y, h:i A') : '—' }}
+
+                                                            </small>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                            {{-- Total --}}
+                                            <tfoot class="table-light">
+                                                <tr>
+                                                    <td colspan="2" class="text-end fw-500">Total Paid:</td>
+                                                    <td colspan="4">
+                                                        <strong class="text-success">
+                                                            ${{ number_format($transactions->whereIn('status', ['paid', 'succeeded'])->sum('amount'), 2) }}
+                                                        </strong>
                                                     </td>
                                                 </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                                            </tfoot>
+                                        </table>
+                                    </div>
                                 @else
-                                    <p class="text-muted mb-0">No payment history found.</p>
+                                    <div class="p-3 text-center text-muted">
+                                        <i class="fa fa-inbox fa-2x mb-2"></i>
+                                        <p class="mb-0">No payment history found.</p>
+                                    </div>
                                 @endif
                             </div>
                         </div>

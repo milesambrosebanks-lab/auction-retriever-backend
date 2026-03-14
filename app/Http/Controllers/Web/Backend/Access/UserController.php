@@ -285,26 +285,25 @@ class UserController extends Controller
             },
         ])->findOrFail($id);
 
-        $payments = collect();
-
+        // $payments = collect();
+        $transactions = $user->transactions;
+// dd($transactions);
         // Stripe payment history
-        if ($user->stripe_id) {
-            try {
-                \Stripe\Stripe::setApiKey(config('cashier.secret'));
-                $charges  = \Stripe\Charge::all([
-                    'customer' => $user->stripe_id,
-                    'limit'    => 10,
-                ]);
-                $payments = collect($charges->data);
-            } catch (\Exception $e) {
-                // Stripe না থাকলে skip
-            }
-        }
+        // if ($user->stripe_id) {
+        //     try {
+        //         \Stripe\Stripe::setApiKey(config('cashier.secret'));
+        //         $charges  = \Stripe\Charge::all([
+        //             'customer' => $user->stripe_id,
+        //             'limit'    => 10,
+        //         ]);
+        //         $payments = collect($charges->data);
+        //     } catch (\Exception $e) {
+        //         // Stripe না থাকলে skip
+        //     }
+        // }
+        // dd($transactions);
 
-        return view(
-            'backend.layouts.access.users.show',
-            compact('user', 'payments')
-        );
+        return view('backend.layouts.access.users.show', compact('user', 'transactions'));
     }
 
     public function edit($id)
