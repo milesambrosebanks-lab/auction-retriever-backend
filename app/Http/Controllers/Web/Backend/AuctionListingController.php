@@ -54,7 +54,7 @@ class AuctionListingController extends Controller
                     return '<span class="badge bg-' . $color . '">' . e($row->type) . '</span>';
                 })
                 ->addColumn('bid_info', function ($row) {
-                    return '<strong>' . e($row->current_bid) . '</strong>
+                    return '<strong>$' . e($row->current_bid) . '</strong>
                             <br><small class="text-muted">' . $row->bid_count . ' bids</small>';
                 })
                 ->addColumn('time_badge', function ($row) {
