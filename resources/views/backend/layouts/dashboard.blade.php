@@ -23,111 +23,154 @@
                     </div>
                 </div>
                 <!-- PAGE-HEADER END -->
+                {{-- ── User Stats Cards ──────────────────────────────────────── --}}
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-muted mb-3">User Overview</h5>
+                    </div>
 
-                <!-- ROW-1 -->
-                <div class="row">
-                    <div class="col-lg-6 col-sm-12 col-md-6 col-xl-3">
-                        <div class="card overflow-hidden">
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="card text-center h-100">
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h3 class="mb-2 fw-semibold">{{  0 }}</h3>
-                                        <p class="text-muted fs-13 mb-0">All Orders</p>
-                                    </div>
-                                    <div class="col col-auto top-icn dash">
-                                        <div class="counter-icon bg-primary dash ms-auto box-shadow-primary">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="fill-white"
-                                                enable-background="new 0 0 24 24" viewBox="0 0 16 16">
-                                                <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
-                                                <path
-                                                    d="m5.93 6.704-.846 8.451a.768.768 0 0 0 1.523.203l.81-4.865a.59.59 0 0 1 1.165 0l.81 4.865a.768.768 0 0 0 1.523-.203l-.845-8.451A1.5 1.5 0 0 1 10.5 5.5L13 2.284a.796.796 0 0 0-1.239-.998L9.634 3.84a.7.7 0 0 1-.33.235c-.23.074-.665.176-1.304.176-.64 0-1.074-.102-1.305-.176a.7.7 0 0 1-.329-.235L4.239 1.286a.796.796 0 0 0-1.24.998l2.5 3.216c.317.316.475.758.43 1.204Z" />
-                                            </svg>
-                                        </div>
-                                    </div>
+                                <div class="mb-2">
+                                    <i class="fa-solid fa-users fa-2x text-primary"></i>
                                 </div>
+                                <h3 class="mb-1 fw-bold">{{ number_format($userStats['total']) }}</h3>
+                                <p class="text-muted small mb-0">Total Users</p>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-6 col-sm-12 col-md-6 col-xl-3">
-                        <div class="card overflow-hidden">
+
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="card text-center h-100">
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h3 class="mb-2 fw-semibold">
-                                            {{  0 }}</h3>
-                                        <p class="text-muted fs-13 mb-0">Completed Orders</p>
-                                    </div>
-                                    <div class="col col-auto top-icn dash">
-                                        <div class="counter-icon bg-secondary dash ms-auto box-shadow-secondary">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="fill-white"
-                                                enable-background="new 0 0 24 24" viewBox="0 0 16 16">
-                                                <path fill-rule="evenodd"
-                                                    d="M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5m-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5" />
-                                            </svg>
-                                        </div>
-                                    </div>
+                                <div class="mb-2">
+                                    <i class="fa-solid fa-clock fa-2x text-info"></i>
                                 </div>
+                                <h3 class="mb-1 fw-bold text-info">{{ number_format($userStats['trial']) }}</h3>
+                                <p class="text-muted small mb-0">Trial</p>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-6 col-sm-12 col-md-6 col-xl-3">
-                        <div class="card overflow-hidden">
+
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="card text-center h-100">
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h3 class="mb-2 fw-semibold">{{ DB::table('subscribers')->count() ?? 0 }}</h3>
-                                        <p class="text-muted fs-13 mb-0">Subcribers</p>
-                                    </div>
-                                    <div class="col col-auto top-icn dash">
-                                        <div class="counter-icon bg-info dash ms-auto box-shadow-info">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="fill-white"
-                                                enable-background="new 0 0 24 24" viewBox="0 0 16 16">
-                                                <path
-                                                    d="M4 16s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-5.95a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
-                                                <path
-                                                    d="M2 1a2 2 0 0 0-2 2v9.5A1.5 1.5 0 0 0 1.5 14h.653a5.4 5.4 0 0 1 1.066-2H1V3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v9h-2.219c.554.654.89 1.373 1.066 2h.653a1.5 1.5 0 0 0 1.5-1.5V3a2 2 0 0 0-2-2z" />
-                                            </svg>
-                                        </div>
-                                    </div>
+                                <div class="mb-2">
+                                    <i class="fa-solid fa-check-circle fa-2x text-success"></i>
                                 </div>
+                                <h3 class="mb-1 fw-bold text-success">{{ number_format($userStats['active']) }}</h3>
+                                <p class="text-muted small mb-0">Active</p>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-6 col-sm-12 col-md-6 col-xl-3">
-                        <div class="card overflow-hidden">
+
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="card text-center h-100">
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h3 class="mb-2 fw-semibold">{{ DB::table('users')->count() ?? 0 }}</h3>
-                                        <p class="text-muted fs-13 mb-0">Total Users</p>
-                                    </div>
-                                    <div class="col col-auto top-icn dash">
-                                        <div class="counter-icon bg-warning dash ms-auto box-shadow-warning">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="fill-white"
-                                                enable-background="new 0 0 24 24" viewBox="0 0 16 16">
-                                                <path fill-rule="evenodd"
-                                                    d="M6 1h6v7a.5.5 0 0 1-.757.429L9 7.083 6.757 8.43A.5.5 0 0 1 6 8z" />
-                                                <path
-                                                    d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2" />
-                                                <path
-                                                    d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z" />
-                                            </svg>
-                                        </div>
-                                    </div>
+                                <div class="mb-2">
+                                    <i class="fa-solid fa-times-circle fa-2x text-danger"></i>
                                 </div>
+                                <h3 class="mb-1 fw-bold text-danger">{{ number_format($userStats['cancelled']) }}</h3>
+                                <p class="text-muted small mb-0">Cancelled</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <i class="fa-solid fa-exclamation-circle fa-2x text-warning"></i>
+                                </div>
+                                <h3 class="mb-1 fw-bold text-warning">{{ number_format($userStats['past_due']) }}</h3>
+                                <p class="text-muted small mb-0">Past Due</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <i class="fa-solid fa-star fa-2x text-warning"></i>
+                                </div>
+                                <h3 class="mb-1 fw-bold text-warning">{{ number_format($userStats['subscriptions']) }}</h3>
+                                <p class="text-muted small mb-0">Total Subscriptions</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- ROW-1 END-->
-                <div class="row">
-                    <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
+
+                {{-- ── Transaction Stats Cards ─────────────────────────────────── --}}
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-muted mb-3">Transaction Overview</h5>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <i class="fa-solid fa-receipt fa-2x text-primary"></i>
+                                </div>
+                                <h3 class="mb-1 fw-bold">{{ number_format($transactionStats['total']) }}</h3>
+                                <p class="text-muted small mb-0">Total Transactions</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <i class="fa-solid fa-dollar-sign fa-2x text-success"></i>
+                                </div>
+                                <h3 class="mb-1 fw-bold text-success">
+                                    ${{ number_format($transactionStats['total_amount'], 2) }}
+                                </h3>
+                                <p class="text-muted small mb-0">Total Revenue</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <i class="fa-solid fa-check fa-2x text-success"></i>
+                                </div>
+                                <h3 class="mb-1 fw-bold text-success">{{ number_format($transactionStats['paid']) }}</h3>
+                                <p class="text-muted small mb-0">Paid</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <i class="fa-solid fa-xmark fa-2x text-danger"></i>
+                                </div>
+                                <h3 class="mb-1 fw-bold text-danger">{{ number_format($transactionStats['failed']) }}</h3>
+                                <p class="text-muted small mb-0">Failed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ── Transaction Chart ───────────────────────────────────────── --}}
+                <div class="row mb-4">
+                    <div class="col-12">
                         <div class="card">
-                            <div class="card-header border-bottom">
-                                <h3 class="card-title">Sales</h3>
+                            <div class="card-header border-bottom d-flex align-items-center justify-content-between">
+                                <h5 class="mb-0">
+                                    <i class="fa-solid fa-chart-line me-1 text-primary"></i>
+                                    Monthly Transactions — {{ $currentYear }}
+                                </h5>
+                                <span class="badge bg-primary">{{ $currentYear }}</span>
                             </div>
                             <div class="card-body">
-                                <div id="chart"></div>
+                                <canvas id="transactionChart" height="100"></canvas>
                             </div>
                         </div>
                     </div>
@@ -138,123 +181,94 @@
     </div>
     <!-- CONTAINER CLOSED -->
 @endsection
-
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        /* document.addEventListener('DOMContentLoaded', function() {
+        const chartData = @json($formatted_data);
+        const months = Object.keys(chartData).map(m => m.charAt(0).toUpperCase() + m.slice(1));
+        const successData = Object.values(chartData).map(d => parseFloat(d.success));
+        const pendingData = Object.values(chartData).map(d => parseFloat(d.pending));
+        const countData = Object.values(chartData).map(d => d.count);
 
-            Echo.private('chat.1').listen('MessageSent', (e) => {
-                console.log('Message Receiver:', e.message);
-                if ($('#ReceiverId').val()) {
-                    getMessage($('#ReceiverId').val());
-                }
-            });
-
-            Echo.private('chat.2').listen('MessageSent', (e) => {
-                console.log('Message Receiver:', e.message);
-                if ($('#ReceiverId').val()) {
-                    getMessage($('#ReceiverId').val());
-                }
-            });
-
-            Echo.private('chat.3').listen('MessageSent', (e) => {
-                console.log('Message Receiver:', e.message);
-                if ($('#ReceiverId').val()) {
-                    getMessage($('#ReceiverId').val());
-                }
-            });
-
-        }); */
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.36.3/dist/apexcharts.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', async function() {
-            try {
-                const response = await fetch(`/transactions/{{ auth()->user()->slug }}.json`);
-                const transactionData = await response.json();
-
-                const categories = Object.keys(transactionData).map(month =>
-                    month.charAt(0).toUpperCase() + month.slice(1)
-                );
-
-                const successData = Object.values(transactionData).map(value =>
-                    parseFloat(value.success)
-                );
-
-                const pendingData = Object.values(transactionData).map(value =>
-                    parseFloat(value.pending)
-                );
-
-                const options = {
-                    series: [{
-                            name: "Success",
-                            data: successData,
-                            color: '#00E396' // Green
-                        },
-                        {
-                            name: "Pending",
-                            data: pendingData,
-                            color: '#FEB019' // Orange
-                        }
-                    ],
-                    chart: {
-                        height: 400,
+        const ctx = document.getElementById('transactionChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: months,
+                datasets: [{
+                        label: 'Paid ($)',
+                        data: successData,
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Pending ($)',
+                        data: pendingData,
+                        backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Count',
+                        data: countData,
                         type: 'line',
-                        zoom: {
-                            enabled: false
-                        },
-                        toolbar: {
-                            show: true
-                        }
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        fill: false,
+                        yAxisID: 'y1',
                     },
-                    dataLabels: {
-                        enabled: true,
-                        style: {
-                            colors: ['#304758']
-                        }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
                     },
-                    stroke: {
-                        curve: 'smooth',
-                        width: 2
-                    },
-                    title: {
-                        text: 'Monthly Transaction Status Overview',
-                        align: 'center',
-                        style: {
-                            fontSize: '20px',
-                            fontWeight: 'bold',
-                            color: '#333'
-                        }
-                    },
-                    grid: {
-                        borderColor: '#e7e7e7',
-                        row: {
-                            colors: ['#f3f3f3', 'transparent'],
-                            opacity: 0.5
-                        }
-                    },
-                    xaxis: {
-                        categories: categories,
-                        labels: {
-                            style: {
-                                colors: '#777',
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                if (ctx.dataset.yAxisID === 'y') {
+                                    return ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2);
+                                }
+                                return ctx.dataset.label + ': ' + ctx.parsed.y;
                             }
                         }
-                    },
-                    legend: {
-                        position: 'top',
-                        horizontalAlign: 'right',
-                        floating: true,
-                        offsetY: -25,
-                        offsetX: -5
                     }
-                };
-
-                const chart = new ApexCharts(document.querySelector("#chart"), options);
-                chart.render();
-
-            } catch (error) {
-                console.error('Error fetching or processing JSON data:', error);
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Amount ($)'
+                        },
+                        ticks: {
+                            callback: val => '$' + val.toLocaleString()
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Count'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                    },
+                }
             }
         });
     </script>
