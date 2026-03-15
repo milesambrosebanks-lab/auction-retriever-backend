@@ -13,7 +13,7 @@
                 {{-- Page Header --}}
                 <div class="page-header">
                     <div>
-                        <h1 class="page-title">Bid4Assets Listings</h1>
+                        <h1 class="page-title">Auction Listings</h1>
                     </div>
                     <div class="ms-auto pageheader-btn">
                         <ol class="breadcrumb">
