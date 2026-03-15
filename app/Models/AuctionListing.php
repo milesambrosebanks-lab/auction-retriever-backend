@@ -35,10 +35,25 @@ use Illuminate\Database\Eloquent\Model;
 class AuctionListing extends Model
 {
     protected $fillable = [
-        'auction_id', 'title', 'type', 'state', 'county',
-        'current_bid', 'bid_amount', 'bid_count', 'time_left',
-        'auction_date', 'image_url', 'source_url',
-        'channel_code', 'category_code', 'scraped_at',
+        'auction_id',
+        'title',
+        'type',
+        'state',
+        'county',
+        'current_bid',
+        'bid_amount',
+        'bid_count',
+        'time_left',
+        'auction_date',
+        'image_url',
+        'source_url',
+        'channel_code',
+        'category_code',
+        'scraped_at',
+        'city',
+        'zip',
+        'auction_started_at',
+        'parcel_number', // ← add করো
     ];
 
     protected $casts = [

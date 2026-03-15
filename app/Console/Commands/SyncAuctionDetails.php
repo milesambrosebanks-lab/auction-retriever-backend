@@ -42,7 +42,7 @@ class SyncAuctionDetails extends Command
             $batch = (int) $this->option('batch');
         }
 
-        $pending = AuctionListing::whereNull('state')->whereNotNull('auction_id')->count();
+        $pending = AuctionListing::whereNull('county')->whereNotNull('auction_id')->count();
         $this->info("Pending listings without location: {$pending}");
 
         if ($pending === 0) {
@@ -50,7 +50,7 @@ class SyncAuctionDetails extends Command
             return;
         }
 
-        $batch = (int) $this->option('batch');
+        // $batch = (int) $this->option('batch');
         $this->info("Processing {$batch} listings...");
 
         $bar     = $this->output->createProgressBar($batch);

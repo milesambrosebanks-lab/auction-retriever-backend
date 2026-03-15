@@ -96,6 +96,7 @@ class Bid4AssetsDetailScraper
 
         foreach ($listings as $listing) {
             $detail = $this->fetchDetail($listing->auction_id);
+            Log::info("Fetched #{$listing->auction_id}: " . json_encode($detail));  // ← add করো
 
             if ($detail) {
                 $listing->update($detail);
@@ -131,13 +132,19 @@ class Bid4AssetsDetailScraper
             // ── Location: "Cherokee Village, AR 72529" ──────────────────
             $locationRaw = '';
 
-            // Method 1: auction-info-summary table থেকে
             $crawler->filter('.auction-info-summary table tr')->each(function (Crawler $row) use (&$locationRaw) {
                 $th = $row->filter('td strong');
                 if ($th->count() > 0 && str_contains($th->text(), 'Location')) {
                     $tds = $row->filter('td');
                     if ($tds->count() > 1) {
-                        $locationRaw = trim($tds->eq(1)->text());
+                        // ✅ html() নিয়ে <br> দিয়ে split করো — text() নয়
+                        $rawHtml = $tds->eq(1)->html();
+                        $lines   = preg_split('/<br\s*\/?>/i', $rawHtml);
+                        $lines   = array_map(fn($l) => trim(strip_tags($l)), $lines);
+                        $lines   = array_filter($lines); // empty lines বাদ
+
+                        // শেষ line এ "City, ST ZIP" থাকে
+                        $locationRaw = end($lines);
                     }
                 }
             });
