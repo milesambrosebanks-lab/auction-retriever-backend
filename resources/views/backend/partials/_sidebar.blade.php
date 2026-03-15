@@ -11,12 +11,12 @@
             </a>
         </div>
 
-        <div class="main-sidemenu">
+        {{-- <div class="main-sidemenu">
             <input class="form-control form-control-dark w-100 border-0"
                    id="menuSearching" type="text"
                    placeholder="Search menu..." aria-label="Search">
             <ul id="customMenulist" class="side-menu"></ul>
-        </div>
+        </div> --}}
 
         <div class="main-sidemenu">
             <ul class="side-menu mt-2">
