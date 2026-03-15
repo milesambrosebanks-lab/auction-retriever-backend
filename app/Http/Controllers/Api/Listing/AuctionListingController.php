@@ -16,7 +16,11 @@ class AuctionListingController extends Controller
     // ── Browse listings with filters ────────────────────────────────────────
     public function index(Request $request)
     {
-        // dd($request->all());
+
+        $current_page = 1;
+        $per_page = 18;
+        $paginate = false;
+
         $query = AuctionListing::query();
 
         // ── Filters ──────────────────────────────────────────────────────
@@ -33,11 +37,11 @@ class AuctionListingController extends Controller
         }
 
         if ($request->filled('bid_min')) {
-            $query->where('bid_amount', '>=', $request->bid_min);
+            $query->where('current_bid', '>=', $request->bid_min);
         }
 
         if ($request->filled('bid_max')) {
-            $query->where('bid_amount', '<=', $request->bid_max);
+            $query->where('current_bid', '<=', $request->bid_max);
         }
 
         if ($request->filled('auction_date_from')) {
@@ -61,20 +65,45 @@ class AuctionListingController extends Controller
             $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
         }
 
-        $listings = $query->paginate($request->input('per_page', 15));
+        if ($request->filled('per_page')) {
+            $per_page = $request->per_page;
+            $paginate = true;
+        }
+        if ($request->filled('current_page')) {
+            $current_page = $request->current_page;
+            $paginate = true;
+        }
+        if ($paginate) {
+            $data = $query->paginate($per_page, ['*'], 'page', $current_page);
+        } else {
+            $data = $query->orderBy('id', 'desc')->get();
+        }
 
-        return AuctionListingResource::collection($listings)->additional([
-            'filters' => [
-                'states'  => AuctionListing::select('state')->distinct()->whereNotNull('state')->orderBy('state')->pluck('state'),
-                'types'   => AuctionListing::select('type')->distinct()->whereNotNull('type')->orderBy('type')->pluck('type'),
-            ],
-            'meta' => [
-                'total'       => $listings->total(),
-                'per_page'    => $listings->perPage(),
-                'current_page'=> $listings->currentPage(),
-                'last_page'   => $listings->lastPage(),
-            ]
-        ]);
+        $listings = AuctionListingResource::collection($data);
+        $filters = [
+            'states'  => AuctionListing::select('state')->distinct()->whereNotNull('state')->orderBy('state')->pluck('state'),
+            'types'   => AuctionListing::select('type')->distinct()->whereNotNull('type')->orderBy('type')->pluck('type'),
+        ];
+        $data = ['data' => $listings, 'filters' => $filters];
+
+        return jsonResponse(true, 'data retrive successfully done', 200, $data, $paginate, $listings);
+
+
+
+        // $listings = $query->paginate($request->input('per_page', 15));
+
+        // return AuctionListingResource::collection($listings)->additional([
+        //     'filters' => [
+        //         'states'  => AuctionListing::select('state')->distinct()->whereNotNull('state')->orderBy('state')->pluck('state'),
+        //         'types'   => AuctionListing::select('type')->distinct()->whereNotNull('type')->orderBy('type')->pluck('type'),
+        //     ],
+        //     'meta' => [
+        //         'total'       => $listings->total(),
+        //         'per_page'    => $listings->perPage(),
+        //         'current_page' => $listings->currentPage(),
+        //         'last_page'   => $listings->lastPage(),
+        //     ]
+        // ]);
     }
 
     // ── Single listing ───────────────────────────────────────────────────────
@@ -117,19 +146,89 @@ class AuctionListingController extends Controller
     // ── User's saved listings ─────────────────────────────────────────────────
     public function savedListings(Request $request)
     {
-        $listings = AuctionListing::whereHas('savedByUsers', function ($q) {
-            $q->where('user_id', auth('api')->id());
-        })
-        ->paginate($request->input('per_page', 15));
+        $current_page = 1;
+        $per_page = 18;
+        $paginate = false;
 
-        return AuctionListingResource::collection($listings)->additional([
-            'meta' => [
-                'total'        => $listings->total(),
-                'per_page'     => $listings->perPage(),
-                'current_page' => $listings->currentPage(),
-                'last_page'    => $listings->lastPage(),
-            ]
-        ]);
+        $query = AuctionListing::whereHas('savedByUsers', function ($q) {
+            $q->where('user_id', auth('api')->id());
+        });
+        // ->paginate($request->input('per_page', 15));
+
+        // ── Filters ──────────────────────────────────────────────────────
+        if ($request->filled('state')) {
+            $query->where('state', $request->state);
+        }
+
+        if ($request->filled('county')) {
+            $query->where('county', 'like', '%' . $request->county . '%');
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('bid_min')) {
+            $query->where('current_bid', '>=', $request->bid_min);
+        }
+
+        if ($request->filled('bid_max')) {
+            $query->where('current_bid', '<=', $request->bid_max);
+        }
+
+        if ($request->filled('auction_date_from')) {
+            $query->whereDate('auction_date', '>=', $request->auction_date_from);
+        }
+
+        if ($request->filled('auction_date_to')) {
+            $query->whereDate('auction_date', '<=', $request->auction_date_to);
+        }
+
+        if ($request->filled('keyword')) {
+            $query->where('title', 'like', '%' . $request->keyword . '%');
+        }
+
+        // ── Sorting ───────────────────────────────────────────────────────
+        $sortBy  = $request->input('sort_by', 'scraped_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+
+        $allowedSorts = ['bid_amount', 'bid_count', 'auction_date', 'scraped_at', 'title'];
+        if (in_array($sortBy, $allowedSorts)) {
+            $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
+        }
+
+        if ($request->filled('per_page')) {
+            $per_page = $request->per_page;
+            $paginate = true;
+        }
+        if ($request->filled('current_page')) {
+            $current_page = $request->current_page;
+            $paginate = true;
+        }
+        if ($paginate) {
+            $data = $query->paginate($per_page, ['*'], 'page', $current_page);
+        } else {
+            $data = $query->orderBy('id', 'desc')->get();
+        }
+
+        $listings = AuctionListingResource::collection($data);
+
+        $filters = [
+            'states'  => AuctionListing::select('state')->distinct()->whereNotNull('state')->orderBy('state')->pluck('state'),
+            'types'   => AuctionListing::select('type')->distinct()->whereNotNull('type')->orderBy('type')->pluck('type'),
+        ];
+        $data = ['data' => $listings, 'filters' => $filters];
+
+        return jsonResponse(true, 'data retrive successfully done', 200, $data, $paginate, $listings);
+
+        // return AuctionListingResource::collection($listings)->additional([
+        //     'meta' => [
+        //         'total'        => $listings->total(),
+        //         'per_page'     => $listings->perPage(),
+        //         'current_page' => $listings->currentPage(),
+        //         'last_page'    => $listings->lastPage(),
+        //     ]
+        // ]);
     }
 
     // ── Filter options (state, county, type list) ─────────────────────────────
@@ -139,20 +238,20 @@ class AuctionListingController extends Controller
             'success' => true,
             'data'    => [
                 'states'  => AuctionListing::select('state')
-                                ->distinct()
-                                ->whereNotNull('state')
-                                ->orderBy('state')
-                                ->pluck('state'),
-                'counties'=> AuctionListing::select('county')
-                                ->distinct()
-                                ->whereNotNull('county')
-                                ->orderBy('county')
-                                ->pluck('county'),
+                    ->distinct()
+                    ->whereNotNull('state')
+                    ->orderBy('state')
+                    ->pluck('state'),
+                'counties' => AuctionListing::select('county')
+                    ->distinct()
+                    ->whereNotNull('county')
+                    ->orderBy('county')
+                    ->pluck('county'),
                 'types'   => AuctionListing::select('type')
-                                ->distinct()
-                                ->whereNotNull('type')
-                                ->orderBy('type')
-                                ->pluck('type'),
+                    ->distinct()
+                    ->whereNotNull('type')
+                    ->orderBy('type')
+                    ->pluck('type'),
                 'bid_range' => [
                     'min' => AuctionListing::min('bid_amount'),
                     'max' => AuctionListing::max('bid_amount'),
@@ -161,7 +260,7 @@ class AuctionListingController extends Controller
         ]);
     }
 
-       public function delete($id)
+    public function delete($id)
     {
         $listing = SavedListing::where('user_id', auth('api')->user()->id)->where('auction_listing_id', $id)->first();
         if (!$listing) {
@@ -171,6 +270,4 @@ class AuctionListingController extends Controller
 
         return $this->success($listing, 'Listing deleted successfully', 200);
     }
-
-
 }

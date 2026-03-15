@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('auction_id')->unique()->nullable();
             $table->string('title')->nullable();
             $table->string('type')->nullable();
-            $table->string('current_bid')->nullable();
+            $table->decimal('current_bid', 8, 2)->nullable();
             $table->integer('bid_count')->default(0);
             $table->string('time_left')->nullable();
             $table->string('image_url')->nullable();

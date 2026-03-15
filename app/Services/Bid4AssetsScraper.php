@@ -298,7 +298,10 @@ class Bid4AssetsScraper
                     ? $row->filter('td.w140')->text() : '');
 
                 $w100       = $row->filter('td.w100');
-                $currentBid = $w100->count() > 0 ? trim($w100->eq(0)->text()) : '';
+                // $currentBid = $w100->count() > 0 ? trim($w100->eq(0)->text()) : '';
+                $currentBidRaw = $w100->count() > 0 ? trim($w100->eq(0)->text()) : '';
+                $currentBid = preg_replace('/[^0-9.]/', '', $currentBidRaw);
+                $currentBid = $currentBid !== '' && is_numeric($currentBid) ? (float)$currentBid : 0.0;
                 $bidCount   = $w100->count() > 1 ? (int) trim($w100->eq(1)->text()) : 0;
                 $timeLeft   = $w100->count() > 2 ? trim($w100->eq(2)->text()) : '';
 

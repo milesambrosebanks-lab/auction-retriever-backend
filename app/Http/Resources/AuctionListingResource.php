@@ -8,7 +8,7 @@ class AuctionListingResource extends JsonResource
 {
     public function toArray($request): array
     {
-        $userId = auth('sanctum')->id();
+        $userId = auth('api')->id();
 
         return [
             'id'           => $this->id,
@@ -17,7 +17,7 @@ class AuctionListingResource extends JsonResource
             'type'         => $this->type,
             'state'        => $this->state,
             'county'       => $this->county,
-            'current_bid'  => $this->current_bid,
+            'current_bid'  => $this->current_bid ? (float) number_format($this->current_bid,2): 0,
             'bid_amount'   => $this->bid_amount,
             'bid_count'    => $this->bid_count,
             'time_left'    => $this->time_left,
