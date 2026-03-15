@@ -92,7 +92,7 @@ Route::group(['middleware' => ['web-admin']], function () {
         Route::get('/', 'index')->name('index');
         Route::get('/show/{id}', 'show')->name('show');
         Route::post('/scrape', 'scrapeNow')->name('scrape');
-         Route::get('/scrape-logs', 'scrapeLogs')->name('scrape.logs');      // ← page
+        Route::get('/scrape-logs', 'scrapeLogs')->name('scrape.logs');      // ← page
         Route::get('/scrape-logs/data', 'scrapeLogsData')->name('scrape.logs.data'); // ← datatable ajax
     });
 
@@ -196,6 +196,9 @@ Route::group(['middleware' => ['web-admin']], function () {
     Route::controller(AdminSubsciptionController::class)->prefix('subscriptions')->name('subscriptions.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/{id}/view', 'show')->name('show');
+        Route::post('/{id}/pause', 'pause')->name('pause');
+        Route::post('/{id}/resume', 'resume')->name('resume');
+        Route::post('/{id}/cancel', 'cancel')->name('cancel');
     });
 
 
