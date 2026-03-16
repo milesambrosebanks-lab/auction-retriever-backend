@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Helpers\Helper;
 use App\Mail\OtpMail;
+use App\Mail\VerifyEmailMail;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -21,7 +23,7 @@ class ResetPasswordController extends Controller
     public function __construct()
     {
         parent::__construct();
-        $this->select = ['id', 'name', 'email', 'avatar'];   
+        $this->select = ['id', 'name', 'email', 'avatar'];
     }
     public function forgotPassword(Request $request)
     {
@@ -34,7 +36,15 @@ class ResetPasswordController extends Controller
             $user  = User::where('email', $email)->first();
 
             if ($user) {
-                Mail::to($email)->send(new OtpMail($otp, $user, 'Reset Your Password'));
+                $verificationUrl = URL::temporarySignedRoute(
+                    'generate.token',
+                    now()->addHours(24),
+                    ['id' => $user->id, 'email' => $user->email]
+                );
+
+                // Mail::to($email)->send(new OtpMail($otp, 'password_reset'));
+                Mail::to($user->email)->send(new VerifyEmailMail($user->name, $verificationUrl));
+
 
                 $user->otp            = $otp;
                 $user->otp_expires_at = Carbon::now()->addMinutes(60);
@@ -44,7 +54,6 @@ class ResetPasswordController extends Controller
             } else {
                 return Helper::jsonErrorResponse('Invalid Email Address', 404);
             }
-
         } catch (Exception $e) {
             return Helper::jsonErrorResponse($e->getMessage(), 500);
         }
@@ -56,14 +65,14 @@ class ResetPasswordController extends Controller
             'email' => 'required|email|exists:users,email',
             'otp'   => 'required|digits:6',
         ]);
-        
+
         try {
             $email = $request->input('email');
             $otp   = $request->input('otp');
             $user = User::where('email', $email)->first();
 
             if (!$user) {
-                return Helper::jsonErrorResponse( 'User not found', 404);
+                return Helper::jsonErrorResponse('User not found', 404);
             }
 
             if (Carbon::parse($user->otp_expires_at)->isPast()) {
@@ -106,11 +115,11 @@ class ResetPasswordController extends Controller
 
             $user = User::where('email', $email)->first();
             if (!$user) {
-                return Helper::jsonErrorResponse( 'User not found', 404);
+                return Helper::jsonErrorResponse('User not found', 404);
             }
 
             if (!empty($user->reset_password_token) && $user->reset_password_token === $request->token && $user->reset_password_token_expire_at >= Carbon::now()) {
-                
+
                 $user->password = Hash::make($newPassword);
                 $user->reset_password_token = null;
                 $user->reset_password_token_expire_at = null;
@@ -118,10 +127,44 @@ class ResetPasswordController extends Controller
                 $user->save();
 
                 return Helper::jsonResponse(true, 'Password reset successfully.', 200);
-            }else{
+            } else {
                 return Helper::jsonErrorResponse('Invalid Token', 419);
             }
+        } catch (Exception $e) {
+            return Helper::jsonErrorResponse($e->getMessage(), 500);
+        }
+    }
+    public function Generate_RP_Link(Request $request, $id)
+    {
+        // Signed URL valid কিনা check
+        if (!$request->hasValidSignature()) {
+            return Helper::jsonErrorResponse('Invalid or expired verification link.', 422);
+        }
 
+        $user = User::findOrFail($id);
+
+        // // Already verified?
+        // if (!empty($user->otp_verified_at)) {
+        //     return Helper::jsonErrorResponse('Email already verified.', 409);
+        // }
+
+
+        try {
+
+            $token = Str::random(60);
+            $user->otp = null;
+            $user->otp_expires_at = null;
+            $user->reset_password_token = $token;
+            $user->reset_password_token_expire_at = Carbon::now()->addHour();
+
+            $user->save();
+
+            return response()->json([
+                'status'     => true,
+                'message'    => 'OTP verified successfully.',
+                'code'       => 200,
+                'token'      => $token,
+            ]);
         } catch (Exception $e) {
             return Helper::jsonErrorResponse($e->getMessage(), 500);
         }

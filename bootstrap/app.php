@@ -88,7 +88,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     return Helper::jsonErrorResponse($e->getMessage(), 403);
                 }
                 // Dynamically determine the status code if available
-                $statusCode = method_exists($e, 'getStatusCode') ? $e->getCode() : 500;
+                $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
 
                 return Helper::jsonErrorResponse($e->getMessage(), $statusCode);
             } else {

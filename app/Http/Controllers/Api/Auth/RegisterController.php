@@ -11,12 +11,15 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use App\Mail\OtpMail;
+use App\Mail\VerifyEmailMail;
+use App\Mail\WelcomeMail;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\RegistrationNotification;
 use App\Services\StripeService;
 use Illuminate\Support\Facades\DB;
 use App\Traits\SMS;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 class RegisterController extends Controller
 {
@@ -39,6 +42,7 @@ class RegisterController extends Controller
             // 'role'       => 'required|exists:roles,id',
             // 'agree'      => 'required|in:true',
         ]);
+
         try {
             DB::beginTransaction();
             do {
@@ -55,6 +59,11 @@ class RegisterController extends Controller
                 'status'             => 'active',
                 'last_activity_at'   => Carbon::now()
             ]);
+            $verificationUrl = URL::temporarySignedRoute(
+                'verify.email',
+                now()->addHours(24),
+                ['id' => $user->id, 'email' => $user->email]
+            );
 
             DB::table('model_has_roles')->insert([
                 // 'role_id' => $request->input('role'),
@@ -84,7 +93,7 @@ class RegisterController extends Controller
 
             $data = User::select($this->select)->with('roles')->find($user->id);
 
-            Mail::to($user->email)->send(new OtpMail($user->otp, $user, 'Verify Your Email Address'));
+            Mail::to($user->email)->send(new VerifyEmailMail($user->name, $verificationUrl));
 
             DB::commit();
 
@@ -115,7 +124,10 @@ class RegisterController extends Controller
             'email' => 'required|email|exists:users,email',
             'otp'   => 'required|digits:6',
         ]);
+        DB::beginTransaction();
+
         try {
+
             $user = User::where('email', $request->input('email'))->first();
 
             //! Check if email has already been verified
@@ -138,6 +150,8 @@ class RegisterController extends Controller
             $user->otp               = null;
             $user->otp_expires_at    = null;
             $user->save();
+
+
             try {
                 if (!$user->stripe_customer_id) {
 
@@ -150,7 +164,11 @@ class RegisterController extends Controller
                     ]);
                     Log::info($customer->id);
                 }
+
+                Mail::to($user->email)->send(new WelcomeMail($user->name));
+                DB::commit();
             } catch (Exception $e) {
+
                 Log::info($e->getMessage());
             }
 
@@ -161,7 +179,48 @@ class RegisterController extends Controller
                 'role' => $user->role,
             ]);
         } catch (Exception $e) {
+            DB::rollBack();
             return Helper::jsonErrorResponse($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function verifyEmailLink(Request $request, $id)
+    {
+        // Signed URL valid কিনা check
+        if (!$request->hasValidSignature()) {
+            return Helper::jsonErrorResponse('Invalid or expired verification link.', 422);
+        }
+
+        $user = User::findOrFail($id);
+
+        // Already verified?
+        if (!empty($user->otp_verified_at)) {
+            return Helper::jsonErrorResponse('Email already verified.', 409);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Verify
+            $user->otp_verified_at = now();
+            $user->otp             = null;
+            $user->otp_expires_at  = null;
+            $user->save();
+
+            // Stripe customer create
+            if (!$user->stripe_id) {
+                $stripe   = new StripeService();
+                $customer = $stripe->createCustomer($user);
+                $user->update(['stripe_id' => $customer->id]);
+            }
+
+            DB::commit();
+
+            // Frontend এ redirect করো
+            return redirect(config('app.frontend_url') . '/login');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return Helper::jsonErrorResponse($e->getMessage(), 500);
         }
     }
 
@@ -185,6 +244,12 @@ class RegisterController extends Controller
                 return Helper::jsonErrorResponse('Email already verified.', 409);
             }
 
+            $verificationUrl = URL::temporarySignedRoute(
+                'verify.email',
+                now()->addHours(24),
+                ['id' => $user->id, 'email' => $user->email]
+            );
+
             $newOtp               = rand(100000, 999999);
             $otpExpiresAt         = Carbon::now()->addMinutes(60);
             $user->otp            = $newOtp;
@@ -192,7 +257,7 @@ class RegisterController extends Controller
             $user->save();
 
             //* Send the new OTP to the user's email
-            Mail::to($user->email)->send(new OtpMail($newOtp, $user, 'Verify Your Email Address'));
+            Mail::to($user->email)->send(new VerifyEmailMail($user->name, $verificationUrl));
 
             return Helper::jsonResponse(true, 'A new OTP has been sent to your email.', 200);
         } catch (Exception $e) {

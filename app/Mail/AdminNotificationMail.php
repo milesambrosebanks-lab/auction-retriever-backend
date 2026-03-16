@@ -2,23 +2,26 @@
 
 namespace App\Mail;
 
+
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
-class WelcomeMail extends Mailable
+class AdminNotificationMail extends Mailable
 {
     public function __construct(
-        public string $name
+        public string $subject,
+        public string $message,
+        public array  $data = []
     ) {}
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Welcome to MilesBanks!');
+        return new Envelope(subject: '[Admin] ' . $this->subject);
     }
 
     public function content(): Content
     {
-        return new Content(view: 'emails.welcome');
+        return new Content(view: 'emails.admin-notification');
     }
 }

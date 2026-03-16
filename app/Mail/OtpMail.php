@@ -2,52 +2,31 @@
 
 namespace App\Mail;
 
-use App\Models\User;
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
 
-class OtpMail extends Mailable {
-    use Queueable, SerializesModels;
-    public int $otp;
-    public User $user;
-    public string $header_message;
-    /**
-     * Create a new message instance.
-     */
-    public function __construct(int $otp,User $user, string $message) {
-        $this->otp = $otp;
-        $this->user = $user;
-        $this->header_message= $message;
+class OtpMail extends Mailable
+{
+    public function __construct(
+        public string  $otp = '',
+        public string  $type = 'registration',
+        public ?string $verificationUrl = null // ← optional
+    ) {}
+
+    public function envelope(): Envelope
+    {
+        $subject = match(true) {
+            !is_null($this->verificationUrl) => 'Verify your email — MilesBanks',
+            $this->type === 'password_reset' => 'Your password reset OTP',
+            default                          => 'Verify your email — MilesBanks',
+        };
+
+        return new Envelope(subject: $subject);
     }
 
-    /**
-     * Get the message envelope.
-     */
-    public function envelope(): Envelope {
-        return new Envelope(
-            subject: $this->header_message,
-        );
-    }
-
-    /**
-     * Get the message content definition.
-     */
-    public function content(): Content {
-        return new Content(
-            view: 'mail.otp-mail',
-        );
-    }
-
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, Attachment>
-     */
-    public function attachments(): array {
-        return [];
+    public function content(): Content
+    {
+        return new Content(view: 'emails.otp');
     }
 }

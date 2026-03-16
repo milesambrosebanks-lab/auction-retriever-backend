@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\TrackingSettingController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
@@ -56,13 +57,10 @@ Route::middleware('auth:api')->prefix('auth')->group(function () {
     Route::get('/subscription/status', [SubscriptionController::class, 'subscriptionStatus']);
 });
 
-// Route::middleware('auth:api')->prefix('auction')->group(function () {
-//     Route::get('/', [ListingController::class, 'index']);
-//     Route::get('/{id}/view', [ListingController::class, 'view']);
-//     Route::post('/{id}/save', [ListingController::class, 'saveListing']);
-//     Route::get('/save-listing', [ListingController::class, 'saveListingView']);
-//     Route::post('/{id}/delete', [ListingController::class, 'delete']);
-// });
+Route::middleware(['auth:api'])->prefix('admin')->group(function () {
+    Route::get('tracking-settings', [TrackingSettingController::class, 'show']);
+    Route::post('tracking-settings', [TrackingSettingController::class, 'update']);
+});
 
 Route::middleware('auth:api')->prefix('auction')->group(function () {
     Route::get('/', [AuctionListingController::class, 'index']);
@@ -115,6 +113,13 @@ Route::group(['middleware' => 'guest:api'], function ($router) {
     Route::post('/reset-password', [ResetPasswordController::class, 'ResetPassword']);
     //social login
     Route::post('/social-login', [SocialLoginController::class, 'SocialLogin']);
+    Route::get('verify-email/{id}', [RegisterController::class, 'verifyEmailLink'])
+        ->name('verify.email')
+        ->middleware('signed');
+
+    Route::get('reset-password/{id}', [ResetPasswordController::class, 'Generate_RP_Link'])
+        ->name('generate.token')
+        ->middleware('signed');
 });
 
 Route::group(['middleware' => ['auth:api', 'api-otp']], function ($router) {
