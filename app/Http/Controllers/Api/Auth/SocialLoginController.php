@@ -17,7 +17,7 @@ class SocialLoginController extends Controller
     public function __construct()
     {
         parent::__construct();
-        $this->select = ['id', 'name', 'email', 'avatar'];   
+        $this->select = ['id', 'name', 'email', 'avatar'];
     }
 
     public function RedirectToProvider($provider)
@@ -36,7 +36,7 @@ class SocialLoginController extends Controller
         $request->validate([
             'token'         => 'required',
             'provider'      => 'required|in:google,facebook,apple',
-            'role'          => 'required|in:user,trainer',
+            'role'          => 'required|in:customer',
         ]);
 
         try {
@@ -95,5 +95,34 @@ class SocialLoginController extends Controller
         } catch (Exception $e) {
             return Helper::jsonResponse(false, 'Something went wrong', 500, ['error' => $e->getMessage()]);
         }
+    }
+
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback()
+    {
+        $googleUser = Socialite::driver('google')->stateless()->user();
+
+        $user = User::where('email', $googleUser->email)->first();
+
+        if (!$user) {
+            $user = User::create([
+                'name' => $googleUser->name,
+                'email' => $googleUser->email,
+                'google_id' => $googleUser->id,
+                'password' => bcrypt(str()->random(16))
+            ]);
+        }
+
+        Auth::login($user);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Login successful',
+            'user' => $user
+        ]);
     }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\ResetPasswordController;
+use App\Http\Controllers\Api\Auth\SocialAuthController;
 use App\Http\Controllers\Api\Auth\UserController;
 use App\Http\Controllers\Api\Auth\SocialLoginController;
 use App\Http\Controllers\Api\ChatController;
@@ -113,6 +114,9 @@ Route::group(['middleware' => 'guest:api'], function ($router) {
     Route::post('/reset-password', [ResetPasswordController::class, 'ResetPassword']);
     //social login
     Route::post('/social-login', [SocialLoginController::class, 'SocialLogin']);
+    Route::post('google/callback',  [SocialAuthController::class, 'googleCallback']);
+    Route::post('apple/callback',   [SocialAuthController::class, 'appleCallback']);
+
     Route::get('verify-email/{id}', [RegisterController::class, 'verifyEmailLink'])
         ->name('verify.email')
         ->middleware('signed');
