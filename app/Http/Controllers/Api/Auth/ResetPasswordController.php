@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
@@ -105,15 +106,15 @@ class ResetPasswordController extends Controller
     public function ResetPassword(Request $request)
     {
         $request->validate([
-            'email'    => 'required|email|exists:users,email',
+            // 'email'    => 'required|email|exists:users,email',
             'token'    => 'required|string',
             'password' => 'required|string|min:6|confirmed',
         ]);
         try {
-            $email       = $request->input('email');
+            $token       = $request->input('token');
             $newPassword = $request->input('password');
 
-            $user = User::where('email', $email)->first();
+            $user = User::where('reset_password_token', $token)->first();
             if (!$user) {
                 return Helper::jsonErrorResponse('User not found', 404);
             }
@@ -143,12 +144,6 @@ class ResetPasswordController extends Controller
 
         $user = User::findOrFail($id);
 
-        // // Already verified?
-        // if (!empty($user->otp_verified_at)) {
-        //     return Helper::jsonErrorResponse('Email already verified.', 409);
-        // }
-
-
         try {
 
             $token = Str::random(60);
@@ -159,14 +154,20 @@ class ResetPasswordController extends Controller
 
             $user->save();
 
-            return response()->json([
-                'status'     => true,
-                'message'    => 'OTP verified successfully.',
-                'code'       => 200,
-                'token'      => $token,
-            ]);
+            return redirect(config('app.frontend_url') . '/auth/reset-password?token='.$token);
+
+            // return response()->json([
+            //     'status'     => true,
+            //     'message'    => 'OTP verified successfully.',
+            //     'code'       => 200,
+            //     'token'      => $token,
+            // ]);
         } catch (Exception $e) {
-            return Helper::jsonErrorResponse($e->getMessage(), 500);
+
+            Log::info($e->getMessage());
+            return redirect(config('app.frontend_url') . '/error?message=failed! invalid token');
+
+            // return Helper::jsonErrorResponse($e->getMessage(), 500);
         }
     }
 }

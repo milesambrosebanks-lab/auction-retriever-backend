@@ -188,14 +188,16 @@ class RegisterController extends Controller
     {
         // Signed URL valid কিনা check
         if (!$request->hasValidSignature()) {
-            return Helper::jsonErrorResponse('Invalid or expired verification link.', 422);
+            // return Helper::jsonErrorResponse('Invalid or expired verification link.', 422);
+            return redirect(config('app.frontend_url') . '/error?message=Invalid or expired verification link');
         }
 
         $user = User::findOrFail($id);
 
         // Already verified?
         if (!empty($user->otp_verified_at)) {
-            return Helper::jsonErrorResponse('Email already verified.', 409);
+            // return Helper::jsonErrorResponse('Email already verified.', 409);
+            return redirect(config('app.frontend_url') . '/auth');
         }
 
         DB::beginTransaction();
@@ -216,8 +218,7 @@ class RegisterController extends Controller
             DB::commit();
 
             // Frontend এ redirect করো
-            return redirect(config('app.frontend_url') . '/login');
-
+            return redirect(config('app.frontend_url') . '/auth');
         } catch (Exception $e) {
             DB::rollBack();
             return Helper::jsonErrorResponse($e->getMessage(), 500);
