@@ -73,9 +73,7 @@ Route::middleware('auth:api')->prefix('auction')->group(function () {
     Route::post('/saved/{id}/delete', [AuctionListingController::class, 'delete']);
 });
 
-/*
-# Post
-*/
+
 Route::middleware(['auth:api'])->controller(PostController::class)->prefix('auth/post')->group(function () {
     Route::get('/', 'index');
     Route::post('/store', 'store');
@@ -96,9 +94,6 @@ Route::middleware(['auth:api'])->controller(ImageController::class)->prefix('aut
 Route::get('dynamic/page', [PageController::class, 'index']);
 Route::get('dynamic/page/show/{slug}', [PageController::class, 'show']);
 
-/*
-# Auth Route
-*/
 
 Route::group(['middleware' => 'guest:api'], function ($router) {
     //register

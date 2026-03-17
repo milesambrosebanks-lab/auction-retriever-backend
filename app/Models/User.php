@@ -57,7 +57,7 @@ class User extends Authenticatable implements JWTSubject
     ];
 
     protected $appends = [
-        'role',
+        // 'role',
         'is_online',
         // 'balance'
     ];

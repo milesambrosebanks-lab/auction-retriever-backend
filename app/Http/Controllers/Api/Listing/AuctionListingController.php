@@ -8,7 +8,7 @@ use App\Models\AuctionListing;
 use App\Models\SavedListing;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponse;
-
+use Illuminate\Support\Facades\Log;
 
 class AuctionListingController extends Controller
 {
@@ -116,31 +116,34 @@ class AuctionListingController extends Controller
     // ── Save listing ──────────────────────────────────────────────────────────
     public function save(int $id)
     {
-        $listing = AuctionListing::findOrFail($id);
+        try {
+            // $listing = AuctionListing::findOrFail($id);
 
-        $saved = SavedListing::where('user_id', auth('api')->id())
-            ->where('auction_listing_id', $id)
-            ->first();
+            $saved = SavedListing::where('user_id', auth('api')->id())
+                ->where('auction_listing_id', $id)
+                ->first();
 
-        if ($saved) {
-            $saved->delete();
-            return response()->json([
-                'success'  => true,
-                'saved'    => false,
-                'message'  => 'Listing removed from saved.',
+            if ($saved) {
+                $saved->delete();
+                return jsonResponse(true, 'Listing removed from saved.', 200, [
+                    'saved'    => false,
+                    'message'  => 'Listing removed from saved.',
+                ]);
+            }
+
+            SavedListing::create([
+                'user_id'            => auth('api')->id(),
+                'auction_listing_id' => $id,
             ]);
+
+            return jsonResponse(true, 'Listing saved successfully.', 200, [
+                'saved'   => true,
+                'message' => 'Listing saved successfully.',
+            ]);
+        } catch (\Throwable $th) {
+            Log::info($th->getMessage());
+            return jsonErrorResponse('Listing saved successfully.', 500, []);
         }
-
-        SavedListing::create([
-            'user_id'            => auth('api')->id(),
-            'auction_listing_id' => $id,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'saved'   => true,
-            'message' => 'Listing saved successfully.',
-        ]);
     }
 
     // ── User's saved listings ─────────────────────────────────────────────────

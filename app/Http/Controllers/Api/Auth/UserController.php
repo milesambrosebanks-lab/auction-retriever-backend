@@ -15,12 +15,12 @@ class UserController extends Controller
     public function __construct()
     {
         parent::__construct();
-        $this->select = ['id', 'name', 'email', 'avatar', 'otp_verified_at', 'last_activity_at'];   
+        $this->select = ['id', 'name', 'email', 'avatar', 'last_activity_at'];
     }
 
     public function me()
-    {   
-        $data = User::select($this->select)->with('roles')->find(auth('api')->user()->id);     
+    {
+        $data = User::select($this->select)->find(auth('api')->user()->id);
         return Helper::jsonResponse(true, 'User details fetched successfully', 200, $data);
     }
 
@@ -33,6 +33,7 @@ class UserController extends Controller
             'password' => 'nullable|string|min:6|confirmed',
             'address' => 'nullable|string|max:255',
         ]);
+
 
         if (!empty($validatedData['password'])) {
             $validatedData['password'] = bcrypt($validatedData['password']);
@@ -53,7 +54,7 @@ class UserController extends Controller
 
         $user->update($validatedData);
 
-        $data = User::select($this->select)->with('roles')->find($user->id);
+        $data = User::select($this->select)->find($user->id);
         return Helper::jsonResponse(true, 'Profile updated successfully', 200, $data);
     }
 
@@ -68,7 +69,7 @@ class UserController extends Controller
         }
         $validatedData['avatar'] = Helper::fileUpload($request->file('avatar'), 'user/avatar', getFileName($request->file('avatar')));
         $user->update($validatedData);
-        $data = User::select($this->select)->with('roles')->find($user->id);
+        $data = User::select($this->select)->find($user->id);
         return Helper::jsonResponse(true, 'Avatar updated successfully', 200, $data);
     }
 
@@ -93,5 +94,5 @@ class UserController extends Controller
         $user->forceDelete();
         return Helper::jsonResponse(true, 'Profile deleted successfully', 200);
     }
-    
+
 }
