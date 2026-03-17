@@ -106,16 +106,16 @@ class RegisterController extends Controller
 
             return response()->json([
                 'status'     => true,
-                'message'    => 'User register in successfully.',
+                'message'    => 'A verification link has been sent to your email address. Please check your inbox to verify your account.',
                 'code'       => 200,
-                'token_type' => 'bearer',
+                // 'token_type' => 'bearer',
                 // 'token'      => $token,
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
                 'data' => [
                     'name' => $data->name,
                     'email' => $data->email,
                     'role' => $data->role,
-                    'otp' => $data->otp,
+                    // 'otp' => $data->otp,
                 ]
             ], 200);
         } catch (Exception $e) {
