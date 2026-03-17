@@ -28,7 +28,7 @@ class Helper
         return 'uploads/' . $folder . '/' . $imageName;
     }
 
-    
+
 
     //! File or Image Delete
     public static function fileDelete(string $path): void
@@ -98,9 +98,9 @@ class Helper
     {
         $response = [
             'status'  => false,
-            'message' => $message,
             'code'    => $code,
-            't-errors'  => $errors,
+            'message' => $message,
+            'errors'  => $errors,
         ];
         return response()->json($response, $code);
     }

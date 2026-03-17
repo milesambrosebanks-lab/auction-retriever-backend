@@ -29,7 +29,7 @@ class LoginController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return Helper::jsonResponse(false, 'Validation failed', 422, $validator->errors());
+                return validationError($validator);
             }
 
             $user = User::where('email', $request->email);

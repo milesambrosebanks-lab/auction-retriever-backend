@@ -114,6 +114,7 @@ Route::group(['middleware' => 'guest:api'], function ($router) {
     Route::post('/reset-password', [ResetPasswordController::class, 'ResetPassword']);
     //social login
     Route::post('/social-login', [SocialLoginController::class, 'SocialLogin']);
+
     Route::post('google/callback',  [SocialAuthController::class, 'googleCallback']);
     Route::post('apple/callback',   [SocialAuthController::class, 'appleCallback']);
 

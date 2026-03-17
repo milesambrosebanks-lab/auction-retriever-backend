@@ -105,18 +105,24 @@ class ResetPasswordController extends Controller
 
     public function ResetPassword(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             // 'email'    => 'required|email|exists:users,email',
-            'token'    => 'required|string',
+            'token'    => 'required|string|exists:users,reset_password_token',
             'password' => 'required|string|min:6|confirmed',
         ]);
+
+        if ($validator->fails()) {
+            return validationError($validator);
+        }
+
         try {
             $token       = $request->input('token');
             $newPassword = $request->input('password');
 
             $user = User::where('reset_password_token', $token)->first();
+
             if (!$user) {
-                return Helper::jsonErrorResponse('User not found', 404);
+                return Helper::jsonErrorResponse('The Token User not Found !', 404);
             }
 
             if (!empty($user->reset_password_token) && $user->reset_password_token === $request->token && $user->reset_password_token_expire_at >= Carbon::now()) {
@@ -154,7 +160,7 @@ class ResetPasswordController extends Controller
 
             $user->save();
 
-            return redirect(config('app.frontend_url') . '/auth/reset-password?token='.$token);
+            return redirect(config('app.frontend_url') . '/auth/reset-password?token=' . $token);
 
             // return response()->json([
             //     'status'     => true,

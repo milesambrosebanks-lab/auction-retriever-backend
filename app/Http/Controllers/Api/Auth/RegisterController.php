@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 use App\Traits\SMS;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
@@ -35,13 +36,17 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name'       => 'required|string|max:100',
             'email'      => 'required|string|email|max:150|unique:users',
             'password'   => 'required|string|min:6|confirmed',
             // 'role'       => 'required|exists:roles,id',
             // 'agree'      => 'required|in:true',
         ]);
+
+        if ($validator->fails()) {
+            return validationError($validator);
+        }
 
         try {
             DB::beginTransaction();
@@ -120,10 +125,16 @@ class RegisterController extends Controller
     }
     public function VerifyEmail(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
             'otp'   => 'required|digits:6',
         ]);
+
+        if ($validator->fails()) {
+            return validationError($validator);
+        }
+
+
         DB::beginTransaction();
 
         try {
@@ -230,9 +241,13 @@ class RegisterController extends Controller
     public function ResendOtp(Request $request)
     {
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
         ]);
+
+        if ($validator->fails()) {
+            return validationError($validator);
+        }
 
         try {
             $user = User::where('email', $request->input('email'))->first();

@@ -59,3 +59,29 @@ if (!function_exists('jsonResponse')) {
         return response()->json($response, $code);
     }
 }
+
+
+
+
+if (!function_exists('validationError')) {
+    function validationError($validator, $message = null)
+    {
+        $errors = [];
+
+        foreach ($validator->errors()->messages() as $field => $messages) {
+            foreach ($messages as $msg) {
+                $errors[] = [
+                    'field'   => $field,
+                    'message' => $msg
+                ];
+            }
+        }
+
+        return response()->json([
+            'status'  => false,
+            'code'    => 422,
+            'message' => $message ?? 'Some input fields are invalid. Please check and try again.',
+            'errors'  => $errors
+        ], 422);
+    }
+}
