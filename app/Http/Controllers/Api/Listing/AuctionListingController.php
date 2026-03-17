@@ -117,7 +117,7 @@ class AuctionListingController extends Controller
     public function save(int $id)
     {
         try {
-            // $listing = AuctionListing::findOrFail($id);
+             $listing = AuctionListing::findOrFail($id);
 
             $saved = SavedListing::where('user_id', auth('api')->id())
                 ->where('auction_listing_id', $id)
@@ -142,7 +142,9 @@ class AuctionListingController extends Controller
             ]);
         } catch (\Throwable $th) {
             Log::info($th->getMessage());
-            return jsonErrorResponse('Listing saved successfully.', 500, []);
+            return jsonErrorResponse('inavlid auction listing id', 500,[
+                'message'=>$th->getMessage(),
+            ]);
         }
     }
 

@@ -6,9 +6,9 @@ if (!function_exists('jsonErrorResponse')) {
     {
         $response = [
             'status'  => false,
-            'message' => $message,
             'code'    => $code,
-            't-errors'  => $errors,
+            'message' => $message,
+            'errors'  => $errors,
         ];
         return response()->json($response, $code);
     }
