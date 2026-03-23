@@ -66,7 +66,7 @@
                     <a class="side-menu__item {{ request()->routeIs('admin.my_plan.*') ? 'has-link active' : '' }}"
                        href="{{ route('admin.my_plan.index') }}">
                         <i class="fa-solid fa-tags side-menu__icon"></i>
-                        <span class="side-menu__label">Plans</span>
+                        <span class="side-menu__label">My Plans</span>
                     </a>
                 </li>
 
@@ -74,7 +74,7 @@
                     <a class="side-menu__item {{ request()->routeIs('admin.subscriptions.*') ? 'has-link active' : '' }}"
                        href="{{ route('admin.subscriptions.index') }}">
                         <i class="fa-solid fa-star side-menu__icon"></i>
-                        <span class="side-menu__label">Subscriptions</span>
+                        <span class="side-menu__label">Subscribers</span>
                     </a>
                 </li>
 
@@ -82,7 +82,7 @@
                     <a class="side-menu__item {{ request()->routeIs('admin.transaction.*') ? 'has-link active' : '' }}"
                        href="{{ route('admin.transaction.index') }}">
                         <i class="fa-solid fa-money-bill-transfer side-menu__icon"></i>
-                        <span class="side-menu__label">Transactions</span>
+                        <span class="side-menu__label">Revenue</span>
                     </a>
                 </li>
 
