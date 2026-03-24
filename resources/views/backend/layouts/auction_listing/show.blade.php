@@ -146,8 +146,8 @@
                                     <strong>{{ $listing->zip ?? '—' }}</strong>
                                 </div>
                                 <div class="col-md-4">
-                                    <p class="text-muted small mb-1">County</p>
-                                    <strong>{{ $listing->county ?? '—' }}</strong>
+                                    <p class="text-muted small mb-1">Country</p>
+                                    <strong>{{ $listing->country ?? '—' }}</strong>
                                 </div>
                                 <div class="col-md-4">
                                     <p class="text-muted small mb-1">Parcel Number</p>

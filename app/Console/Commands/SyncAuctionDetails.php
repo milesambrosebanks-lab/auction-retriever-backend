@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Services\Bid4AssetsDetailScraper;
 use App\Models\AuctionListing;
+use Illuminate\Support\Facades\Log;
 
 class SyncAuctionDetails extends Command
 {
@@ -25,6 +26,7 @@ class SyncAuctionDetails extends Command
             if ($detail) {
                 $this->info("Detail fetched for #{$id}:");
                 $this->table(['Field', 'Value'], collect($detail)->map(fn($v, $k) => [$k, $v ?? 'null'])->toArray());
+            // Log::info($detail);
 
                 AuctionListing::where('auction_id', $id)->update($detail);
                 $this->info("Saved to database!");
@@ -42,7 +44,7 @@ class SyncAuctionDetails extends Command
             $batch = (int) $this->option('batch');
         }
 
-        $pending = AuctionListing::whereNull('county')->whereNotNull('auction_id')->count();
+        $pending = AuctionListing::whereNull('state')->whereNotNull('auction_id')->count();
         $this->info("Pending listings without location: {$pending}");
 
         if ($pending === 0) {

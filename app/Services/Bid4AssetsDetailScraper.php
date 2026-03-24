@@ -89,7 +89,7 @@ class Bid4AssetsDetailScraper
         // যেগুলোর state নেই সেগুলো fetch করুন
         $listings = AuctionListing::whereNull('state')
             ->whereNotNull('auction_id')
-            ->limit($batchSize)
+            ->limit($batchSize)->orderBY('id','asc')
             ->get();
 
         $updated = 0;
@@ -97,6 +97,7 @@ class Bid4AssetsDetailScraper
         foreach ($listings as $listing) {
             $detail = $this->fetchDetail($listing->auction_id);
             Log::info("Fetched #{$listing->auction_id}: " . json_encode($detail));  // ← add করো
+            // Log::info($detail);
 
             if ($detail) {
                 $listing->update($detail);
@@ -116,6 +117,7 @@ class Bid4AssetsDetailScraper
         try {
             $response = $this->client->get("/auction/{$auctionId}");
             $html     = (string) $response->getBody();
+
             return $this->parseDetail($html);
         } catch (\Exception $e) {
             Log::warning("Detail fetch failed for #{$auctionId}: " . $e->getMessage());
@@ -131,11 +133,16 @@ class Bid4AssetsDetailScraper
 
             // ── Location: "Cherokee Village, AR 72529" ──────────────────
             $locationRaw = '';
+            $address = '';
+            $country = '';
 
-            $crawler->filter('.auction-info-summary table tr')->each(function (Crawler $row) use (&$locationRaw) {
+            $crawler->filter('.auction-info-summary table tr')->each(function (Crawler $row) use (&$locationRaw,&$address,&$country) {
                 $th = $row->filter('td strong');
+
+
                 if ($th->count() > 0 && str_contains($th->text(), 'Location')) {
                     $tds = $row->filter('td');
+
                     if ($tds->count() > 1) {
                         // ✅ html() নিয়ে <br> দিয়ে split করো — text() নয়
                         $rawHtml = $tds->eq(1)->html();
@@ -144,10 +151,23 @@ class Bid4AssetsDetailScraper
                         $lines   = array_filter($lines); // empty lines বাদ
 
                         // শেষ line এ "City, ST ZIP" থাকে
-                        $locationRaw = end($lines);
+                        //  $locationRaw = end($lines);
+                        // Parse address, city/state/zip, country from lines
+                        $address = trim($lines[0] ?? '');
+                        $country = trim(end($lines)); // 'United States'
+                        foreach ($lines as $line) {
+                            $line = trim($line);
+                            if (preg_match('/^(.+),\s*([A-Z]{2})\s*(\d{5})?$/i', $line)) {
+                                $locationRaw = $line;
+                                break;
+                            }
+                        }
+
+                        // Log::info($address);
                     }
                 }
             });
+
 
             // Method 2: item-specifics-table Address row থেকে (fallback)
             if (empty($locationRaw)) {
@@ -167,6 +187,8 @@ class Bid4AssetsDetailScraper
             // ── Location parse: "City, ST ZIP" ──────────────────────────
             $parsed = $this->parseLocation($locationRaw);
             $data   = array_merge($data, $parsed);
+            $data['address'] = $address;
+            $data['country'] = $country;
 
             // ── Auction Started ──────────────────────────────────────────
             $auctionStarted = '';

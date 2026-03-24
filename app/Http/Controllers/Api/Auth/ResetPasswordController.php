@@ -51,7 +51,7 @@ class ResetPasswordController extends Controller
                 $user->otp_expires_at = Carbon::now()->addMinutes(60);
                 $user->save();
 
-                return Helper::jsonResponse(true, 'OTP Code Sent Successfully Please Check Your Email.', 200);
+                return Helper::jsonResponse(true, 'A varification link send to your email. Please Check Your Email.', 200);
             } else {
                 return Helper::jsonErrorResponse('Invalid Email Address', 404);
             }
@@ -141,6 +141,7 @@ class ResetPasswordController extends Controller
             return Helper::jsonErrorResponse($e->getMessage(), 500);
         }
     }
+
     public function Generate_RP_Link(Request $request, $id)
     {
         // Signed URL valid কিনা check
@@ -162,12 +163,7 @@ class ResetPasswordController extends Controller
 
             return redirect(config('app.frontend_url') . '/auth/reset-password?token=' . $token);
 
-            // return response()->json([
-            //     'status'     => true,
-            //     'message'    => 'OTP verified successfully.',
-            //     'code'       => 200,
-            //     'token'      => $token,
-            // ]);
+
         } catch (Exception $e) {
 
             Log::info($e->getMessage());

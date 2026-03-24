@@ -25,7 +25,9 @@ class AuctionListing extends Model
         'city',
         'zip',
         'auction_started_at',
-        'parcel_number', // ← add করো
+        'parcel_number',
+        'address',
+        'country' // ← add করো
     ];
 
     protected $casts = [
