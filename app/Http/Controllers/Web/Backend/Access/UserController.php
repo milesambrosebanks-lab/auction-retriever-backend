@@ -344,7 +344,7 @@ class UserController extends Controller
         $user = User::find($id);
         DB::table('model_has_roles')->where('model_id', $id)->delete();
         $user->delete();
-        return redirect()->back()->with('t-success', 'User deleted t-successfully');
+        return redirect()->route('admin.users.index')->with('t-success', 'User deleted t-successfully');
     }
 
     public function status(int $id)
