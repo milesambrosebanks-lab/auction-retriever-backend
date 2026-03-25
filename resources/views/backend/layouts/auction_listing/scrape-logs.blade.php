@@ -60,91 +60,88 @@
                     </div>
                 </div>
 
-                {{-- Source Status Card --}}
+                {{-- Source Status Cards --}}
                 <div class="row mb-4">
-                    <div class="col-12">
-                        <div
-                            class="card source-status-card {{ $cards['running_now'] ? 'running' : ($cards['success_runs'] > 0 ? 'success' : 'failed') }}">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col-md-1 text-center">
-                                        @if ($cards['running_now'])
-                                            <i class="fa fa-spinner fa-spin fa-2x text-warning pulse"></i>
-                                        @elseif($cards['success_runs'] > 0)
-                                            <i class="fa fa-check-circle fa-2x text-success"></i>
-                                        @else
-                                            <i class="fa fa-times-circle fa-2x text-danger"></i>
-                                        @endif
-                                    </div>
-                                    <div class="col-md-3">
-                                        <p class="mb-0 text-muted small">Source</p>
-                                        <strong class="fs-16">
-                                            @if ($source === 'auction_com')
-                                                <a href="https://www.auction.com" target="_blank">
-                                                    Auction.com
-                                                    <i class="fa fa-external-link ms-1 fs-12"></i>
-                                                </a>
-                                            @elseif ($source === 'bid4assets')
-                                                <a href="https://www.bid4assets.com" target="_blank">
-                                                    Bid4Assets
-                                                    <i class="fa fa-external-link ms-1 fs-12"></i>
-                                                </a>
+                    @foreach($sourceCards as $card)
+                        <div class="col-lg-6 col-md-6 mb-3">
+                            <div class="card source-status-card {{ $card['running_now'] ? 'running' : ($card['success_runs'] > 0 ? 'success' : 'failed') }}">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2 text-center">
+                                            @if ($card['running_now'])
+                                                <i class="fa fa-spinner fa-spin fa-2x text-warning pulse"></i>
+                                            @elseif($card['success_runs'] > 0)
+                                                <i class="fa fa-check-circle fa-2x text-success"></i>
                                             @else
-                                                {{ $cards['source'] }}
+                                                <i class="fa fa-times-circle fa-2x text-danger"></i>
                                             @endif
-                                        </strong>
-                                        <br>
-                                        @if ($cards['running_now'])
-                                            <span class="badge bg-warning">
-                                                <i class="fa fa-spinner fa-spin me-1"></i>
-                                                Running — Attempt {{ $cards['current_run']->attempt ?? 1 }}
-                                            </span>
-                                        @else
-                                            <span class="badge bg-success">Active Source</span>
-                                        @endif
-                                    </div>
-                                    <div class="col-md-3">
-                                        <p class="mb-0 text-muted small">Last Successful Run</p>
-                                        <strong>{{ $cards['last_success'] }}</strong>
-                                        <br>
-                                        <small class="text-muted">{{ $cards['last_count'] }} items scraped</small>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <p class="mb-0 text-muted small">Last Failed</p>
-                                        <strong
-                                            class="{{ $cards['last_failed'] !== 'Never' ? 'text-danger' : 'text-muted' }}">
-                                            {{ $cards['last_failed'] }}
-                                        </strong>
-                                    </div>
-                                    <div class="col-md-3 text-end">
-                                        <div class="d-flex gap-3 justify-content-end">
-                                            <div class="text-center">
-                                                <h4 class="text-success mb-0">{{ $cards['success_runs'] }}</h4>
-                                                <small class="text-muted">Success</small>
-                                            </div>
-                                            <div class="text-center">
-                                                <h4 class="text-danger mb-0">{{ $cards['failed_runs'] }}</h4>
-                                                <small class="text-muted">Failed</small>
-                                            </div>
-                                            <div class="text-center">
-                                                <h4 class="text-primary mb-0">{{ $cards['total_runs'] }}</h4>
-                                                <small class="text-muted">Total</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <p class="mb-0 text-muted small">Source</p>
+                                            <strong class="fs-16">
+                                                @if ($card['source'] === 'auction_com')
+                                                    <a href="https://www.auction.com" target="_blank">
+                                                        {{ $card['label'] }}
+                                                        <i class="fa fa-external-link ms-1 fs-12"></i>
+                                                    </a>
+                                                @elseif ($card['source'] === 'bid4assets')
+                                                    <a href="https://www.bid4assets.com" target="_blank">
+                                                        {{ $card['label'] }}
+                                                        <i class="fa fa-external-link ms-1 fs-12"></i>
+                                                    </a>
+                                                @else
+                                                    {{ $card['label'] }}
+                                                @endif
+                                            </strong>
+                                            <br>
+                                            @if ($card['running_now'])
+                                                <span class="badge bg-warning">
+                                                    <i class="fa fa-spinner fa-spin me-1"></i>
+                                                    Running — Attempt {{ $card['current_run']->attempt ?? 1 }}
+                                                </span>
+                                            @else
+                                                <span class="badge bg-success">Active Source</span>
+                                            @endif
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="mb-0 text-muted small">Last Success</p>
+                                            <strong>{{ $card['last_success'] }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ $card['last_count'] }} items</small>
+                                        </div>
+                                        <div class="col-md-3 text-end">
+                                            <div class="d-flex gap-2 justify-content-end align-items-center">
+                                                <div class="text-center">
+                                                    <h5 class="text-success mb-0">{{ $card['success_runs'] }}</h5>
+                                                    <small class="text-muted">Success</small>
+                                                </div>
+                                                <div class="text-center">
+                                                    <h5 class="text-danger mb-0">{{ $card['failed_runs'] }}</h5>
+                                                    <small class="text-muted">Failed</small>
+                                                </div>
+                                                <div class="text-center">
+                                                    <h5 class="text-primary mb-0">{{ $card['total_runs'] }}</h5>
+                                                    <small class="text-muted">Total</small>
+                                                </div>
+                                                <button class="btn btn-sm btn-warning scrape-btn" data-source="{{ $card['source'] }}" data-label="{{ $card['label'] }}">
+                                                    <i class="fa fa-download"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {{-- Current run message --}}
-                                @if ($cards['running_now'] && $cards['current_run']?->message)
-                                    <hr class="my-2">
-                                    <div class="alert alert-warning mb-0 py-2">
-                                        <i class="fa fa-info-circle me-1"></i>
-                                        <strong>Live:</strong> {{ $cards['current_run']->message }}
-                                    </div>
-                                @endif
+                                    {{-- Current run message --}}
+                                    @if ($card['running_now'] && $card['current_run']?->message)
+                                        <hr class="my-2">
+                                        <div class="alert alert-warning mb-0 py-2">
+                                            <i class="fa fa-info-circle me-1"></i>
+                                            <strong>Live:</strong> {{ $card['current_run']->message }}
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    @endforeach
                 </div>
 
                 {{-- Logs Table --}}
@@ -166,9 +163,6 @@
                                     </select>
                                 </div>
                                 <div class="ms-auto d-flex gap-2">
-                                    <button id="scrapeNowBtn" class="btn btn-sm btn-warning">
-                                        <i class="fa fa-download me-1"></i> Scrape Now
-                                    </button>
                                     <button id="refreshBtn" class="btn btn-sm btn-outline-secondary">
                                         <i class="fa fa-refresh me-1"></i> Refresh
                                     </button>
@@ -301,12 +295,14 @@
             });
 
             // Scrape Now
-            $('#scrapeNowBtn').on('click', function() {
+            $('.scrape-btn').on('click', function() {
                 var btn = $(this);
+                var source = btn.data('source');
+                var label = btn.data('label');
 
                 Swal.fire({
-                    title: 'Start Scraping?',
-                    text: 'This will extract all listings from Bid4Assets.',
+                    title: 'Start Scraping ' + label + '?',
+                    text: 'This will extract all listings from ' + label + '.',
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, Start!',
@@ -320,6 +316,7 @@
                     $.ajax({
                         type: 'POST',
                         url: "{{ route('admin.auction.listings.scrape') }}",
+                        data: { source: source },
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -332,7 +329,7 @@
                         },
                         complete: function() {
                             btn.prop('disabled', false)
-                                .html('<i class="fa fa-download me-1"></i> Scrape Now');
+                                .html('<i class="fa fa-download"></i>');
 
                             // table + page reload
                             table.ajax.reload(null, false);
@@ -342,7 +339,7 @@
                 });
             });
             // Running থাকলে auto-refresh প্রতি ১০ সেকেন্ডে
-            @if ($cards['running_now'])
+            @if (collect($sourceCards)->contains('running_now', true))
                 setInterval(function() {
                     table.ajax.reload(null, false);
                 }, 10000);

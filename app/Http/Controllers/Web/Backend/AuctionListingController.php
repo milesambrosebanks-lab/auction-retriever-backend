@@ -105,17 +105,34 @@ class AuctionListingController extends Controller
     }
 
     // Manual scrape trigger
-    public function scrapeNow()
+    public function scrapeNow(Request $request)
     {
-        try {
-            $scraper = app(Bid4AssetsScraper::class);
-            $total   = $scraper->scrapeAll();
+        $source = $request->input('source', 'bid4assets');
 
-            return response()->json([
-                'success' => true,
-                'message' => "Scraping complete! $total listings saved.",
-                'total'   => $total,
-            ]);
+        try {
+            if ($source === 'bid4assets') {
+                $scraper = app(Bid4AssetsScraper::class);
+                $total = $scraper->scrapeAll();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Bid4Assets scraping complete! $total listings saved.",
+                    'total' => $total,
+                ]);
+            } elseif ($source === 'auction_com') {
+                // Run the Auction.com scrape command
+                \Artisan::call('scrape:auction', ['--limit' => 50, '--max' => 500]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Auction.com scraping started in background.",
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unknown source.',
+                ], 400);
+            }
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -131,31 +148,31 @@ class AuctionListingController extends Controller
     {
         $source = $request->get('source');
 
-        $baseQuery = ScrapeLog::query();
+        $sources = ScrapeLog::select('source')->distinct()->get();
 
-        if ($source) {
-            $baseQuery->where('source', $source);
+        $sourceCards = [];
+        foreach ($sources as $src) {
+            $query = ScrapeLog::where('source', $src->source);
+
+            $sourceCards[] = [
+                'source' => $src->source,
+                'label' => match ($src->source) {
+                    'bid4assets' => 'Bid4Assets',
+                    'auction_com' => 'Auction.com',
+                    default => ucfirst(str_replace('_', ' ', $src->source)),
+                },
+                'success_runs' => (clone $query)->where('status', 'success')->count(),
+                'failed_runs' => (clone $query)->where('status', 'failed')->count(),
+                'total_runs' => (clone $query)->count(),
+                'last_success' => (clone $query)->where('status', 'success')->latest('finished_at')->value('finished_at') ?: 'Never',
+                'last_failed' => (clone $query)->where('status', 'failed')->latest('finished_at')->value('finished_at') ?: 'Never',
+                'running_now' => (clone $query)->where('status', 'running')->exists(),
+                'current_run' => (clone $query)->where('status', 'running')->latest('started_at')->first(),
+                'last_count' => (clone $query)->where('status', 'success')->latest('finished_at')->value('total_scraped') ?: 0,
+            ];
         }
 
-        $sourceLabel = $source ? match ($source) {
-            'bid4assets' => 'Bid4Assets',
-            'auction_com' => 'Auction.com',
-            default => ucfirst(str_replace('_', ' ', $source)),
-        } : 'All Sources';
-
-        $cards = [
-            'source' => $sourceLabel,
-            'last_success' => (clone $baseQuery)->where('status', 'success')->latest('finished_at')->value('finished_at') ?: 'Never',
-            'last_count' => (clone $baseQuery)->where('status', 'success')->latest('finished_at')->value('total_scraped') ?: 0,
-            'last_failed' => (clone $baseQuery)->where('status', 'failed')->latest('finished_at')->value('finished_at') ?: 'Never',
-            'total_runs' => (clone $baseQuery)->count(),
-            'success_runs' => (clone $baseQuery)->where('status', 'success')->count(),
-            'failed_runs' => (clone $baseQuery)->where('status', 'failed')->count(),
-            'running_now' => (clone $baseQuery)->where('status', 'running')->exists(),
-            'current_run' => (clone $baseQuery)->where('status', 'running')->latest('started_at')->first(),
-        ];
-
-        return view('backend.layouts.auction_listing.scrape-logs', compact('cards', 'source'));
+        return view('backend.layouts.auction_listing.scrape-logs', compact('sourceCards', 'source'));
     }
 
     public function scrapeLogsData(Request $request)
