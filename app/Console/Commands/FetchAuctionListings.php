@@ -38,6 +38,7 @@ class FetchAuctionListings extends Command
             try {
                 // Call Node.js Puppeteer scraper
                 $response = $this->scrapeWithPuppeteer($limit, $offset);
+                Log::info("test" . $response);
 
                 if (!$response || isset($response['error'])) {
                     $this->warn("❌ No data found or invalid response at offset $offset: " . ($response['error'] ?? 'no response'));
@@ -125,19 +126,20 @@ class FetchAuctionListings extends Command
 
                 // Anti-bot delay
                 sleep(rand(3, 6));
-
             } catch (\Exception $e) {
+                $errorDetails = "Offset: $offset | " . $e->getMessage();
                 $this->error("❌ Error at offset $offset: " . $e->getMessage());
                 Log::error("Scrape error: " . $e->getMessage());
 
                 // Update scrape log with failure
                 $scrapeLog->update([
                     'status' => 'failed',
-                    'error_message' => $e->getMessage(),
+                    'error_message' => $errorDetails,
+                    'message' => 'Failed at offset ' . $offset . ': ' . \Str::limit($e->getMessage(), 100),
                     'finished_at' => now(),
                 ]);
-
-                break;
+                Log::info('Failed from js request'.$e->getMessage());
+                return;
             }
         }
 

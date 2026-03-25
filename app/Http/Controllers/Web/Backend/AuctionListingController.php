@@ -7,6 +7,7 @@ use App\Models\AuctionListing;
 use App\Models\ScrapeLog;
 use App\Services\Bid4AssetsScraper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -121,7 +122,7 @@ class AuctionListingController extends Controller
                 ]);
             } elseif ($source === 'auction_com') {
                 // Run the Auction.com scrape command
-                \Artisan::call('scrape:auction', ['--limit' => 50, '--max' => 500]);
+                Artisan::call('scrape:auction', ['--limit' => 50, '--max' => 500]);
 
                 return response()->json([
                     'success' => true,
@@ -217,15 +218,16 @@ class AuctionListingController extends Controller
                     '</span>';
             })
             ->addColumn('message_col', function ($row) {
-                if (!$row->message) return '<span class="text-muted">—</span>';
+                $message = $row->status === 'failed' ? ($row->error_message ?: $row->message) : $row->message;
+                if (!$message) return '<span class="text-muted">—</span>';
                 $color = match ($row->status) {
                     'success' => 'text-success',
                     'failed'  => 'text-danger',
                     'running' => 'text-warning',
                     default   => 'text-muted',
                 };
-                return '<span class="' . $color . '" title="' . e($row->message) . '">'
-                    . \Str::limit($row->message, 70)
+                return '<span class="' . $color . '" title="' . e($message) . '">'
+                    . \Str::limit($message, 70)
                     . '</span>';
             })
             ->addColumn('duration_col', function ($row) {
