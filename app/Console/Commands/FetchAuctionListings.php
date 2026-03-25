@@ -38,10 +38,9 @@ class FetchAuctionListings extends Command
             try {
                 // Call Node.js Puppeteer scraper
                 $response = $this->scrapeWithPuppeteer($limit, $offset);
-                Log::info("test" . $response);
 
                 if (!$response || isset($response['error'])) {
-                    $this->warn("❌ No data found or invalid response at offset $offset: " . ($response['error'] ?? 'no response'));
+                    $this->warn("No data found or invalid response at offset $offset: " . ($response['error'] ?? 'no response'));
                     break;
                 }
 
@@ -49,7 +48,7 @@ class FetchAuctionListings extends Command
                 $this->info("✅ Got " . count($listings) . " listings");
 
                 if (empty($listings)) {
-                    $this->warn("❌ Empty results, stopping.");
+                    $this->warn("Empty results, stopping.");
                     break;
                 }
 
@@ -79,6 +78,7 @@ class FetchAuctionListings extends Command
                             $auctionStartedAt = $auctionDate;
                         } catch (\Exception $e) {
                             // Skip invalid dates
+                            Log::info('invalid dates');
                         }
                     }
 
@@ -92,7 +92,7 @@ class FetchAuctionListings extends Command
                     }
 
                     $listingId = $item['listing_id'];
-                    $this->line("  📍 {$listingId} | {$title} | $city, $state $zip");
+                    $this->line("- {$listingId} | {$title} | $city, $state $zip");
 
                     AuctionListing::updateOrCreate(
                         ['auction_id' => $item['listing_id']],
@@ -138,7 +138,7 @@ class FetchAuctionListings extends Command
                     'message' => 'Failed at offset ' . $offset . ': ' . \Str::limit($e->getMessage(), 100),
                     'finished_at' => now(),
                 ]);
-                Log::info('Failed from js request'.$e->getMessage());
+                Log::info('Failed from js request');
                 return;
             }
         }
@@ -165,7 +165,7 @@ class FetchAuctionListings extends Command
         $process->run();
 
         if (!$process->isSuccessful()) {
-            throw new \Exception("Puppeteer failed: " . $process->getErrorOutput());
+            throw new \Exception("Puppeteer failed: " . \Str::limit($process->getErrorOutput(), 100));
         }
 
         $output = $process->getOutput();
