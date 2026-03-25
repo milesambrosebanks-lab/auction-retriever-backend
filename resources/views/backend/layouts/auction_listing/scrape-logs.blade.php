@@ -79,10 +79,19 @@
                                     <div class="col-md-3">
                                         <p class="mb-0 text-muted small">Source</p>
                                         <strong class="fs-16">
-                                            <a href="https://www.bid4assets.com" target="_blank">
-                                                Bid4Assets
-                                                <i class="fa fa-external-link ms-1 fs-12"></i>
-                                            </a>
+                                            @if ($source === 'auction_com')
+                                                <a href="https://www.auction.com" target="_blank">
+                                                    Auction.com
+                                                    <i class="fa fa-external-link ms-1 fs-12"></i>
+                                                </a>
+                                            @elseif ($source === 'bid4assets')
+                                                <a href="https://www.bid4assets.com" target="_blank">
+                                                    Bid4Assets
+                                                    <i class="fa fa-external-link ms-1 fs-12"></i>
+                                                </a>
+                                            @else
+                                                {{ $cards['source'] }}
+                                            @endif
                                         </strong>
                                         <br>
                                         @if ($cards['running_now'])
@@ -147,6 +156,15 @@
                                     <i class="fa-solid fa-arrow-left"></i>
                                 </a>
                                 <h3 class="card-title mb-0">Run History</h3>
+                                <div class="d-flex align-items-center gap-2">
+                                    <label for="sourceFilter" class="form-label mb-0">Filter by Source:</label>
+                                    <select id="sourceFilter" class="form-select form-select-sm" style="width: auto;">
+                                        <option value="">All Sources</option>
+                                        <option value="bid4assets">Bid4Assets</option>
+                                        <option value="auction_com">Auction.com</option>
+                                        <!-- Add more options as needed -->
+                                    </select>
+                                </div>
                                 <div class="ms-auto d-flex gap-2">
                                     <button id="scrapeNowBtn" class="btn btn-sm btn-warning">
                                         <i class="fa fa-download me-1"></i> Scrape Now
@@ -161,6 +179,7 @@
                                     <thead>
                                         <tr>
                                             <th>#</th>
+                                            <th>Source</th>
                                             <th>Status</th>
                                             <th>Message</th>
                                             <th>Items Saved</th>
@@ -201,6 +220,9 @@
                     url: "{{ route('admin.auction.listings.scrape.logs.data') }}",
                     type: "GET",
                     cache: false,
+                    data: function(d) {
+                        d.source = $('#sourceFilter').val();
+                    }
                 },
                 language: {
                     processing: `<div class="text-center">
@@ -213,6 +235,10 @@
                         name: 'DT_RowIndex',
                         orderable: false,
                         searchable: false
+                    },
+                    {
+                        data: 'source_badge',
+                        name: 'source'
                     },
                     {
                         data: 'status_badge',
@@ -247,6 +273,25 @@
                         orderable: false
                     },
                 ],
+            });
+
+            // restore selected source from query
+            var urlParams = new URLSearchParams(window.location.search);
+            var selectedSource = urlParams.get('source');
+            if (selectedSource) {
+                $('#sourceFilter').val(selectedSource);
+            }
+
+            // Source filter
+            $('#sourceFilter').on('change', function() {
+                var val = $(this).val();
+                if (val) {
+                    urlParams.set('source', val);
+                } else {
+                    urlParams.delete('source');
+                }
+                window.history.replaceState({}, '', window.location.pathname + '?' + urlParams.toString());
+                table.ajax.reload();
             });
 
             // Refresh button

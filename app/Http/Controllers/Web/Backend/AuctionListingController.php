@@ -127,22 +127,35 @@ class AuctionListingController extends Controller
     // Scrape logs datatable
     // AuctionListingController.php
 
-    public function scrapeLogs()
+    public function scrapeLogs(Request $request)
     {
-        $source = 'bid4assets';
+        $source = $request->get('source');
+
+        $baseQuery = ScrapeLog::query();
+
+        if ($source) {
+            $baseQuery->where('source', $source);
+        }
+
+        $sourceLabel = $source ? match ($source) {
+            'bid4assets' => 'Bid4Assets',
+            'auction_com' => 'Auction.com',
+            default => ucfirst(str_replace('_', ' ', $source)),
+        } : 'All Sources';
 
         $cards = [
-            'last_success'  => Cache::get("scrape_last_success_{$source}", 'Never'),
-            'last_count'    => Cache::get("scrape_last_count_{$source}", 0),
-            'last_failed'   => Cache::get("scrape_last_failed_{$source}", 'Never'),
-            'total_runs'    => ScrapeLog::where('source', $source)->count(),
-            'success_runs'  => ScrapeLog::where('source', $source)->where('status', 'success')->count(),
-            'failed_runs'   => ScrapeLog::where('source', $source)->where('status', 'failed')->count(),
-            'running_now'   => ScrapeLog::where('source', $source)->where('status', 'running')->exists(),
-            'current_run'   => ScrapeLog::where('source', $source)->where('status', 'running')->latest()->first(),
+            'source' => $sourceLabel,
+            'last_success' => (clone $baseQuery)->where('status', 'success')->latest('finished_at')->value('finished_at') ?: 'Never',
+            'last_count' => (clone $baseQuery)->where('status', 'success')->latest('finished_at')->value('total_scraped') ?: 0,
+            'last_failed' => (clone $baseQuery)->where('status', 'failed')->latest('finished_at')->value('finished_at') ?: 'Never',
+            'total_runs' => (clone $baseQuery)->count(),
+            'success_runs' => (clone $baseQuery)->where('status', 'success')->count(),
+            'failed_runs' => (clone $baseQuery)->where('status', 'failed')->count(),
+            'running_now' => (clone $baseQuery)->where('status', 'running')->exists(),
+            'current_run' => (clone $baseQuery)->where('status', 'running')->latest('started_at')->first(),
         ];
 
-        return view('backend.layouts.auction_listing.scrape-logs', compact('cards'));
+        return view('backend.layouts.auction_listing.scrape-logs', compact('cards', 'source'));
     }
 
     public function scrapeLogsData(Request $request)
@@ -151,10 +164,29 @@ class AuctionListingController extends Controller
             return response()->json(['error' => 'Not ajax'], 400);
         }
 
-        $data = ScrapeLog::where('source', 'bid4assets')->latest();
+        $data = ScrapeLog::latest();
+
+        // Filter by source if provided
+        if ($request->filled('source')) {
+            $data->where('source', $request->source);
+        }
 
         return DataTables::of($data)
             ->addIndexColumn()
+            ->addColumn('source_badge', function ($row) {
+                $colors = [
+                    'bid4assets' => 'primary',
+                    'auction'    => 'info',
+                    // Add more sources as needed
+                ];
+                $color = $colors[$row->source] ?? 'secondary';
+                $label = match ($row->source) {
+                    'bid4assets' => 'Bid4Assets',
+                    'auction_com' => 'Auction.com',
+                    default => ucfirst($row->source),
+                };
+                return '<span class="badge bg-' . $color . '">' . e($label) . '</span>';
+            })
             ->addColumn('status_badge', function ($row) {
                 $icon = match ($row->status) {
                     'success' => 'fa-check-circle',
@@ -192,7 +224,7 @@ class AuctionListingController extends Controller
                     ? $row->finished_at->format('d M Y, h:i A')
                     : '<span class="text-warning"><i class="fa fa-spinner fa-spin me-1"></i>In progress...</span>';
             })
-            ->rawColumns(['status_badge', 'message_col', 'finished_col'])
+            ->rawColumns(['source_badge', 'status_badge', 'message_col', 'finished_col'])
             ->make();
     }
 }

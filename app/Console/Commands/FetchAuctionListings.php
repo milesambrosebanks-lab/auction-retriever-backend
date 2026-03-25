@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\AuctionListing;
+use App\Models\ScrapeLog;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
 
@@ -17,7 +18,18 @@ class FetchAuctionListings extends Command
         $limit = (int) $this->option('limit');
         $max = (int) $this->option('max');
 
+        // Create scrape log
+        $scrapeLog = ScrapeLog::create([
+            'source' => 'auction_com',
+            'status' => 'running',
+            'attempt' => 1,
+            'message' => 'Starting Auction.com scrape...',
+            'started_at' => now(),
+        ]);
+
         $this->info("🚀 Starting scrape with Browser Automation...");
+
+        $totalScraped = 0;
 
         for ($offset = 0; $offset < $max; $offset += $limit) {
 
@@ -101,7 +113,15 @@ class FetchAuctionListings extends Command
                             'scraped_at' => now(),
                         ]
                     );
+
+                    $totalScraped++;
                 }
+
+                // Update scrape log with progress
+                $scrapeLog->update([
+                    'total_scraped' => $totalScraped,
+                    'message' => "Processed $totalScraped listings so far...",
+                ]);
 
                 // Anti-bot delay
                 sleep(rand(3, 6));
@@ -109,9 +129,24 @@ class FetchAuctionListings extends Command
             } catch (\Exception $e) {
                 $this->error("❌ Error at offset $offset: " . $e->getMessage());
                 Log::error("Scrape error: " . $e->getMessage());
+
+                // Update scrape log with failure
+                $scrapeLog->update([
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'finished_at' => now(),
+                ]);
+
                 break;
             }
         }
+
+        // Update scrape log with success
+        $scrapeLog->update([
+            'status' => 'success',
+            'message' => "Successfully scraped $totalScraped listings from Auction.com",
+            'finished_at' => now(),
+        ]);
 
         $this->info("✅ Scraping completed!");
     }
