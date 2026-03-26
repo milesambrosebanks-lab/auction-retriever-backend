@@ -124,13 +124,14 @@ class AuctionListingController extends Controller
             } elseif ($source === 'auction_com') {
                 // Run the Auction.com scrape command
                 // Artisan::call('scrape:auction', ['--limit' => 5, '--max' => 10]);
-                $output = [];
-                $status = null;
+                // $output = [];
+                // $status = null;
 
-                exec('export PATH=/home/thewarriors/.nvm/versions/node/v24.13.0/bin:/usr/local/bin:/usr/bin:/bin && php artisan scrape:auction --limit=5 --max=10 2>&1', $output, $status);
+                $path = '/home/thewarriors/milesbanks.thewarriors.team';
 
-                Log::info($output);
-                Log::info($status);
+                exec("cd $path && php artisan scrape:auction --limit=5 --max=10 > /dev/null 2>&1 &");
+                // Log::info($output);
+                // Log::info($status);
 
                 return response()->json([
                     'success' => true,
