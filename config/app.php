@@ -27,7 +27,7 @@ return [
     */
 
     'env' => env('APP_ENV', 'production'),
-    'server' => env('SERVER', 'local'),
+    'server' => env('SERVER', 'production'),
 
     /*
     |--------------------------------------------------------------------------

@@ -79,13 +79,17 @@ class AuctionListingController extends Controller
                 ->rawColumns(['image', 'title_col', 'type_badge', 'bid_info', 'time_badge', 'scraped', 'action'])
                 ->make();
         }
+        $lastScrape = ScrapeLog::orderBy('id', 'desc')->first();
+        // dd($lastScrape);
+        $count = $lastScrape->total_scraped??0;
+        $time = $lastScrape->finished_at ?? 'Never';
 
         $stats = [
             'total'        => AuctionListing::count(),
             'land'         => AuctionListing::where('type', 'Land')->count(),
             'financed'     => AuctionListing::where('type', 'Financed')->count(),
-            'last_scraped' => Cache::get('bid4assets_last_success', 'Never'),
-            'last_count'   => Cache::get('bid4assets_last_count', 0),
+            'last_scraped' => $time,
+            'last_count'   => $count,
             'types'        => AuctionListing::select('type')
                 ->distinct()
                 ->whereNotNull('type')
