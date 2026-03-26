@@ -127,11 +127,11 @@ class AuctionListingController extends Controller
                 // $output = [];
                 // $status = null;
 
-                $path = '/home/thewarriors/milesbanks.thewarriors.team';
-
-                exec('export PATH=/home/thewarriors/.nvm/versions/node/v24.13.0/bin:/usr/local/bin:/usr/bin:/bin && cd /home/thewarriors/milesbanks.thewarriors.team && php artisan scrape:auction --limit=5 --max=10 > /dev/null 2>&1 &');
-                // Log::info($output);
-                // Log::info($status);
+                if (config('app.server') == 'local') {
+                    Artisan::call('scrape:auction', ['--limit' => 50, '--max' => 500]);
+                } else {
+                    exec('export PATH=/home/thewarriors/.nvm/versions/node/v24.13.0/bin:/usr/local/bin:/usr/bin:/bin && cd /home/thewarriors/milesbanks.thewarriors.team && php artisan scrape:auction --limit=50 --max=500 > /dev/null 2>&1 &');
+                }
 
                 return response()->json([
                     'success' => true,
