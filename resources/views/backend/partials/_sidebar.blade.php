@@ -66,7 +66,7 @@
                     <a class="side-menu__item {{ request()->routeIs('admin.my_plan.*') ? 'has-link active' : '' }}"
                        href="{{ route('admin.my_plan.index') }}">
                         <i class="fa-solid fa-tags side-menu__icon"></i>
-                        <span class="side-menu__label">My Plans</span>
+                        <span class="side-menu__label">Subscriptions Plan</span>
                     </a>
                 </li>
 

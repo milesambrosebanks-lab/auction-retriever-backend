@@ -15,6 +15,9 @@ class FetchAuctionListings extends Command
 
     public function handle()
     {
+        // Increase execution time for long-running scrapes
+        ini_set('max_execution_time', 300); // 5 minutes
+
         $limit = (int) $this->option('limit');
         $max = (int) $this->option('max');
 

@@ -122,7 +122,7 @@ class AuctionListingController extends Controller
                 ]);
             } elseif ($source === 'auction_com') {
                 // Run the Auction.com scrape command
-                Artisan::call('scrape:auction', ['--limit' => 50, '--max' => 500]);
+                Artisan::call('scrape:auction', ['--limit' => 5, '--max' => 10]);
 
                 return response()->json([
                     'success' => true,

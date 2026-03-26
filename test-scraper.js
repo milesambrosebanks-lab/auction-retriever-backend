@@ -11,7 +11,7 @@ async function testQuick() {
 
     const page = await browser.newPage();
     console.log('⏳ Going to auction.com...');
-    await page.goto('https://www.auction.com', { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto('https://www.auction.com', { waitUntil: 'networkidle2', timeout: 60000 });
 
     console.log('⏳ Fetching GraphQL data...');
     const result = await page.evaluate(async () => {
