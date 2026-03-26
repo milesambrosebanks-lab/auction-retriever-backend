@@ -129,7 +129,7 @@ class AuctionListingController extends Controller
 
                 $path = '/home/thewarriors/milesbanks.thewarriors.team';
 
-                exec("cd $path && php artisan scrape:auction --limit=5 --max=10 > /dev/null 2>&1 &");
+                exec('export PATH=/home/thewarriors/.nvm/versions/node/v24.13.0/bin:/usr/local/bin:/usr/bin:/bin && cd /home/thewarriors/milesbanks.thewarriors.team && php artisan scrape:auction --limit=5 --max=10 > /dev/null 2>&1 &');
                 // Log::info($output);
                 // Log::info($status);
 
