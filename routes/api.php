@@ -128,6 +128,7 @@ Route::group(['middleware' => ['auth:api', 'api-otp']], function ($router) {
     Route::get('/me', [UserController::class, 'me']);
     Route::get('/account/switch', [UserController::class, 'accountSwitch']);
     Route::post('/update-profile', [UserController::class, 'updateProfile']);
+    Route::post('/change-password', [UserController::class, 'changePassword']);
     Route::post('/update-avatar', [UserController::class, 'updateAvatar']);
     Route::delete('/delete-profile', [UserController::class, 'destroy']);
 });

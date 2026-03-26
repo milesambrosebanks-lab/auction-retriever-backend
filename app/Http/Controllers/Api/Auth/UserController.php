@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -24,24 +25,46 @@ class UserController extends Controller
         return Helper::jsonResponse(true, 'User details fetched successfully', 200, $data);
     }
 
+    public function changePassword(Request $request)
+    {
+        $validatedData = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = User::findOrFail(auth('api')->id());
+
+        // Check current password
+        if (!Hash::check($validatedData['current_password'], $user->password)) {
+            return Helper::jsonResponse(false, 'Current password is incorrect', 400);
+        }
+
+        // Update password
+        $user->update([
+            'password' => bcrypt($validatedData['new_password']),
+        ]);
+
+        return Helper::jsonResponse(true, 'Password updated successfully', 200);
+    }
+
     public function updateProfile(Request $request)
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:100',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-            'phone' => 'required|string|numeric|max_digits:20',
-            'password' => 'nullable|string|min:6|confirmed',
+            'phone' => 'nullable|string|numeric|max_digits:20',
+            // 'password' => 'nullable|string|min:6|confirmed',
             'address' => 'nullable|string|max:255',
         ]);
 
 
-        if (!empty($validatedData['password'])) {
-            $validatedData['password'] = bcrypt($validatedData['password']);
-        } else if (array_key_exists('password', $validatedData)) {
-            unset($validatedData['password']);
-        }
+        // if (!empty($validatedData['password'])) {
+        //     $validatedData['password'] = bcrypt($validatedData['password']);
+        // } else if (array_key_exists('password', $validatedData)) {
+        //     unset($validatedData['password']);
+        // }
 
-        $user = auth('api')->user();
+        $user = User::findOrFail(auth('api')->id());
 
         if ($request->hasFile('avatar')) {
             if (!empty($user->avatar)) {
@@ -94,5 +117,4 @@ class UserController extends Controller
         $user->forceDelete();
         return Helper::jsonResponse(true, 'Profile deleted successfully', 200);
     }
-
 }
