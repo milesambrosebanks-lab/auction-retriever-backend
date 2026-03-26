@@ -9,6 +9,7 @@ use App\Services\Bid4AssetsScraper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
 class AuctionListingController extends Controller
@@ -123,7 +124,13 @@ class AuctionListingController extends Controller
             } elseif ($source === 'auction_com') {
                 // Run the Auction.com scrape command
                 // Artisan::call('scrape:auction', ['--limit' => 5, '--max' => 10]);
-                exec('export PATH=/home/thewarriors/.nvm/versions/node/v24.13.0/bin:/usr/local/bin:/usr/bin:/bin && php artisan scrape:auction --limit=5 --max=10 > /dev/null 2>&1 &');
+                $output = [];
+                $status = null;
+
+                exec('export PATH=/home/thewarriors/.nvm/versions/node/v24.13.0/bin:/usr/local/bin:/usr/bin:/bin && php artisan scrape:auction --limit=5 --max=10 2>&1', $output, $status);
+
+                Log::info($output);
+                Log::info($status);
 
                 return response()->json([
                     'success' => true,
