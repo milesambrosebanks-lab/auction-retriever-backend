@@ -63,12 +63,24 @@
                                 <h3 class="card-title mb-0">Listings</h3>
 
                                 <div class="ms-auto d-flex gap-2">
+
+                                    <select id="states" class="form-select form-select-sm" style="width:150px;">
+                                        <option value="">States</option>
+                                        @foreach ($states as $state)
+                                            <option value="{{ $state['value'] }}">{{ $state['name'] }}</option>
+                                        @endforeach
+                                    </select>
                                     {{-- Type Filter --}}
                                     <select id="typeFilter" class="form-select form-select-sm" style="width:150px;">
                                         <option value="">All Types</option>
-                                        @foreach ($stats['types'] as $type)
+                                        {{-- @foreach ($stats['types'] as $type)
                                             <option value="{{ $type }}">{{ $type }}</option>
-                                        @endforeach
+                                        @endforeach --}}
+
+                                            <option value="Land">Land</option>
+                                            <option value="Residential">Residential</option>
+                                            <option value="Financed">Commercial</option>
+
                                     </select>
 
                                     {{-- Keyword Search --}}
@@ -137,6 +149,7 @@
                     type: "GET",
                     data: function(d) {
                         d.type = $('#typeFilter').val();
+                        d.state = $('#states').val();
                         d.search_keyword = $('#keywordFilter').val();
                     },
                     cache: false,
@@ -195,9 +208,10 @@
             });
 
             // Filter apply
-            $('#typeFilter, #keywordFilter').on('change keyup', function() {
+            $('#typeFilter, #keywordFilter, #states').on('change keyup', function() {
                 table.ajax.reload();
             });
+
 
             // Manual Scrape
             $('#scrapeNowBtn').on('click', function() {

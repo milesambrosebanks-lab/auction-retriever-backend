@@ -49,6 +49,7 @@ class ScrapeRealtyBid extends Command
                         if (!is_array($data)) {
                             throw new \Exception("Scraper returned invalid data on page $page");
                         }
+                        
 
                         $success = true;
                     } catch (\Exception $e) {
