@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Auth\UserController;
 use App\Http\Controllers\Api\Auth\SocialLoginController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\CountryController;
 use App\Http\Controllers\Api\FirebaseTokenController;
 use App\Http\Controllers\Api\Frontend\CategoryController;
 use App\Http\Controllers\Api\Frontend\FaqController;
@@ -43,6 +44,8 @@ Route::post('subscriber/remove/{token}', [SubscriberController::class, 'remove']
 Route::post('pdf-request/store', [SubscriberController::class, 'pdfGuide'])->name('api.pdf.request.store');
 Route::get('/subscription/plans', [SubscriptionController::class, 'getPlanDetails']);
 
+Route::get('/countries', [CountryController::class, 'countries']);
+Route::get('/states', [CountryController::class, 'states']);
 
 Route::middleware('auth:api')->prefix('auth')->group(function () {
 
