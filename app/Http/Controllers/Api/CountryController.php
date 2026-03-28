@@ -16,7 +16,7 @@ class CountryController extends Controller
         $countries = LocationService::getCountries();
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'data' => $countries
         ]);
     }
@@ -37,7 +37,7 @@ class CountryController extends Controller
 
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'country' => $request->country??'United States',
             'data' => $states
         ]);
