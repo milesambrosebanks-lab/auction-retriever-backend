@@ -86,7 +86,11 @@ class AuctionListingController extends Controller
                     'min' => AuctionListing::min('bid_amount'),
                     'max' => AuctionListing::max('bid_amount'),
                 ],
-            'types'   => ['Land', 'Commercial', 'Residential'],
+            'types'   => [
+                ['name'=>'Land','value'=>'Land'],
+                ['name'=>'Commercial','value'=>'Commercial'],
+                ['name'=>'Residential','value'=>'Residential'],
+            ],
             // 'types'   => AuctionListing::select('type')->distinct()->whereNotNull('type')->orderBy('type')->pluck('type'),
         ];
         $data = ['data' => $listings, 'filters' => $filters];
