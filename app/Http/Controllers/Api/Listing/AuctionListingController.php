@@ -28,8 +28,8 @@ class AuctionListingController extends Controller
             $query->where('state', $request->state);
         }
 
-        if ($request->filled('county')) {
-            $query->where('county', 'like', '%' . $request->county . '%');
+        if ($request->filled('country')) {
+            $query->where('country', 'like', '%' . $request->country . '%');
         }
 
         if ($request->filled('type')) {
@@ -81,8 +81,13 @@ class AuctionListingController extends Controller
 
         $listings = AuctionListingResource::collection($data);
         $filters = [
-            'states'  => AuctionListing::select('state')->distinct()->whereNotNull('state')->orderBy('state')->pluck('state'),
-            'types'   => AuctionListing::select('type')->distinct()->whereNotNull('type')->orderBy('type')->pluck('type'),
+           // 'states'  => AuctionListing::select('state')->distinct()->whereNotNull('state')->orderBy('state')->pluck('state'),
+           'bid_range' => [
+                    'min' => AuctionListing::min('bid_amount'),
+                    'max' => AuctionListing::max('bid_amount'),
+                ],
+            'types'   => ['Land', 'Commercial', 'Residential'],
+            // 'types'   => AuctionListing::select('type')->distinct()->whereNotNull('type')->orderBy('type')->pluck('type'),
         ];
         $data = ['data' => $listings, 'filters' => $filters];
 

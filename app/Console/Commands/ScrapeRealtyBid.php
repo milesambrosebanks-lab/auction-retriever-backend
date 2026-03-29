@@ -45,11 +45,10 @@ class ScrapeRealtyBid extends Command
                     try {
                         $attempt++;
                         $data = $scraper->scrape($limit, $page);
-
                         if (!is_array($data)) {
                             throw new \Exception("Scraper returned invalid data on page $page");
                         }
-                        
+
 
                         $success = true;
                     } catch (\Exception $e) {
@@ -80,18 +79,22 @@ class ScrapeRealtyBid extends Command
                     AuctionListing::updateOrCreate(
                         ['auction_id' => $item['ITEM_ID']],
                         [
-                            'title' => $item['ADDRESS1'] ?? null,
+                            'title' => $item['CATEGORY_ONLINE_HINT_TEXT'] ?? null,
                             'city' => $item['CITY'] ?? null,
                             'state' => $item['STATE'] ?? null,
+                            'country' => 'United State',
+                            'zip' => $item['POSTAL_CODE'],
+                            'county' => $item['county'],
                             'current_bid' => $item['CURRENT_BID'] ?? 0,
                             'auction_start_date' => $item['AUCTION_START_DATE'] ?? null,
                             'auction_end_date' => $item['AUCTION_END_DATE'] ?? null,
-                            'property_type' => $item['PROP_TYPE_DESC'] ?? null,
-                            'source_url' => 'https://www.realtybid.com',
+                            'type' => $item['PROP_TYPE_DESC'] ?? null,
+                            'source_url' => 'https://www.realtybid.com'.$item['PHOTOS'][0]['IMAGE_PATH'],
                             'scraped_at' => now(),
                         ]
                     );
                 }
+                Log::info($data);
 
                 $allData = array_merge($allData, $data ?? []);
 

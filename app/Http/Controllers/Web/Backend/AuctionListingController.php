@@ -146,6 +146,18 @@ class AuctionListingController extends Controller
                     'success' => true,
                     'message' => "Auction.com scraping started in background.",
                 ]);
+            }elseif ($source === 'realtybid') {
+                if (config('app.server') == 'local') {
+                    Artisan::call('scrape:realtybid');
+                } else {
+                    exec('export PATH=/home/thewarriors/.nvm/versions/node/v24.13.0/bin:/usr/local/bin:/usr/bin:/bin && cd /home/thewarriors/milesbanks.thewarriors.team && php artisan scrape:realtybid > /dev/null 2>&1 &');
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "realtybid scraping started in background.",
+                ]);
+
             } else {
                 return response()->json([
                     'success' => false,
