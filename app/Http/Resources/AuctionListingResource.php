@@ -10,6 +10,14 @@ class AuctionListingResource extends JsonResource
     {
         $userId = auth('api')->id();
 
+        $host = parse_url($this->source_url, PHP_URL_HOST);
+        if ($host) {
+            $host = preg_replace('/^www\./', '', $host);
+            $sourceName = preg_replace('/\.[a-z]+$/', '', $host);
+        } else {
+            $sourceName = null;
+        }
+
         return [
             'id'           => $this->id,
             'auction_id'   => $this->auction_id,
@@ -24,6 +32,7 @@ class AuctionListingResource extends JsonResource
             'auction_date' => $this->auction_date?->format('Y-m-d H:i:s'),
             'image_url'    => $this->image_url,
             'source_url'   => $this->source_url,
+            'source_name' => $sourceName,
             'scraped_at'   => $this->scraped_at?->diffForHumans(),
             'is_saved'     => $userId ? $this->isSavedBy($userId) : false,
         ];
