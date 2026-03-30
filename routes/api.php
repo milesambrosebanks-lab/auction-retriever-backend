@@ -46,6 +46,8 @@ Route::get('/subscription/plans', [SubscriptionController::class, 'getPlanDetail
 
 Route::get('/countries', [CountryController::class, 'countries']);
 Route::get('/states', [CountryController::class, 'states']);
+Route::get('home/random/auction', [AuctionListingController::class, 'randomAuction']);
+
 
 Route::middleware('auth:api')->prefix('auth')->group(function () {
 

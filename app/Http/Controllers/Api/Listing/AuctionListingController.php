@@ -80,16 +80,17 @@ class AuctionListingController extends Controller
         }
 
         $listings = AuctionListingResource::collection($data);
+
         $filters = [
-           // 'states'  => AuctionListing::select('state')->distinct()->whereNotNull('state')->orderBy('state')->pluck('state'),
-           'bid_range' => [
-                    'min' => AuctionListing::min('bid_amount'),
-                    'max' => AuctionListing::max('bid_amount'),
-                ],
+            // 'states'  => AuctionListing::select('state')->distinct()->whereNotNull('state')->orderBy('state')->pluck('state'),
+            'bid_range' => [
+                'min' => AuctionListing::min('bid_amount'),
+                'max' => AuctionListing::max('bid_amount'),
+            ],
             'types'   => [
-                ['name'=>'Land','value'=>'Land'],
-                ['name'=>'Commercial','value'=>'Commercial'],
-                ['name'=>'Residential','value'=>'Residential'],
+                ['name' => 'Land', 'value' => 'Land'],
+                ['name' => 'Commercial', 'value' => 'Commercial'],
+                ['name' => 'Residential', 'value' => 'Residential'],
             ],
             // 'types'   => AuctionListing::select('type')->distinct()->whereNotNull('type')->orderBy('type')->pluck('type'),
         ];
@@ -126,7 +127,7 @@ class AuctionListingController extends Controller
     public function save(int $id)
     {
         try {
-             $listing = AuctionListing::findOrFail($id);
+            $listing = AuctionListing::findOrFail($id);
 
             $saved = SavedListing::where('user_id', auth('api')->id())
                 ->where('auction_listing_id', $id)
@@ -151,8 +152,8 @@ class AuctionListingController extends Controller
             ]);
         } catch (\Throwable $th) {
             Log::info($th->getMessage());
-            return jsonErrorResponse('inavlid auction listing id', 500,[
-                'message'=>$th->getMessage(),
+            return jsonErrorResponse('inavlid auction listing id', 500, [
+                'message' => $th->getMessage(),
             ]);
         }
     }
@@ -283,5 +284,13 @@ class AuctionListingController extends Controller
         $listing->delete();
 
         return $this->success($listing, 'Listing deleted successfully', 200);
+    }
+    public function randomAuction()
+    {
+        $listings = AuctionListing::inRandomOrder()
+            ->take(3)
+            ->get();
+
+        return $this->success(AuctionListingResource::collection($listings), 'Random auction listings fetched successfully', 200);
     }
 }
