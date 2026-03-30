@@ -287,9 +287,8 @@ class AuctionListingController extends Controller
     }
     public function randomAuction()
     {
-        $listings = AuctionListing::inRandomOrder()
-            ->take(3)
-            ->get();
+        $ids = AuctionListing::pluck('id')->shuffle()->take(3);
+        $listings = AuctionListing::whereIn('id', $ids)->get();
 
         return $this->success(AuctionListingResource::collection($listings), 'Random auction listings fetched successfully', 200);
     }
