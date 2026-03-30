@@ -22,6 +22,7 @@ class UserController extends Controller
     public function me()
     {
         $data = User::select($this->select)->find(auth('api')->user()->id);
+        $data->is_subscribed = $data->activeSubscription()->exists();
         return Helper::jsonResponse(true, 'User details fetched successfully', 200, $data);
     }
 
