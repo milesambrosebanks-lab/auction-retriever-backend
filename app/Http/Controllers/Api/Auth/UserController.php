@@ -21,8 +21,34 @@ class UserController extends Controller
 
     public function me()
     {
+                $user = auth('api')->user();
+
         $data = User::select($this->select)->find(auth('api')->user()->id);
-        $data->is_subscribed = $data->activeSubscription()->exists();
+
+         $subscription = $user->subscription('default');
+
+        if (! $subscription) {
+             $ss=[
+                'active'    => false,
+                'cancelled' => false,
+                'on_grace'  => false,
+                'ends_at'   => null,
+            ];
+        }
+
+         $ss=[
+            'id'            => $subscription->id,
+            'stripe_price'  => $subscription->stripe_price,
+
+            'active'        => $subscription->active(),
+            'canceled'      => $subscription->canceled(),
+            'on_grace'      => $subscription->onGracePeriod(),
+            'ends_at'       => $subscription->ends_at,
+            'trial_ends_at' => $subscription->trial_ends_at,
+        ];
+
+        // $data->is_subscribed = $data->activeSubscription()->exists();
+        $data->subscribtion = $ss;
         return Helper::jsonResponse(true, 'User details fetched successfully', 200, $data);
     }
 
