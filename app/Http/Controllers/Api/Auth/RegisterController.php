@@ -229,7 +229,7 @@ class RegisterController extends Controller
             DB::commit();
 
             // Frontend এ redirect করো
-            return redirect(config('app.frontend_url') . '/auth');
+            return redirect(config('app.frontend_url') . '/start-trial');
         } catch (Exception $e) {
             DB::rollBack();
             return Helper::jsonErrorResponse($e->getMessage(), 500);
