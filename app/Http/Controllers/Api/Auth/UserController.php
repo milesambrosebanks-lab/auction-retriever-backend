@@ -39,7 +39,7 @@ class UserController extends Controller
             $ss = [
                 'id'            => $subscription->id,
                 'stripe_price'  => $subscription->stripe_price,
-
+                'starts_at'    => $subscription->created_at,
                 'active'        => $subscription->active(),
                 'canceled'      => $subscription->canceled(),
                 'on_grace'      => $subscription->onGracePeriod(),
