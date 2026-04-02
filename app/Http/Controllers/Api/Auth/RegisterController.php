@@ -99,6 +99,7 @@ class RegisterController extends Controller
             $data = User::select($this->select)->with('roles')->find($user->id);
 
             Mail::to($user->email)->send(new VerifyEmailMail($user->name, $verificationUrl));
+            Log::info('Verification email sent to ' . $user->email);
 
             DB::commit();
 
@@ -120,6 +121,7 @@ class RegisterController extends Controller
             ], 200);
         } catch (Exception $e) {
             DB::rollBack();
+            Log::error('User registration failed: ' . $e->getMessage());
             return Helper::jsonErrorResponse('User registration failed', 500, [$e->getMessage()]);
         }
     }
