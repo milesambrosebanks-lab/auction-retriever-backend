@@ -228,6 +228,7 @@ class RegisterController extends Controller
                 $customer = $stripe->createCustomer($user);
                 $user->update(['stripe_id' => $customer->id]);
             }
+            auth('api')->login($user);
 
             DB::commit();
 
