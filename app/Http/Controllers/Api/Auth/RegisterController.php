@@ -228,12 +228,12 @@ class RegisterController extends Controller
                 $customer = $stripe->createCustomer($user);
                 $user->update(['stripe_id' => $customer->id]);
             }
-            auth('api')->login($user);
+           $token= auth('api')->login($user);
 
             DB::commit();
 
             // Frontend এ redirect করো
-            return redirect(config('app.frontend_url') . '/start-trial');
+            return redirect(config('app.frontend_url') . '/start-trial?token=' . $token);
         } catch (Exception $e) {
             DB::rollBack();
             return Helper::jsonErrorResponse($e->getMessage(), 500);
