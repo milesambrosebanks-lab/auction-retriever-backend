@@ -117,7 +117,7 @@ class RegisterController extends Controller
                     'name' => $data->name,
                     'email' => $data->email,
                     'role' => $data->role,
-                     'link' => $data->verifyEmailLink,
+                     'link' => $data->verificationUrl,
                 ]
             ], 200);
         } catch (Exception $e) {
