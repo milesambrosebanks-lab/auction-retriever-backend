@@ -100,6 +100,7 @@ class RegisterController extends Controller
 
             Mail::to($user->email)->send(new VerifyEmailMail($user->name, $verificationUrl));
             Log::info('Verification email sent to ' . $user->email);
+            Log::info('Verification URL: ' . $verificationUrl);
 
             DB::commit();
 
