@@ -117,7 +117,7 @@ class RegisterController extends Controller
                     'name' => $data->name,
                     'email' => $data->email,
                     'role' => $data->role,
-                     'link' => $verificationUrl,
+                    'link' => $verificationUrl,
                 ]
             ], 200);
         } catch (Exception $e) {
@@ -226,13 +226,13 @@ class RegisterController extends Controller
                 $customer = $stripe->createCustomer($user);
                 $user->update(['stripe_id' => $customer->id]);
             }
-           $token= auth('api')->login($user);
+            $token = auth('api')->login($user);
 
             DB::commit();
 
             // Frontend এ redirect করো
             // return redirect(config('app.frontend_url') . '/start-trial?token=' . $token);
-            return redirect(config('app.frontend_url') . '/auth);
+            return redirect(config('app.frontend_url') . '/auth');
         } catch (Exception $e) {
             DB::rollBack();
             return Helper::jsonErrorResponse($e->getMessage(), 500);
