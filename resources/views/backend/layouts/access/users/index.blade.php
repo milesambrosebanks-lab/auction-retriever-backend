@@ -83,6 +83,7 @@
                                         <tr>
                                             <th>#</th>
                                             <th>User</th>
+                                            <th class="d-none">Email</th>
                                             <th>Status</th>
                                             <th>Plan</th>
                                             <th>Trial Ends</th>
@@ -147,8 +148,15 @@
                     },
                     {
                         data: 'name_col',
-                        name: 'name',
+                        name: 'name', // server-side uses name/email via filter
                         orderable: true
+                    },
+                    // Hidden column so global search also includes plain email text
+                    {
+                        data: 'email',
+                        name: 'email',
+                        visible: false,
+                        searchable: true
                     },
                     {
                         data: 'status_badge',
@@ -189,7 +197,7 @@
                     },
                 ],
                 order: [
-                    [7, 'desc']
+                    [8, 'desc'] // created column (after adding hidden email)
                 ],
                 lengthMenu: [10, 25, 50, 100],
                 dom: "<'row mb-3'<'col-md-6'l><'col-md-6 text-end'f>>" +
@@ -201,7 +209,7 @@
                         className: 'btn btn-success btn-sm',
                         text: '<i class="fa fa-download me-1"></i> CSV',
                         exportOptions: {
-                            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8] // action column বাদ
+                            columns: [0, 1, 3, 4, 5, 6, 7, 8, 9] // skip hidden email + action
                         }
                     },
                     {
@@ -209,7 +217,7 @@
                         className: 'btn btn-info btn-sm',
                         text: '<i class="fa fa-file-excel me-1"></i> Excel',
                         exportOptions: {
-                            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+                            columns: [0, 1, 3, 4, 5, 6, 7, 8, 9]
                         }
                     },
                     {
@@ -217,7 +225,7 @@
                         className: 'btn btn-secondary btn-sm',
                         text: '<i class="fa fa-print me-1"></i> Print',
                         exportOptions: {
-                            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+                            columns: [0, 1, 3, 4, 5, 6, 7, 8, 9]
                         }
                     },
                 ],

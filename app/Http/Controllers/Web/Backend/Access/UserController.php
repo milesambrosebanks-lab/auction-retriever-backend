@@ -22,38 +22,6 @@ class UserController extends Controller
         View::share('crud', 'user');
     }
 
-    public function index_draft(Request $request)
-    {
-        $user = Auth::guard('web')->user();
-
-        $user = User::where('id', '!=', $user->id)
-            ->whereHas('roles', function ($q) {
-                $q->where('name', 'customer');
-            })->with('roles');
-
-        if ($request->ajax()) {
-            return DataTables::of($user)
-                ->addIndexColumn()
-                ->addColumn('last_activity', fn($user) => $user->last_activity_at ? $user->last_activity_at : null)
-                ->addColumn('created', fn($user) => $user->created_at)
-                ->addColumn('action', function ($user) {
-                    $btn = '<div class="btn-group" role="group">';
-                    $btn .= '<a href="' . route('admin.users.edit', $user->id) . '" class="btn btn-primary"><i class="fa-solid fa-pencil"></i></a>';
-                    $btn .= '<a href="' . route('admin.users.show', $user->id) . '" class="btn btn-info"><i class="fa-solid fa-eye"></i></a>';
-
-                    $btn .= '<form action="' . route('admin.users.destroy', $user->id) . '" method="POST" style="display:inline;" onsubmit="return confirm(\'Are you sure?\')">';
-                    $btn .= csrf_field() . method_field('DELETE');
-                    $btn .= '<button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i></button>';
-                    $btn .= '</form>';
-
-                    $btn .= '</div>';
-                    return $btn;
-                })
-                ->rawColumns(['action'])
-                ->make(true);
-        }
-        return view('backend.layouts.access.users.index', compact('user'));
-    }
 
     public function index(Request $request)
     {
@@ -69,7 +37,6 @@ class UserController extends Controller
                 'plan',
             ]);
 
-        // ── Filter by subscription status ────────────────────────────
         if ($request->filled('status')) {
             $status = $request->status;
 
@@ -88,7 +55,7 @@ class UserController extends Controller
                 });
             }
         }
-        // ── Filter by plan ────────────────────────────────────────────
+
         if ($request->filled('plan')) {
             $plan = Plan::find($request->plan);
             if ($plan) {
@@ -97,7 +64,7 @@ class UserController extends Controller
                 });
             }
         }
-        // ── Filter by signup date ─────────────────────────────────────
+
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -115,7 +82,7 @@ class UserController extends Controller
                         : asset('default/profile.jpg');
                     return '<div class="d-flex align-items-center gap-2">
                             <img src="' . $avatar . '" class="rounded-circle"
-                                 style="width:32px;height:32px;object-fit:cover;">
+                                style="width:32px;height:32px;object-fit:cover;">
                             <div>
                                 <div class="fw-500">' . e($user->name) . '</div>
                                 <small class="text-muted">' . e($user->email) . '</small>
@@ -124,7 +91,6 @@ class UserController extends Controller
                 })
                 ->addColumn('status_badge', function ($user) {
 
-                    // activeSubscription থেকে status নিন
                     $status = $user->activeSubscription?->stripe_status ?? 'N/A';
 
                     $colors = [
@@ -180,7 +146,6 @@ class UserController extends Controller
                         . '</span>';
                 })
                 ->addColumn('sub_ends', function ($user) {
-                    // subscription_ends_at অথবা subscription এর ends_at
                     $date = $user->subscription_ends_at
                         ?? $user->activeSubscription?->ends_at;
 
@@ -205,27 +170,17 @@ class UserController extends Controller
                 ->addColumn('action', function ($user) {
                     return '<div class="btn-group btn-group-sm">
                     <a href="' . route('admin.users.show', $user->id) . '"
-                       class="btn btn-info" title="View">
+                    class="btn btn-info" title="View">
                         <i class="fa-solid fa-eye"></i>
                     </a>
                     <a href="' . route('admin.users.edit', $user->id) . '"
-                       class="btn btn-primary" title="Edit">
+                    class="btn btn-primary" title="Edit">
                         <i class="fa-solid fa-pencil"></i>
                     </a>
 
                 </div>';
                 })
-                ->rawColumns([
-                    'name_col',
-                    'status_badge',
-                    'plan_col',
-                    'trial_ends',
-                    'sub_ends',
-                    'last_login',
-                    'created',
-                    'action'
-                ])
-                ->make(true);
+                ->rawColumns(['name_col','status_badge','plan_col','trial_ends','sub_ends','last_login','created','action'])->make(true);
         }
 
         // Plan list for filter dropdown
@@ -287,7 +242,7 @@ class UserController extends Controller
 
         // $payments = collect();
         $transactions = $user->transactions;
-// dd($transactions);
+        // dd($transactions);
         // Stripe payment history
         // if ($user->stripe_id) {
         //     try {
