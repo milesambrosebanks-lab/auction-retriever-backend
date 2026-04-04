@@ -6,7 +6,7 @@ const pageNum = process.argv[3] || 1;
 (async () => {
     try {
         const browser = await puppeteer.launch({
-            headless: false,
+            headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
 

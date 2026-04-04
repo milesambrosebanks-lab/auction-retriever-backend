@@ -89,7 +89,8 @@ class ScrapeRealtyBid extends Command
                             'auction_start_date' => $item['AUCTION_START_DATE'] ?? null,
                             'auction_end_date' => $item['AUCTION_END_DATE'] ?? null,
                             'type' => $item['PROP_TYPE_DESC'] ?? null,
-                            'source_url' => 'https://www.realtybid.com'.$item['PHOTOS'][0]['IMAGE_PATH'],
+                            'image_url' => 'https://photos.realtybid.com/large' . $item['PHOTOS'][0]['IMAGE_PATH'],
+                            'source_url' => 'https://www.realtybid.com/houses-for-auction/' . $item['state'] . '/' . $item['county'] . '/' . $item['city'] . '/' . $item['zip'] . '/' . $item['address'] . '/' . $item['ITEM_ID'],
                             'scraped_at' => now(),
                         ]
                     );

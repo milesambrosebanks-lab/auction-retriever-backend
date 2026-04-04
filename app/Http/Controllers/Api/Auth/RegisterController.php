@@ -198,19 +198,17 @@ class RegisterController extends Controller
         }
     }
 
+
     public function verifyEmailLink(Request $request, $id)
     {
-        // Signed URL valid কিনা check
+
         if (!$request->hasValidSignature()) {
-            // return Helper::jsonErrorResponse('Invalid or expired verification link.', 422);
             return redirect(config('app.frontend_url') . '/error?message=Invalid or expired verification link');
         }
 
         $user = User::findOrFail($id);
 
-        // Already verified?
         if (!empty($user->otp_verified_at)) {
-            // return Helper::jsonErrorResponse('Email already verified.', 409);
             return redirect(config('app.frontend_url') . '/auth');
         }
 
@@ -233,7 +231,8 @@ class RegisterController extends Controller
             DB::commit();
 
             // Frontend এ redirect করো
-            return redirect(config('app.frontend_url') . '/start-trial?token=' . $token);
+            // return redirect(config('app.frontend_url') . '/start-trial?token=' . $token);
+            return redirect(config('app.frontend_url') . '/auth);
         } catch (Exception $e) {
             DB::rollBack();
             return Helper::jsonErrorResponse($e->getMessage(), 500);

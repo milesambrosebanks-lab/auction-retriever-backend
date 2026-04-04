@@ -30,7 +30,7 @@ return [
     'allowed_origins' => [
         'http://localhost:3000', // React
         'http://localhost:5173', // Vite
-        'https://auction-retriver.vercel.app/'
+        'https://auction-retriver-beta.vercel.app'
     ],
 
     'allowed_headers' => ['*'],
