@@ -129,7 +129,7 @@ Route::group(['middleware' => 'guest:api'], function ($router) {
         ->middleware('signed');
 });
 
-Route::group(['middleware' => ['auth:api', 'api-otp']], function ($router) {
+Route::group(['middleware' => ['auth:api', 'api-otp']], function () {
     Route::get('/refresh-token', [LoginController::class, 'refreshToken']);
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::get('/me', [UserController::class, 'me']);
@@ -193,19 +193,6 @@ Route::prefix('products')->name('products.')->group(function () {
     Route::post('/order', [OrderController::class, 'store'])->name('order.store');
     Route::post('/{id}/checkout', [StripeCallBackController::class, 'checkout'])->name('order.checkout');
 });
-// Route::prefix('orders')->name('orders.')->group(function () {
-//     Route::post('/{id}/checkout', [StripeCallBackController::class, 'checkout'])->name('order.checkout');
-// });
-/*
-# prayer time
-# http:://127.0.0.1:8000/api/prayer-times?date=2025-12-25&lat=23.7018&lng=90.3742&timezone=6&method=1
-# http:://127.0.0.1:8000/api/prayer-times/today?lat=23.7018&lng=90.3742&timezone=6&method=1
-*/
-// Route::prefix('prayer-times')->group(function () {
-//     Route::get('/', [PrayerTimesController::class, 'index']);
-//     Route::get('/today', [PrayerTimesController::class, 'today']);
-//     Route::get('/methods', [PrayerTimesController::class, 'methods']);
-// });
 
 Route::post('contact/store', [ContactController::class, 'store'])->name('contact.store');
 
