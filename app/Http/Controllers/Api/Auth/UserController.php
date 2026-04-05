@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
+use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,7 @@ class UserController extends Controller
         $data = User::select($this->select)->find(auth('api')->user()->id);
 
         $subscription = $user->subscription('default');
+        $plan = null;
 
         if (! $subscription) {
             $ss = [
@@ -33,8 +35,10 @@ class UserController extends Controller
                 'cancelled' => false,
                 'on_grace'  => false,
                 'ends_at'   => null,
+                'plan'      => null,
             ];
         } else {
+            $plan = Plan::where('stripe_price_id', $subscription->stripe_price)->first();
 
             $ss = [
                 'id'            => $subscription->id,
@@ -45,10 +49,21 @@ class UserController extends Controller
                 'on_grace'      => $subscription->onGracePeriod(),
                 'ends_at'       => $subscription->ends_at,
                 'trial_ends_at' => $subscription->trial_ends_at,
+                'subscription_plan_id' => $plan->id??null,
+                // 'plan'          => $plan ? [
+                //     'id'              => $plan->id,
+                //     'name'            => $plan->name,
+                //     'price'           => $plan->price,
+                //     'currency'        => $plan->currency,
+                //     'interval'        => $plan->interval,
+                //     'interval_count'  => $plan->interval_count,
+                //     'trial_days'      => $plan->trial_days,
+                //     'stripe_price_id' => $plan->stripe_price_id,
+                // ] : null,
             ];
         }
         // $data->is_subscribed = $data->activeSubscription()->exists();
-        $data->subscribtion = $ss;
+        $data->subscription = $ss;
         return Helper::jsonResponse(true, 'User details fetched successfully', 200, $data);
     }
 

@@ -138,7 +138,8 @@ Route::group(['middleware' => ['web-admin']], function () {
     });
 
     Route::controller(TransactionController::class)->prefix('transaction')->name('transaction.')->group(function () {
-        Route::get('/', 'index')->name('index');
+        // Route::get('/', 'index')->name('index');
+        Route::get('/', 'transactions')->name('index');
         Route::get('/show/{id}', 'show')->name('show');
     });
 
