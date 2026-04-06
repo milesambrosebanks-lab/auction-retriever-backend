@@ -59,6 +59,7 @@
                 $stripeSubscriptionRows = $useLiveStripe ? $stripeLiveSubscriptions : $stripeSubscriptions;
                 $stripeInvoiceRows = $useLiveStripe ? $stripeLiveInvoices : $stripeInvoices;
                 $stripeTxnRows = $useLiveStripe ? $stripeLiveBalanceTxns : $stripeInvoices;
+                // dd($stripeSubscriptionRows);
             @endphp
 
             <!-- CONTAINER -->
@@ -441,7 +442,7 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        @forelse($stripeCustomerRows->take(10) as $customer)
+                                        @forelse($stripeCustomerRows->take(14) as $customer)
                                             <tr>
                                                 <td>{{ $customer->name ?? ($customer->description ?? 'N/A') }}</td>
                                                 <td>{{ $customer->email ?? 'N/A' }}</td>
@@ -482,13 +483,15 @@
                                         </tr>
                                         </thead>
                                         <tbody>
+
                                         @forelse($stripeSubscriptionRows->take(10) as $sub)
+
                                             <tr>
                                                 <td>
                                                     {{ optional($sub->user)->name ?? ($sub->customer?->name ?? 'N/A') }}
-                                                    <div class="small text-muted">{{ optional($sub->user)->email ?? ($sub->customer?->email ?? '') }}</div>
+                                                    <div class="small text-muted">{{ optional($sub->user)->email ?? ($sub->customer?->email ?? 'N/A') }}</div>
                                                 </td>
-                                                <td><span class="badge bg-{{ $sub->stripe_status === 'active' ? 'success' : ($sub->stripe_status === 'trialing' ? 'info' : 'secondary') }}">{{ ucfirst($sub->stripe_status ?? 'n/a') }}</span></td>
+                                                <td><span class="badge bg-{{ $sub->status === 'active' ? 'success' : ($sub->status === 'trialing' ? 'info' : 'secondary') }}">{{ ucfirst($sub->status ?? 'n/a') }}</span></td>
                                                 <td class="text-muted small">{{ $sub->stripe_price ?? ($sub->items->data[0]->price->id ?? '—') }}</td>
                                                 <td>
                                                     @php $created = $sub->created ?? null; @endphp
@@ -574,7 +577,7 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        @forelse($stripeTxnRows->take(10) as $trx)
+                                        @forelse($stripeTxnRows->take(13) as $trx)
                                             <tr>
                                                 <td class="small text-muted">#{{ $trx->invoice_id ?? $trx->id }}</td>
                                                 <td>

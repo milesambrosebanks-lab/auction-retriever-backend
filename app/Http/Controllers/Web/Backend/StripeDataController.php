@@ -87,6 +87,7 @@ class StripeDataController extends Controller
             $error = $e->getMessage();
         }
 
+
         return view('backend.layouts.stripe.subscriptions', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters'));
     }
 

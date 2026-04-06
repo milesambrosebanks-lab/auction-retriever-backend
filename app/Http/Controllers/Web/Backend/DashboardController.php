@@ -29,18 +29,18 @@ class DashboardController extends Controller
         $userStats = [
             'total'     => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))->count(),
             'trial'     => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))
-                               ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'trialing'))
-                               ->count(),
+                            ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'trialing'))
+                            ->count(),
             'active'    => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))
-                               ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'active'))
-                               ->count(),
+                            ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'active'))
+                            ->count(),
             'cancelled' => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))
-                               ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'canceled'))
-                               ->count(),
+                            ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'canceled'))
+                            ->count(),
             'past_due'  => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))
-                               ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'past_due'))
-                               ->count(),
-                               'subscriptions' => Subscription::count(), // ← নতুন
+                            ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'past_due'))
+                            ->count(),
+                            'subscriptions' => Subscription::count(),
         ];
 
         // ── Transaction Stats ────────────────────────────────────────
@@ -208,20 +208,20 @@ class DashboardController extends Controller
             $stripe = new StripeClient(config('services.stripe.secret'));
 
             $stripeLiveCustomers = collect($stripe->customers->all([
-                'limit' => 10,
+                'limit' => 14,
             ])->data);
 
             $stripeLiveSubscriptions = collect($stripe->subscriptions->all([
                 'limit' => 10,
-                'expand' => ['data.items.data.price'],
+                'expand' => ['data.items.data.price', 'data.customer'],
             ])->data);
-
+// dd($stripeLiveSubscriptions->toArray());
             $stripeLiveInvoices = collect($stripe->invoices->all([
                 'limit' => 10,
             ])->data);
 
             $stripeLiveBalanceTxns = collect($stripe->balanceTransactions->all([
-                'limit' => 10,
+                'limit' => 13,
             ])->data);
 
             $stripeLiveKpis['active_subscribers'] = $stripeLiveSubscriptions
