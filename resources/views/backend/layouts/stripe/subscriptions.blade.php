@@ -40,8 +40,8 @@
                             </select>
                         </div>
                         <div class="col-sm-6 col-md-4 col-lg-3 d-flex align-items-end gap-2 flex-wrap">
-                            <button class="btn btn-primary btn-sm" type="submit"><i class="fe fe-filter me-1"></i> Apply</button>
-                            <a href="{{ route('admin.stripe.subscriptions') }}" class="btn btn-light btn-sm">Reset</a>
+                            <button class="btn btn-success btn-sm px-3" type="submit"><i class="fe fe-filter me-1"></i>Apply</button>
+                            <a href="{{ route('admin.stripe.subscriptions') }}" class="btn btn-light btn-sm px-3">Reset</a>
                         </div>
                     </form>
                 </div>

@@ -208,20 +208,20 @@ class DashboardController extends Controller
             $stripe = new StripeClient(config('services.stripe.secret'));
 
             $stripeLiveCustomers = collect($stripe->customers->all([
-                'limit' => 20,
+                'limit' => 10,
             ])->data);
 
             $stripeLiveSubscriptions = collect($stripe->subscriptions->all([
-                'limit' => 20,
+                'limit' => 10,
                 'expand' => ['data.items.data.price'],
             ])->data);
 
             $stripeLiveInvoices = collect($stripe->invoices->all([
-                'limit' => 20,
+                'limit' => 10,
             ])->data);
 
             $stripeLiveBalanceTxns = collect($stripe->balanceTransactions->all([
-                'limit' => 20,
+                'limit' => 10,
             ])->data);
 
             $stripeLiveKpis['active_subscribers'] = $stripeLiveSubscriptions
