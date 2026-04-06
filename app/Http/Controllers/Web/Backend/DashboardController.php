@@ -168,18 +168,18 @@ class DashboardController extends Controller
         $stripeCustomers = User::select('id', 'name', 'email', 'stripe_id', 'created_at')
             ->whereNotNull('stripe_id')
             ->latest()
-            ->take(8)
+            ->take(10)
             ->get();
 
         $stripeSubscriptions = Subscription::select('id', 'user_id', 'stripe_status', 'stripe_price', 'quantity', 'created_at', 'ends_at')
             ->with('user:id,name,email,stripe_id')
             ->latest()
-            ->take(8)
+            ->take(10)
             ->get();
 
         $stripeInvoices = Transaction::select('id', 'title', 'invoice_id', 'customer_id', 'amount', 'currency', 'status', 'created_at')
             ->latest()
-            ->take(8)
+            ->take(10)
             ->get();
 
         $stripeKpis = [

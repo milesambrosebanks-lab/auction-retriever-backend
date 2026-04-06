@@ -417,8 +417,11 @@
                     <div class="col-xl-6 mb-4">
                         <div class="card h-100">
                             <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0"><i class="fa-solid fa-users me-1 text-primary"></i> Recent Customers</h5>
-                                <span class="badge bg-light text-muted">{{ $stripeCustomerRows->count() }} records</span>
+                                <div>
+                                    <h5 class="mb-0"><i class="fa-solid fa-users me-1 text-primary"></i> Recent Customers</h5>
+                                    <span class="badge bg-light text-muted">{{ $stripeCustomerRows->count() }} records</span>
+                                </div>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.stripe.customers') }}">View All</a>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
@@ -432,7 +435,7 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        @forelse($stripeCustomerRows as $customer)
+                                        @forelse($stripeCustomerRows->take(10) as $customer)
                                             <tr>
                                                 <td>{{ $customer->name ?? ($customer->description ?? 'N/A') }}</td>
                                                 <td>{{ $customer->email ?? 'N/A' }}</td>
@@ -455,8 +458,11 @@
                     <div class="col-xl-6 mb-4">
                         <div class="card h-100">
                             <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0"><i class="fa-solid fa-star me-1 text-success"></i> Active Subscriptions</h5>
-                                <span class="badge bg-light text-muted">{{ $stripeSubscriptionRows->count() }} records</span>
+                                <div>
+                                    <h5 class="mb-0"><i class="fa-solid fa-star me-1 text-success"></i> Active Subscriptions</h5>
+                                    <span class="badge bg-light text-muted">{{ $stripeSubscriptionRows->count() }} records</span>
+                                </div>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.stripe.subscriptions') }}">View All</a>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
@@ -470,7 +476,7 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        @forelse($stripeSubscriptionRows as $sub)
+                                        @forelse($stripeSubscriptionRows->take(10) as $sub)
                                             <tr>
                                                 <td>
                                                     {{ optional($sub->user)->name ?? ($sub->customer?->name ?? 'N/A') }}
@@ -498,8 +504,11 @@
                     <div class="col-xl-6 mb-4 mb-xl-0">
                         <div class="card h-100">
                             <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0"><i class="fa-solid fa-file-invoice-dollar me-1 text-warning"></i> Latest Invoices</h5>
-                                <span class="badge bg-light text-muted">{{ $stripeInvoiceRows->count() }} records</span>
+                                <div>
+                                    <h5 class="mb-0"><i class="fa-solid fa-file-invoice-dollar me-1 text-warning"></i> Latest Invoices</h5>
+                                    <span class="badge bg-light text-muted">{{ $stripeInvoiceRows->count() }} records</span>
+                                </div>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.stripe.invoices') }}">View All</a>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
@@ -513,7 +522,7 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        @forelse($stripeInvoiceRows as $invoice)
+                                        @forelse($stripeInvoiceRows->take(10) as $invoice)
                                             <tr>
                                                 <td>
                                                     <span class="fw-semibold">{{ $invoice->title ?? 'Invoice' }}</span>
@@ -541,8 +550,11 @@
                     <div class="col-xl-6">
                         <div class="card h-100">
                             <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0"><i class="fa-solid fa-money-bill-transfer me-1 text-primary"></i> Recent Transactions</h5>
-                                <span class="badge bg-light text-muted">{{ $stripeTxnRows->count() }} shown</span>
+                                <div>
+                                    <h5 class="mb-0"><i class="fa-solid fa-money-bill-transfer me-1 text-primary"></i> Recent Transactions</h5>
+                                    <span class="badge bg-light text-muted">{{ $stripeTxnRows->count() }} shown</span>
+                                </div>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.stripe.transactions') }}">View All</a>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
@@ -556,7 +568,7 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        @forelse($stripeTxnRows as $trx)
+                                        @forelse($stripeTxnRows->take(10) as $trx)
                                             <tr>
                                                 <td class="small text-muted">#{{ $trx->invoice_id ?? $trx->id }}</td>
                                                 <td>

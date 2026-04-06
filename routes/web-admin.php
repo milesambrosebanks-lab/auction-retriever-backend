@@ -143,6 +143,17 @@ Route::group(['middleware' => ['web-admin']], function () {
         Route::get('/show/{id}', 'show')->name('show');
     });
 
+    // Stripe live data listings
+    Route::controller(\App\Http\Controllers\Web\Backend\StripeDataController::class)
+        ->prefix('stripe')
+        ->name('stripe.')
+        ->group(function () {
+            Route::get('/customers', 'customers')->name('customers');
+            Route::get('/subscriptions', 'subscriptions')->name('subscriptions');
+            Route::get('/invoices', 'invoices')->name('invoices');
+            Route::get('/transactions', 'transactions')->name('transactions');
+        });
+
 
     /*
     * CMS
