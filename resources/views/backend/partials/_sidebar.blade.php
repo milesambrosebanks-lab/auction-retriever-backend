@@ -86,6 +86,14 @@
                     </a>
                 </li>
 
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('admin.dashboard') && request('tab', 'overview') === 'stripe' ? 'has-link active' : '' }}"
+                       href="{{ route('admin.dashboard', ['tab' => 'stripe']) }}">
+                        <i class="fa-brands fa-stripe-s side-menu__icon"></i>
+                        <span class="side-menu__label">Stripe Insights</span>
+                    </a>
+                </li>
+
                 {{-- ── SYSTEM ────────────────────────────────── --}}
                 @role('admin')
                 <li><h3>System</h3></li>
