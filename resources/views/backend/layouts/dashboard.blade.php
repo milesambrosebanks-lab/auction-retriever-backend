@@ -388,7 +388,7 @@
                                 <span class="badge bg-warning text-dark">Counts</span>
                             </div>
                             <div class="card-body chart-center">
-                                <canvas id="stripeStatusChart" class="chart-200" style="max-width:260px; max-height:260px;"></canvas>
+                                <canvas id="stripeStatusChart" class="chart-100" style="max-width:260px; max-height:260px;"></canvas>
                             </div>
                         </div>
                     </div>
@@ -991,7 +991,7 @@
                         'rgba(255, 193, 7, 0.85)',
                         'rgba(220, 53, 69, 0.8)',
                     ],
-                    borderWidth: 1,
+                    borderWidth: 0,
                 }]
             },
             options: {
@@ -1000,7 +1000,7 @@
                 plugins: {
                     legend: { position: 'bottom' }
                 },
-                layout: { padding: 10 }
+                layout: { padding: 0 }
             }
         });
     </script>
