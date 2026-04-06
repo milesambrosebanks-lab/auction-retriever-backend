@@ -39,6 +39,12 @@
         .chart-280 {
             height: 280px !important;
         }
+        .chart-200 { height: 200px !important; }
+        .chart-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 @endpush
 
@@ -371,18 +377,18 @@
                                 <span class="badge bg-primary">{{ $currentYear }}</span>
                             </div>
                             <div class="card-body">
-                                <canvas id="stripeRevenueChart" height="110"></canvas>
+                                <canvas id="stripeRevenueChart" height="100"></canvas>
                             </div>
                         </div>
                     </div>
                     <div class="col-xl-4">
                         <div class="card h-100">
                             <div class="card-header border-bottom d-flex align-items-center justify-content-between">
-                                <h5 class="mb-0"><i class="fa-solid fa-user-group me-1 text-info"></i> Subscriber Growth</h5>
-                                <span class="badge bg-info">Monthly</span>
+                                <h5 class="mb-0"><i class="fa-solid fa-receipt me-1 text-warning"></i> Payout Mix</h5>
+                                <span class="badge bg-warning text-dark">Counts</span>
                             </div>
-                            <div class="card-body">
-                                <canvas id="stripeSubscriberChart" height="110"></canvas>
+                            <div class="card-body chart-center">
+                                <canvas id="stripeStatusChart" class="chart-200" style="max-width:260px; max-height:260px;"></canvas>
                             </div>
                         </div>
                     </div>
@@ -403,11 +409,11 @@
                     <div class="col-xl-6">
                         <div class="card h-100">
                             <div class="card-header border-bottom d-flex align-items-center justify-content-between">
-                                <h5 class="mb-0"><i class="fa-solid fa-receipt me-1 text-warning"></i> Payout Mix</h5>
-                                <span class="badge bg-warning text-dark">Counts</span>
+                                <h5 class="mb-0"><i class="fa-solid fa-user-group me-1 text-info"></i> Subscriber Growth</h5>
+                                <span class="badge bg-info">Monthly</span>
                             </div>
                             <div class="card-body">
-                                <canvas id="stripeStatusChart" class="chart-280"></canvas>
+                                <canvas id="stripeSubscriberChart" class="chart-280"></canvas>
                             </div>
                         </div>
                     </div>
@@ -872,6 +878,7 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: true,
                 interaction: { mode: 'index', intersect: false },
                 plugins: { legend: { position: 'top' } },
                 scales: {
@@ -989,10 +996,11 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: { position: 'bottom' }
-                }
+                },
+                layout: { padding: 10 }
             }
         });
     </script>
