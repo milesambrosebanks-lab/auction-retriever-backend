@@ -31,7 +31,7 @@ class SubscriptionPlanController extends Controller
     {
         $user = Auth::guard('web')->user();
         $permissions = $user->getAllPermissions(); // collection of Permission models
-    //    dd($permissions);
+        //    dd($permissions);
         // $users = User::where('id', '!=', $user->id)->with('roles')->orderBy('id', 'desc')->paginate(25);
         $plans = Plan::orderBy('id', 'desc')->paginate(25);
         return view('backend.layouts.access.my_plan.public', compact('plans', 'user'));
@@ -120,8 +120,7 @@ class SubscriptionPlanController extends Controller
 
     public function edit($id)
     {
-        // $user = User::find($id);
-        // $roles = Role::all();
+
         $plan = Plan::find($id);
         return view('backend.layouts.access.my_plan.edit', compact('plan'));
     }
@@ -207,7 +206,7 @@ class SubscriptionPlanController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('t-success', 'User updated t-successfully');
+            return redirect()->back()->with('t-success', 'Plan updated successfully');
         } catch (Exception $e) {
             DB::rollBack();
 
@@ -218,19 +217,38 @@ class SubscriptionPlanController extends Controller
 
     public function destroy($id)
     {
-        $plan = Plan::find($id);
-        $stripe = new StripeService();
+        try {
+            $plan = Plan::find($id);
 
-        if ($plan->stripe_price_id) {
-            $stripe->archivePrice($plan->stripe_price_id);
+            if (!$plan) {
+                return redirect()->back()->with('t-error', 'Plan not found');
+            }
+
+            $stripe = new StripeService();
+
+            if ($plan->stripe_price_id) {
+                try {
+                    $stripe->archivePrice($plan->stripe_price_id);
+                } catch (\Throwable $priceException) {
+                    // If the price does not exist in Stripe anymore, keep going and just delete the local plan
+                    Log::info('Stripe price delete skipped: ' . $priceException->getMessage());
+                }
+            }
+
+            if ($plan->stripe_product_id) {
+                try {
+                    $stripe->archiveProduct($plan->stripe_product_id);
+                } catch (\Throwable $productException) {
+                    Log::info('Stripe product delete skipped: ' . $productException->getMessage());
+                }
+            }
+
+            $plan->delete();
+        } catch (\Throwable $th) {
+            Log::info($th->getMessage());
+            return redirect()->back()->with('t-error', 'Plan deleted failed');
         }
-
-        if ($plan->stripe_product_id) {
-            $stripe->archiveProduct($plan->stripe_product_id);
-        }
-
-        $plan->delete();
-        return redirect()->back()->with('t-success', 'User deleted t-successfully');
+        return redirect()->back()->with('t-success', 'Plan deleted successfully');
     }
 
     public function status(int $id)
