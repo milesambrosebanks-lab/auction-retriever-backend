@@ -320,6 +320,7 @@
                         @elseif($useLiveStripe)
                             <div class="alert alert-success small mb-3">
                                 Live Stripe data loaded from API ({{ config('app.server') }} mode).
+                                {{-- need change  --}}
                             </div>
                         @endif
                     </div>
