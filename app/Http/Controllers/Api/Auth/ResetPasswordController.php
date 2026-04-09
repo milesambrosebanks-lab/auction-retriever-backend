@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Helpers\Helper;
+use App\Mail\ForgotPasswordMail;
 use App\Mail\OtpMail;
 use App\Mail\VerifyEmailMail;
 use App\Models\User;
@@ -43,15 +44,14 @@ class ResetPasswordController extends Controller
                     ['id' => $user->id, 'email' => $user->email]
                 );
 
-                // Mail::to($email)->send(new OtpMail($otp, 'password_reset'));
-                Mail::to($user->email)->send(new VerifyEmailMail($user->name, $verificationUrl));
+                Mail::to($user->email)->send(new ForgotPasswordMail($user->name, $verificationUrl));
 
 
                 $user->otp            = $otp;
                 $user->otp_expires_at = Carbon::now()->addMinutes(60);
                 $user->save();
 
-                return Helper::jsonResponse(true, 'A varification link send to your email. Please Check Your Email.', 200);
+                return Helper::jsonResponse(true, 'A verification link send to your email. Please Check Your Email.', 200);
             } else {
                 return Helper::jsonErrorResponse('Invalid Email Address', 404);
             }
