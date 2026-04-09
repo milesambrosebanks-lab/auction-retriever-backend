@@ -3,7 +3,7 @@
 <p>Hi {{ $name }},</p>
 <p>Welcome to {{ config('app.name') }}! You're almost ready to get started</p>
 
-<p>To complete your registration, please click the button below to verify your email address.</p
+<p>To complete your registration, please click the button below to verify your email address.</p>
 <p style="text-align:center;margin:32px 0;">
     <a href="{{ $verificationUrl }}" class="btn">Verify</a>
 </p>

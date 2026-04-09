@@ -15,7 +15,7 @@ class VerifyEmailMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Please Confirm Your Email Address');
+        return new Envelope(subject: 'Please Verify Your Email Address');
     }
 
     public function content(): Content

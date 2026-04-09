@@ -15,7 +15,7 @@ class ForgotPasswordMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Please Verify your Email Address');
+        return new Envelope(subject: 'Please Confirm Your Email Address');
     }
 
     public function content(): Content
