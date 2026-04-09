@@ -222,7 +222,7 @@ class DashboardController extends Controller
                 'limit' => 10,
                 'expand' => ['data.items.data.price', 'data.customer'],
             ])->data);
-// dd($stripeLiveSubscriptions->toArray());
+
             $stripeLiveInvoices = collect($stripe->invoices->all([
                 'limit' => 10,
             ])->data);
@@ -265,12 +265,12 @@ class DashboardController extends Controller
             $stripeLiveKpis['arr'] = $stripeLiveKpis['mrr'] * 12;
             $stripeLiveKpis['live_mode'] = true;
 
-            $stripeTotals = [
-                'customers_total'     => $this->countStripeObjects(fn(array $params) => $stripe->customers->all($params)),
-                'subscriptions_total' => $this->countStripeObjects(fn(array $params) => $stripe->subscriptions->all($params)),
-                'invoices_total'      => $this->countStripeObjects(fn(array $params) => $stripe->invoices->all($params)),
-                'transactions_total'  => $this->countStripeObjects(fn(array $params) => $stripe->balanceTransactions->all($params)),
-            ];
+            // $stripeTotals = [
+            //     'customers_total'     => $this->countStripeObjects(fn(array $params) => $stripe->customers->all($params)),
+            //     'subscriptions_total' => $this->countStripeObjects(fn(array $params) => $stripe->subscriptions->all($params)),
+            //     'invoices_total'      => $this->countStripeObjects(fn(array $params) => $stripe->invoices->all($params)),
+            //     'transactions_total'  => $this->countStripeObjects(fn(array $params) => $stripe->balanceTransactions->all($params)),
+            // ];
 
             // ── Stripe revenue chart (by invoice) ──
             foreach ($stripeLiveInvoices as $invoice) {

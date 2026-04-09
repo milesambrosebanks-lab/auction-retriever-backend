@@ -24,12 +24,12 @@
                         <div class="col-sm-6 col-md-3">
                             <label for="start_date" class="form-label">Start Date</label>
                             <input type="date" name="start_date" id="start_date" class="form-control form-control-sm"
-                                   value="{{ $filters['start_date'] ?? '' }}">
+                                value="{{ $filters['start_date'] ?? '' }}">
                         </div>
                         <div class="col-sm-6 col-md-3">
                             <label for="end_date" class="form-label">End Date</label>
                             <input type="date" name="end_date" id="end_date" class="form-control form-control-sm"
-                                   value="{{ $filters['end_date'] ?? '' }}">
+                                value="{{ $filters['end_date'] ?? '' }}">
                         </div>
                         <div class="col-sm-6 col-md-2">
                             <label for="limit" class="form-label">Per Page</label>

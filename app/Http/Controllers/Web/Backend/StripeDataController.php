@@ -80,13 +80,13 @@ class StripeDataController extends Controller
         $error = null;
 
         try {
+
             $res = $this->stripe->subscriptions->all($params);
             $items = collect($res->data);
             $hasMore = $res->has_more;
         } catch (Throwable $e) {
             $error = $e->getMessage();
         }
-
 
         return view('backend.layouts.stripe.subscriptions', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters'));
     }

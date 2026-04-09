@@ -428,7 +428,7 @@
                                 <div>
                                     <h5 class="mb-0"><i class="fa-solid fa-users me-1 text-primary"></i> Recent Customers</h5>
                                     <span class="badge bg-light text-muted">
-                                        Showing {{ min($stripeCustomerRows->count(), 14) }} of {{ number_format($stripeTotals['customers_total'] ?? $stripeCustomerRows->count()) }}
+                                        Showing {{ min($stripeCustomerRows->count(), 14) }}
                                     </span>
                                 </div>
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.stripe.customers') }}">View All</a>
@@ -471,7 +471,7 @@
                                 <div>
                                     <h5 class="mb-0"><i class="fa-solid fa-star me-1 text-success"></i> Active Subscriptions</h5>
                                     <span class="badge bg-light text-muted">
-                                        Showing {{ min($stripeSubscriptionRows->count(), 10) }} of {{ number_format($stripeTotals['subscriptions_total'] ?? $stripeSubscriptionRows->count()) }}
+                                        Showing {{ min($stripeSubscriptionRows->count(), 10) }}
                                     </span>
                                 </div>
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.stripe.subscriptions') }}">View All</a>
@@ -521,7 +521,7 @@
                                 <div>
                                     <h5 class="mb-0"><i class="fa-solid fa-file-invoice-dollar me-1 text-warning"></i> Latest Invoices</h5>
                                     <span class="badge bg-light text-muted">
-                                        Showing {{ min($stripeInvoiceRows->count(), 10) }} of {{ number_format($stripeTotals['invoices_total'] ?? $stripeInvoiceRows->count()) }}
+                                        Showing {{ min($stripeInvoiceRows->count(), 10) }}
                                     </span>
                                 </div>
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.stripe.invoices') }}">View All</a>
@@ -569,7 +569,7 @@
                                 <div>
                                     <h5 class="mb-0"><i class="fa-solid fa-money-bill-transfer me-1 text-primary"></i> Recent Transactions</h5>
                                     <span class="badge bg-light text-muted">
-                                        Showing {{ min($stripeTxnRows->count(), 13) }} of {{ number_format($stripeTotals['transactions_total'] ?? $stripeTxnRows->count()) }}
+                                        Showing {{ min($stripeTxnRows->count(), 13) }}
                                     </span>
                                 </div>
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.stripe.transactions') }}">View All</a>
