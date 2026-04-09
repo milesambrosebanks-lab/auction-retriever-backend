@@ -182,6 +182,13 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
+        $stripeTotals = [
+            'customers_total'     => (int) User::whereNotNull('stripe_id')->count(),
+            'subscriptions_total' => (int) Subscription::whereNotNull('stripe_price')->count(),
+            'invoices_total'      => (int) Transaction::count(),
+            'transactions_total'  => (int) Transaction::count(),
+        ];
+
         $stripeKpis = [
             'mrr'              => round($currentMrr, 2),
             'arr'              => round($currentMrr * 12, 2),
@@ -257,6 +264,13 @@ class DashboardController extends Controller
             });
             $stripeLiveKpis['arr'] = $stripeLiveKpis['mrr'] * 12;
             $stripeLiveKpis['live_mode'] = true;
+
+            $stripeTotals = [
+                'customers_total'     => $this->countStripeObjects(fn(array $params) => $stripe->customers->all($params)),
+                'subscriptions_total' => $this->countStripeObjects(fn(array $params) => $stripe->subscriptions->all($params)),
+                'invoices_total'      => $this->countStripeObjects(fn(array $params) => $stripe->invoices->all($params)),
+                'transactions_total'  => $this->countStripeObjects(fn(array $params) => $stripe->balanceTransactions->all($params)),
+            ];
 
             // ── Stripe revenue chart (by invoice) ──
             foreach ($stripeLiveInvoices as $invoice) {
@@ -376,7 +390,23 @@ class DashboardController extends Controller
                 'stripeActiveSubscriberLive',
                 'stripeMrrValuesLive',
                 'stripeMrrGrowthValuesLive',
-                'stripePayoutCounts'
+                'stripePayoutCounts',
+                'stripeTotals'
             ));
+    }
+
+    private function countStripeObjects(callable $fetcher, int $pageSize = 100, int $max = 5000): int
+    {
+        $total = 0;
+
+        foreach ($fetcher(['limit' => $pageSize])->autoPagingIterator() as $_) {
+            $total++;
+
+            if ($total >= $max) {
+                break;
+            }
+        }
+
+        return $total;
     }
 }
