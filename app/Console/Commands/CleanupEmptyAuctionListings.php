@@ -34,7 +34,6 @@ class CleanupEmptyAuctionListings extends Command
         }
 
 
-
         $updatedTypes = 0;
 
         AuctionListing::query()
