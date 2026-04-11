@@ -39,8 +39,8 @@
                     </div>
                     <div class="col-md-3">
                         <div class="card text-center p-3">
-                            <h4 class="text-info mb-1">{{ number_format($stats['financed']) }}</h4>
-                            <small class="text-muted">Financed</small>
+                            <h4 class="text-info mb-1">{{ number_format($stats['Residential']) }}</h4>
+                            <small class="text-muted">Residential</small>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -79,7 +79,7 @@
 
                                             <option value="Land">Land</option>
                                             <option value="Residential">Residential</option>
-                                            <option value="Financed">Commercial</option>
+                                            <option value="Commercial">Commercial</option>
 
                                     </select>
 
