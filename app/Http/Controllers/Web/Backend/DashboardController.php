@@ -218,10 +218,7 @@ class DashboardController extends Controller
                 'limit' => 14,
             ])->data);
 
-            $stripeLiveSubscriptions = collect($stripe->subscriptions->all([
-                'limit' => 10,
-                'expand' => ['data.items.data.price', 'data.customer'],
-            ])->data);
+            $stripeLiveSubscriptions = $this->fetchStripeSubscriptions($stripe);
 
             $stripeLiveInvoices = collect($stripe->invoices->all([
                 'limit' => 10,
@@ -245,23 +242,9 @@ class DashboardController extends Controller
                     return ($invoice->amount_remaining ?? 0) / 100;
                 });
 
-            $stripeLiveKpis['mrr'] = $stripeLiveSubscriptions->sum(function ($subscription) {
-                $item = $subscription->items->data[0] ?? null;
-                if (!$item || !$item->price) {
-                    return 0;
-                }
-                $price = $item->price;
-                $amount = ($price->unit_amount ?? 0) / 100;
-                $interval = $price->recurring->interval ?? 'month';
-                $intervalCount = max((int)($price->recurring->interval_count ?? 1), 1);
-                $qty = max((int)($item->quantity ?? 1), 1);
-
-                $monthly = $interval === 'year'
-                    ? $amount / (12 * $intervalCount)
-                    : $amount / $intervalCount;
-
-                return $monthly * $qty;
-            });
+            $stripeLiveKpis['mrr'] = $stripeLiveSubscriptions
+                ->filter(fn ($subscription) => in_array($subscription->status ?? null, ['active', 'past_due'], true))
+                ->sum(fn ($subscription) => $this->calculateStripeSubscriptionMonthlyRevenue($subscription));
             $stripeLiveKpis['arr'] = $stripeLiveKpis['mrr'] * 12;
             $stripeLiveKpis['live_mode'] = true;
 
@@ -326,23 +309,9 @@ class DashboardController extends Controller
                     return true;
                 });
 
-                $monthMrr = $activeSubs->sum(function ($subscription) {
-                    $item = $subscription->items->data[0] ?? null;
-                    if (!$item || !$item->price) {
-                        return 0;
-                    }
-                    $price = $item->price;
-                    $amount = ($price->unit_amount ?? 0) / 100;
-                    $interval = $price->recurring->interval ?? 'month';
-                    $intervalCount = max((int)($price->recurring->interval_count ?? 1), 1);
-                    $qty = max((int)($item->quantity ?? 1), 1);
-
-                    $monthly = $interval === 'year'
-                        ? $amount / (12 * $intervalCount)
-                        : $amount / $intervalCount;
-
-                    return $monthly * $qty;
-                });
+                $monthMrr = $activeSubs
+                    ->filter(fn ($subscription) => in_array($subscription->status ?? null, ['active', 'past_due'], true))
+                    ->sum(fn ($subscription) => $this->calculateStripeSubscriptionMonthlyRevenue($subscription));
 
                 $growth = $prevMrr && $prevMrr > 0
                     ? round((($monthMrr - $prevMrr) / $prevMrr) * 100, 2)
@@ -408,5 +377,51 @@ class DashboardController extends Controller
         }
 
         return $total;
+    }
+
+    private function fetchStripeSubscriptions(StripeClient $stripe, int $pageSize = 100, int $max = 5000): Collection
+    {
+        $subscriptions = collect();
+
+        foreach ($stripe->subscriptions->all([
+            'limit' => $pageSize,
+            'status' => 'all',
+            'expand' => ['data.items.data.price', 'data.customer'],
+        ])->autoPagingIterator() as $subscription) {
+            $subscriptions->push($subscription);
+
+            if ($subscriptions->count() >= $max) {
+                break;
+            }
+        }
+
+        return $subscriptions;
+    }
+
+    private function calculateStripeSubscriptionMonthlyRevenue(object $subscription): float
+    {
+        $items = collect($subscription->items->data ?? []);
+
+        return (float) $items->sum(function ($item) {
+            $price = $item->price ?? null;
+
+            if (!$price || !isset($price->recurring)) {
+                return 0;
+            }
+
+            $amount = ($price->unit_amount ?? 0) / 100;
+            $interval = $price->recurring->interval ?? 'month';
+            $intervalCount = max((int) ($price->recurring->interval_count ?? 1), 1);
+            $quantity = max((int) ($item->quantity ?? 1), 1);
+
+            $monthlyAmount = match ($interval) {
+                'year' => $amount / (12 * $intervalCount),
+                'week' => ($amount * 52) / (12 * $intervalCount),
+                'day' => ($amount * 365) / (12 * $intervalCount),
+                default => $amount / $intervalCount,
+            };
+
+            return $monthlyAmount * $quantity;
+        });
     }
 }
