@@ -26,7 +26,7 @@ class AuctionListingResource extends JsonResource
             'state'        => $this->state,
             'county'       => $this->county,
             'current_bid'  => $this->current_bid ? (float) number_format($this->current_bid,2): 0,
-            'bid_amount'   => $this->bid_amount,
+            'bid_amount'   => $this->bid_amount??$this->current_bid,
             'bid_count'    => $this->bid_count,
             'time_left'    => $this->time_left,
             'auction_date' => $this->auction_date?->format('Y-m-d H:i:s'),
