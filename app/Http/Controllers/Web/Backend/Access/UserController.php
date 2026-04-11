@@ -27,7 +27,8 @@ class UserController extends Controller
     {
         $authUser = Auth::guard('web')->user();
 
-        $query = User::where('id', '!=', $authUser->id)
+        $query = User::withoutGlobalScope('active_account')
+            ->where('id', '!=', $authUser->id)
             ->whereHas('roles', function ($q) {
                 $q->where('name', 'customer');
             })
@@ -116,9 +117,17 @@ class UserController extends Controller
                     $icon  = $icons[$status]  ?? 'fa-circle';
                     $label = $labels[$status] ?? ucfirst($status);
 
-                    return '<span class="badge bg-' . $color . '">
+                    $badges = '<span class="badge bg-' . $color . '">
                 <i class="fa ' . $icon . ' me-1"></i>' . $label .
                         '</span>';
+
+                    if ((bool) $user->is_deleted) {
+                        $badges .= ' <span class="badge bg-danger">
+                <i class="fa fa-trash me-1"></i>Deleted
+                        </span>';
+                    }
+
+                    return $badges;
                 })
                 ->addColumn('plan_col', function ($user) {
                     if ($user->activeSubscription) {
@@ -227,12 +236,12 @@ class UserController extends Controller
 
     public function show_draft($id)
     {
-        $user = User::with(['profile'])->find($id);
+        $user = User::withoutGlobalScope('active_account')->with(['profile'])->find($id);
         return view('backend.layouts.access.users.show', compact('user'));
     }
     public function show($id)
     {
-        $user = User::with([
+        $user = User::withoutGlobalScope('active_account')->with([
             'roles',
             'plan',
             'subscriptions' => function ($q) {
@@ -263,7 +272,7 @@ class UserController extends Controller
 
     public function edit($id)
     {
-        $user = User::find($id);
+        $user = User::withoutGlobalScope('active_account')->find($id);
         $roles = Role::all();
         return view('backend.layouts.access.users.edit', compact('user', 'roles'));
     }
@@ -282,7 +291,7 @@ class UserController extends Controller
         }
 
         try {
-            $user = User::find($id);
+            $user = User::withoutGlobalScope('active_account')->find($id);
             $user->update([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -296,7 +305,7 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        $user = User::find($id);
+        $user = User::withoutGlobalScope('active_account')->find($id);
         DB::table('model_has_roles')->where('model_id', $id)->delete();
         $user->delete();
         return redirect()->route('admin.users.index')->with('t-success', 'User deleted t-successfully');
@@ -304,7 +313,7 @@ class UserController extends Controller
 
     public function status(int $id)
     {
-        $user = User::findOrFail($id);
+        $user = User::withoutGlobalScope('active_account')->findOrFail($id);
         if (!$user) {
             redirect()->back()->with('t-error', 'User not found');
         }

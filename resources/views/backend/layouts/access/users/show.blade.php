@@ -39,6 +39,13 @@
                                 <i class="fa {{ $user->status_icon }} me-1"></i>
                                 {{ ucfirst(str_replace('_', ' ', $user->status ?? 'trial')) }}
                             </span>
+                            @if ($user->is_deleted)
+                                <div class="mb-3">
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-trash me-1"></i> Deleted Account
+                                    </span>
+                                </div>
+                            @endif
                             <div class="d-grid gap-2">
                                 <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-primary btn-sm">
                                     <i class="fa fa-pencil me-1"></i> Edit
@@ -52,7 +59,7 @@
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm w-100">
-                                        <i class="fa fa-trash me-1"></i> Delete User
+                                        <i class="fa fa-trash me-1"></i> Delete User Permanently
                                     </button>
                                 </form>
                             </div>
@@ -100,6 +107,14 @@
                                         <p class="text-muted small mb-1">Joined</p>
                                         <strong>{{ $user->created_at ? $user->created_at->format('d M Y') : '—' }}</strong>
                                     </div>
+                                    @if ($user->is_deleted)
+                                        <div class="col-md-4">
+                                            <p class="text-muted small mb-1">Account State</p>
+                                            <span class="badge bg-danger">
+                                                <i class="fa fa-trash me-1"></i> Deleted Account
+                                            </span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
