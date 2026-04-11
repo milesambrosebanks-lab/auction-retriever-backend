@@ -90,7 +90,7 @@ class AuctionListingController extends Controller
             'types'   => [
                 ['name' => 'Land', 'value' => 'Land'],
                 ['name' => 'Commercial', 'value' => 'Commercial'],
-                ['name' => 'Residential', 'value' => 'Residential'],
+                ['name' => 'Residential', 'value' => 'single-family'],
             ],
             // 'types'   => AuctionListing::select('type')->distinct()->whereNotNull('type')->orderBy('type')->pluck('type'),
         ];
