@@ -258,9 +258,10 @@ class DashboardController extends Controller
                     return ($invoice->amount_remaining ?? 0) / 100;
                 });
 
-            $stripeLiveKpis['mrr'] = $stripeLiveSubscriptions
-                ->filter(fn ($subscription) => in_array($subscription->status ?? null, ['active', 'past_due'], true))
-                ->sum(fn ($subscription) => $this->calculateStripeSubscriptionMonthlyRevenue($subscription));
+            $now = now();
+            $previousSnapshotAt = $now->copy()->subMonthNoOverflow();
+
+            $stripeLiveKpis['mrr'] = $this->calculateStripeSnapshotMrr($stripeLiveSubscriptions, $now);
             $stripeLiveKpis['arr'] = $stripeLiveKpis['mrr'] * 12;
             $stripeLiveKpis['live_mode'] = true;
 
@@ -335,9 +336,7 @@ class DashboardController extends Controller
                     return true;
                 });
 
-                $monthMrr = $activeSubs
-                    ->filter(fn ($subscription) => in_array($subscription->status ?? null, ['active', 'past_due'], true))
-                    ->sum(fn ($subscription) => $this->calculateStripeSubscriptionMonthlyRevenue($subscription));
+                $monthMrr = $this->calculateStripeSnapshotMrr($stripeLiveSubscriptions, $monthEnd);
 
                 $growth = $prevMrr && $prevMrr > 0
                     ? round((($monthMrr - $prevMrr) / $prevMrr) * 100, 2)
@@ -354,8 +353,8 @@ class DashboardController extends Controller
                 $prevMrr = $monthMrr;
             }
 
-            $stripeCurrentMrr = $stripeMrrValuesLive[$currentMonthIndex] ?? round($stripeLiveKpis['mrr'], 2);
-            $stripePreviousPeriodMrr = $previousMonthIndex !== null ? ($stripeMrrValuesLive[$previousMonthIndex] ?? 0) : 0;
+            $stripeCurrentMrr = round($this->calculateStripeSnapshotMrr($stripeLiveSubscriptions, $now), 2);
+            $stripePreviousPeriodMrr = round($this->calculateStripeSnapshotMrr($stripeLiveSubscriptions, $previousSnapshotAt), 2);
 
             $stripeLiveKpis['mrr'] = round($stripeCurrentMrr, 2);
             $stripeLiveKpis['arr'] = round($stripeCurrentMrr * 12, 2);
@@ -464,5 +463,47 @@ class DashboardController extends Controller
 
             return $monthlyAmount * $quantity;
         });
+    }
+
+    private function calculateStripeSnapshotMrr(Collection $subscriptions, Carbon $asOf): float
+    {
+        return round($subscriptions
+            ->filter(fn ($subscription) => $this->isStripeSubscriptionCountedInMrrAt($subscription, $asOf))
+            ->sum(fn ($subscription) => $this->calculateStripeSubscriptionMonthlyRevenue($subscription)), 2);
+    }
+
+    private function isStripeSubscriptionCountedInMrrAt(object $subscription, Carbon $asOf): bool
+    {
+        $created = isset($subscription->created)
+            ? Carbon::createFromTimestamp($subscription->created)
+            : null;
+
+        if (!$created || $created->gt($asOf)) {
+            return false;
+        }
+
+        $canceledAt = !empty($subscription->canceled_at)
+            ? Carbon::createFromTimestamp($subscription->canceled_at)
+            : null;
+
+        if ($canceledAt && $canceledAt->lte($asOf)) {
+            return false;
+        }
+
+        $trialEnd = !empty($subscription->trial_end)
+            ? Carbon::createFromTimestamp($subscription->trial_end)
+            : null;
+
+        if ($trialEnd && $trialEnd->gt($asOf)) {
+            return false;
+        }
+
+        $status = $subscription->status ?? null;
+
+        if ($asOf->greaterThanOrEqualTo(now()->subMinute())) {
+            return in_array($status, ['active', 'past_due'], true);
+        }
+
+        return true;
     }
 }
