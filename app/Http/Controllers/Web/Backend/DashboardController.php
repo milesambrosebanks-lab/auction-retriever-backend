@@ -391,7 +391,7 @@ class DashboardController extends Controller
                 'stripeMrrValuesLive',
                 'stripeMrrGrowthValuesLive',
                 'stripePayoutCounts',
-                'stripeTotals'
+                // 'stripeTotals'
             ));
     }
 

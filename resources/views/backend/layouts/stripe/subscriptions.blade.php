@@ -87,23 +87,23 @@
                     <div class="d-flex gap-2">
                         @if(request('starting_after'))
                             <a class="btn btn-outline-secondary"
-                               href="{{ route('admin.stripe.subscriptions', array_filter([
+                            href="{{ route('admin.stripe.subscriptions', array_filter([
                                     'ending_before' => request('starting_after'),
                                     'limit' => $limit,
                                     'start_date' => $filters['start_date'] ?? null,
                                     'end_date' => $filters['end_date'] ?? null,
-                               ])) }}">
+                            ])) }}">
                                 Previous
                             </a>
                         @endif
                         @if($hasMore && $items->last())
                             <a class="btn btn-primary"
-                               href="{{ route('admin.stripe.subscriptions', array_filter([
+                            href="{{ route('admin.stripe.subscriptions', array_filter([
                                     'starting_after' => $items->last()->id,
                                     'limit' => $limit,
                                     'start_date' => $filters['start_date'] ?? null,
                                     'end_date' => $filters['end_date'] ?? null,
-                               ])) }}">
+                            ])) }}">
                                 Next
                             </a>
                         @endif

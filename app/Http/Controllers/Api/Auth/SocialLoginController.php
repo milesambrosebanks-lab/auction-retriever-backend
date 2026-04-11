@@ -44,9 +44,12 @@ class SocialLoginController extends Controller
             $socialUser = Socialite::driver($provider)->stateless()->userFromToken($request->token);
 
             if ($socialUser) {
-                $user      = User::withTrashed()->where('email', $socialUser->email)->first();
-                if (!empty($user->deleted_at)) {
-                    return Helper::jsonErrorResponse('Your account has been deleted.', 410);
+                $user = User::withoutGlobalScope('active_account')
+                    ->where('email', $socialUser->email)
+                    ->first();
+
+                if ($user && (bool) $user->is_deleted) {
+                    return Helper::jsonErrorResponse('Your account has been deleted.', 403);
                 }
                 $isNewUser = false;
 

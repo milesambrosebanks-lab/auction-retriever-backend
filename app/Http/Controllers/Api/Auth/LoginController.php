@@ -44,6 +44,10 @@ class LoginController extends Controller
                 return Helper::jsonResponse(false, 'user is not active', 404);
             }
 
+            if ((bool) $user->is_deleted) {
+                return Helper::jsonErrorResponse('Your account has been deleted.', 403);
+            }
+
             //! Check the password
             if (!Hash::check($request->password, $user->password)) {
                 return Helper::jsonResponse(false, 'Invalid password', 401);
@@ -90,6 +94,11 @@ class LoginController extends Controller
 
     public function refreshToken()
     {
+        if ((bool) auth('api')->user()?->is_deleted) {
+            auth('api')->logout();
+            return Helper::jsonErrorResponse('Your account has been deleted.', 403);
+        }
+
         $refreshToken = auth('api')->refresh();
 
         if (empty($refreshToken)) {

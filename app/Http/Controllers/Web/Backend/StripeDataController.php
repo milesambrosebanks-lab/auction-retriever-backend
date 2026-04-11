@@ -13,6 +13,7 @@ class StripeDataController extends Controller
 {
     protected StripeClient $stripe;
     protected int $defaultLimit = 25;
+    protected ?int $forward;
 
     public function __construct()
     {
@@ -87,8 +88,9 @@ class StripeDataController extends Controller
         } catch (Throwable $e) {
             $error = $e->getMessage();
         }
+        $firstId = $items->first()?->id;
 
-        return view('backend.layouts.stripe.subscriptions', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters'));
+        return view('backend.layouts.stripe.subscriptions', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters', 'firstId'));
     }
 
     public function invoices(Request $request)
@@ -106,8 +108,9 @@ class StripeDataController extends Controller
         } catch (Throwable $e) {
             $error = $e->getMessage();
         }
+        $firstId = $items->first()?->id;
 
-        return view('backend.layouts.stripe.invoices', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters'));
+        return view('backend.layouts.stripe.invoices', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters', 'firstId'));
     }
 
     public function transactions(Request $request)

@@ -2,6 +2,7 @@
 
 use App\Helpers\Helper;
 use App\Http\Middleware\ApiAdminMiddleware;
+use App\Http\Middleware\ApiActiveUserMiddleware;
 use App\Http\Middleware\WebAdminMiddleware;
 use App\Http\Middleware\WebAuthCheckMiddleware;
 use App\Http\Middleware\ApiCustomerMiddleware;
@@ -52,6 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'web-admin'             => WebAdminMiddleware::class,
             'web-staff'             => WebStaffMiddleware::class,
             'api-admin'             => ApiAdminMiddleware::class,
+            'api-active-user'       => ApiActiveUserMiddleware::class,
             'api-customer'          => ApiCustomerMiddleware::class,
             'api-retailer'          => ApiRetailerMiddleware::class,
             'api-otp'               => ApiOtpVerifiedMiddleware::class,

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -43,7 +44,8 @@ class User extends Authenticatable implements JWTSubject
         'stripe_account_id',
         'otp_expires_at',
         'last_activity_at',
-        'slug'
+        'slug',
+        'is_deleted',
     ];
 
     /**
@@ -76,7 +78,15 @@ class User extends Authenticatable implements JWTSubject
         return [
             'otp_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_deleted' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('active_account', function (Builder $builder) {
+            $builder->where('is_deleted', false);
+        });
     }
 
     public function getAvatarAttribute($value): string | null

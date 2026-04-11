@@ -49,7 +49,7 @@ Route::get('/states', [CountryController::class, 'states']);
 Route::get('home/random/auction', [AuctionListingController::class, 'randomAuction']);
 
 
-Route::middleware('auth:api')->prefix('auth')->group(function () {
+Route::middleware(['auth:api', 'api-active-user'])->prefix('auth')->group(function () {
 
     Route::post('/subscription/setup-intent', [SubscriptionController::class, 'createSetupIntent']);
     Route::post('/subscription/create', [SubscriptionController::class, 'createSubscription']);
@@ -63,12 +63,12 @@ Route::middleware('auth:api')->prefix('auth')->group(function () {
     Route::get('/subscription/status', [SubscriptionController::class, 'subscriptionStatus']);
 });
 
-Route::middleware(['auth:api'])->prefix('admin')->group(function () {
+Route::middleware(['auth:api', 'api-active-user'])->prefix('admin')->group(function () {
     Route::get('tracking-settings', [TrackingSettingController::class, 'show']);
     Route::post('tracking-settings', [TrackingSettingController::class, 'update']);
 });
 
-Route::middleware('auth:api')->prefix('auction')->group(function () {
+Route::middleware(['auth:api', 'api-active-user'])->prefix('auction')->group(function () {
     Route::get('/', [AuctionListingController::class, 'index']);
     Route::get('/filter-options', [AuctionListingController::class, 'filterOptions']);
     Route::get('/{id}/view', [AuctionListingController::class, 'show']);
@@ -79,7 +79,7 @@ Route::middleware('auth:api')->prefix('auction')->group(function () {
 });
 
 
-Route::middleware(['auth:api'])->controller(PostController::class)->prefix('auth/post')->group(function () {
+Route::middleware(['auth:api', 'api-active-user'])->controller(PostController::class)->prefix('auth/post')->group(function () {
     Route::get('/', 'index');
     Route::post('/store', 'store');
     Route::get('/show/{id}', 'show');
@@ -90,7 +90,7 @@ Route::middleware(['auth:api'])->controller(PostController::class)->prefix('auth
 Route::get('/posts', [PostController::class, 'posts']);
 Route::get('/post/show/{post_id}', [PostController::class, 'post']);
 
-Route::middleware(['auth:api'])->controller(ImageController::class)->prefix('auth/post/image')->group(function () {
+Route::middleware(['auth:api', 'api-active-user'])->controller(ImageController::class)->prefix('auth/post/image')->group(function () {
     Route::get('/', 'index');
     Route::post('/store', 'store');
     Route::get('/delete/{id}', 'destroy');
@@ -129,7 +129,7 @@ Route::group(['middleware' => 'guest:api'], function ($router) {
         ->middleware('signed');
 });
 
-Route::group(['middleware' => ['auth:api', 'api-otp']], function () {
+Route::group(['middleware' => ['auth:api', 'api-active-user', 'api-otp']], function () {
     Route::get('/refresh-token', [LoginController::class, 'refreshToken']);
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::get('/me', [UserController::class, 'me']);
@@ -144,7 +144,7 @@ Route::group(['middleware' => ['auth:api', 'api-otp']], function () {
 # Firebase Notification Route
 */
 
-Route::middleware(['auth:api'])->controller(FirebaseTokenController::class)->prefix('firebase')->group(function () {
+Route::middleware(['auth:api', 'api-active-user'])->controller(FirebaseTokenController::class)->prefix('firebase')->group(function () {
     Route::get("test", "test");
     Route::post("token/add", "store");
     Route::post("token/get", "getToken");
@@ -155,7 +155,7 @@ Route::middleware(['auth:api'])->controller(FirebaseTokenController::class)->pre
 # In App Notification Route
 */
 
-Route::middleware(['auth:api'])->controller(NotificationController::class)->prefix('notify')->group(function () {
+Route::middleware(['auth:api', 'api-active-user'])->controller(NotificationController::class)->prefix('notify')->group(function () {
     Route::get('test', 'test');
     Route::get('/', 'index');
     Route::get('status/read/all', 'readAll');
@@ -166,7 +166,7 @@ Route::middleware(['auth:api'])->controller(NotificationController::class)->pref
 # Chat Route
 */
 
-Route::middleware(['auth:api'])->controller(ChatController::class)->prefix('auth/chat')->group(function () {
+Route::middleware(['auth:api', 'api-active-user'])->controller(ChatController::class)->prefix('auth/chat')->group(function () {
     Route::get('/list', 'list');
     Route::post('/send/{receiver_id}', 'send');
     Route::get('/conversation/{receiver_id}', 'conversation');

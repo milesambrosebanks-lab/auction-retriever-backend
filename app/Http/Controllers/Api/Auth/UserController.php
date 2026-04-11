@@ -141,22 +141,22 @@ class UserController extends Controller
     public function delete()
     {
         $user = User::findOrFail(auth('api')->id());
-        if (!empty($user->avatar) && file_exists(public_path($user->avatar))) {
-            Helper::fileDelete(public_path($user->avatar));
-        }
-        Auth::logout('api');
-        $user->delete();
+        $user->update([
+            'is_deleted' => true,
+            'last_activity_at' => now(),
+        ]);
+        Auth::guard('api')->logout();
         return Helper::jsonResponse(true, 'Profile deleted successfully', 200);
     }
 
     public function destroy()
     {
         $user = User::findOrFail(auth('api')->id());
-        if (!empty($user->avatar) && file_exists(public_path($user->avatar))) {
-            Helper::fileDelete(public_path($user->avatar));
-        }
-        Auth::logout('api');
-        $user->forceDelete();
+        $user->update([
+            'is_deleted' => true,
+            'last_activity_at' => now(),
+        ]);
+        Auth::guard('api')->logout();
         return Helper::jsonResponse(true, 'Profile deleted successfully', 200);
     }
 }

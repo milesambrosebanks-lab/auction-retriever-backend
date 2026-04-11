@@ -308,6 +308,7 @@
                 </div>
 
             </div> {{-- /tab-pane overview --}}
+
             {{-- ───────────────── Stripe Tab ───────────────── --}}
             <div class="tab-pane fade {{ $activeTab === 'stripe' ? 'show active' : '' }}" id="tab-stripe">
                 <div class="row mb-4 dashboard-stat-grid">

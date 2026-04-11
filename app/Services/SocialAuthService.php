@@ -13,11 +13,19 @@ class SocialAuthService
         $field = $provider . '_id'; // google_id | apple_id
 
         // আগে social ID দিয়ে খোঁজো
-        $user = User::where($field, $socialUser->getId())->first();
+        $user = User::withoutGlobalScope('active_account')
+            ->where($field, $socialUser->getId())
+            ->first();
 
         // না পেলে email দিয়ে খোঁজো
         if (!$user && $socialUser->getEmail()) {
-            $user = User::where('email', $socialUser->getEmail())->first();
+            $user = User::withoutGlobalScope('active_account')
+                ->where('email', $socialUser->getEmail())
+                ->first();
+        }
+
+        if ($user && (bool) $user->is_deleted) {
+            abort(403, 'Your account has been deleted.');
         }
 
         // একদমই নতুন user
