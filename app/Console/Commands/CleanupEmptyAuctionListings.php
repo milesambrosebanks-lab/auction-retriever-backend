@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\Log;
 
 class CleanupEmptyAuctionListings extends Command
 {
-    protected $signature = 'auction-listings:cleanup-empty';
+    protected $signature = 'auction-listings:cleanup';
 
-    protected $description = 'Delete empty auction listings and normalize invalid listing types';
+    protected $description = 'Delete incomplete auction listings and normalize invalid listing types';
 
     public function handle(): int
     {
@@ -25,7 +25,7 @@ class CleanupEmptyAuctionListings extends Command
 
         if ($count === 0) {
             $this->info('No empty auction listings found.');
-            // return self::SUCCESS;
+            Log::info('No empty auction listings found.');
         } else {
             $deleted = $query->delete();
 
@@ -33,6 +33,12 @@ class CleanupEmptyAuctionListings extends Command
             Log::info("Deleted {$deleted} empty auction listings.");
         }
 
+        $deletedWithoutStart = AuctionListing::query()
+            ->whereNull('auction_started_at')
+            ->delete();
+
+        $this->info("Deleted {$deletedWithoutStart} auction listings without auction_started_at.");
+        Log::info("Deleted {$deletedWithoutStart} auction listings without auction_started_at.");
 
         $updatedTypes = 0;
 

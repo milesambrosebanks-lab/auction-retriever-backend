@@ -101,7 +101,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('weekly:digest')->weekly();
         $schedule->command('scrape:bid4assets')->dailyAt('02:00');
         $schedule->command('sync:auction-details --batch=100')->dailyAt('03:00');
-        $schedule->command('auction-listings:cleanup-empty')->dailyAt('03:30');
+        $schedule->command('auction-listings:cleanup')->dailyAt('03:30');
 
          $schedule->command('scrape:auction --limit=50 --max=500')
              ->dailyAt('04:00')
