@@ -99,7 +99,7 @@
                     </div>
                 </div>
                 <div class="card-footer d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                    <div class="text-muted small">Cursor pagination: use Previous / Next.</div>
+                    <div class="text-muted small">Cursor pagination: use Previous / Next. Total : {{ $totalCount }}</div>
                     <div class="d-flex gap-2">
                         @if(request('starting_after'))
                             <a class="btn btn-outline-secondary"

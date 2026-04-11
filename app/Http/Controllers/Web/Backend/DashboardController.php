@@ -65,6 +65,8 @@ class DashboardController extends Controller
             'count' => array_fill(0, 12, 0),
         ];
         $stripeSubscriberGrowthLive = array_fill(0, 12, 0);
+        $stripeCanceledSubscriberLive = array_fill(0, 12, 0);
+        $stripeNetSubscriberGrowthLive = array_fill(0, 12, 0);
         $stripeActiveSubscriberLive = array_fill(0, 12, 0);
         $stripeMrrValuesLive = array_fill(0, 12, 0);
         $stripeMrrGrowthValuesLive = array_fill(0, 12, 0);
@@ -160,9 +162,17 @@ class DashboardController extends Controller
             $previousMrr = $monthMrr;
         }
 
-        $currentMrr = end($mrrValues) ?: 0;
-        $currentSubscriberGrowth = end($subscriberGrowthValues) ?: 0;
-        $currentActiveSubscribers = end($activeSubscriberValues) ?: 0;
+        $currentMonthIndex = now()->month - 1;
+        $previousMonthIndex = $currentMonthIndex > 0 ? $currentMonthIndex - 1 : null;
+
+        $currentMrr = $mrrValues[$currentMonthIndex] ?? 0;
+        $currentSubscriberGrowth = $subscriberGrowthValues[$currentMonthIndex] ?? 0;
+        $currentActiveSubscribers = $activeSubscriberValues[$currentMonthIndex] ?? 0;
+        $previousPeriodMrr = $previousMonthIndex !== null ? ($mrrValues[$previousMonthIndex] ?? 0) : 0;
+        $mrrDeltaAmount = round($currentMrr - $previousPeriodMrr, 2);
+        $mrrDeltaPercentage = $previousPeriodMrr > 0
+            ? round((($currentMrr - $previousPeriodMrr) / $previousPeriodMrr) * 100, 2)
+            : ($currentMrr > 0 ? 100 : 0);
 
         // ── Stripe Snapshot Data (for sidebar tab) ───────────────────
         $stripeCustomers = User::select('id', 'name', 'email', 'stripe_id', 'created_at')
@@ -195,6 +205,9 @@ class DashboardController extends Controller
             'active_customers' => $userStats['active'],
             'churn_rate'       => $userStats['total'] > 0 ? round(($userStats['cancelled'] / $userStats['total']) * 100, 2) : 0,
             'pending_revenue'  => round($pendingAmount, 2),
+            'mrr_previous_period' => round($previousPeriodMrr, 2),
+            'mrr_delta_amount' => $mrrDeltaAmount,
+            'mrr_delta_percentage' => $mrrDeltaPercentage,
         ];
 
         // ── Live Stripe pull (uses Stripe API) ───────────────────────
@@ -208,6 +221,9 @@ class DashboardController extends Controller
             'active_subscribers' => 0,
             'churn_rate' => 0,
             'pending_revenue' => 0,
+            'mrr_previous_period' => 0,
+            'mrr_delta_amount' => 0,
+            'mrr_delta_percentage' => 0,
             'live_mode' => false,
         ];
 
@@ -293,6 +309,16 @@ class DashboardController extends Controller
                     return $createdAt->between($monthStart, $monthEnd);
                 })->count();
 
+                $canceledSubs = $stripeLiveSubscriptions->filter(function ($sub) use ($monthStart, $monthEnd) {
+                    $canceledAt = $sub->canceled_at ?? null;
+
+                    if (!$canceledAt) {
+                        return false;
+                    }
+
+                    return Carbon::createFromTimestamp($canceledAt)->between($monthStart, $monthEnd);
+                })->count();
+
                 $activeSubs = $stripeLiveSubscriptions->filter(function ($sub) use ($monthEnd) {
                     $created = $sub->created ?? null;
                     if (!$created) {
@@ -319,12 +345,25 @@ class DashboardController extends Controller
 
                 $idx = $month->month - 1;
                 $stripeSubscriberGrowthLive[$idx] = $newSubs;
+                $stripeCanceledSubscriberLive[$idx] = $canceledSubs;
+                $stripeNetSubscriberGrowthLive[$idx] = $newSubs - $canceledSubs;
                 $stripeActiveSubscriberLive[$idx] = $activeSubs->count();
                 $stripeMrrValuesLive[$idx] = round($monthMrr, 2);
                 $stripeMrrGrowthValuesLive[$idx] = $growth;
 
                 $prevMrr = $monthMrr;
             }
+
+            $stripeCurrentMrr = $stripeMrrValuesLive[$currentMonthIndex] ?? round($stripeLiveKpis['mrr'], 2);
+            $stripePreviousPeriodMrr = $previousMonthIndex !== null ? ($stripeMrrValuesLive[$previousMonthIndex] ?? 0) : 0;
+
+            $stripeLiveKpis['mrr'] = round($stripeCurrentMrr, 2);
+            $stripeLiveKpis['arr'] = round($stripeCurrentMrr * 12, 2);
+            $stripeLiveKpis['mrr_previous_period'] = round($stripePreviousPeriodMrr, 2);
+            $stripeLiveKpis['mrr_delta_amount'] = round($stripeCurrentMrr - $stripePreviousPeriodMrr, 2);
+            $stripeLiveKpis['mrr_delta_percentage'] = $stripePreviousPeriodMrr > 0
+                ? round((($stripeCurrentMrr - $stripePreviousPeriodMrr) / $stripePreviousPeriodMrr) * 100, 2)
+                : ($stripeCurrentMrr > 0 ? 100 : 0);
         } catch (\Throwable $e) {
             $stripeApiError = $e->getMessage();
         }
@@ -356,6 +395,8 @@ class DashboardController extends Controller
                 'stripeApiError',
                 'stripeRevenueChart',
                 'stripeSubscriberGrowthLive',
+                'stripeCanceledSubscriberLive',
+                'stripeNetSubscriberGrowthLive',
                 'stripeActiveSubscriberLive',
                 'stripeMrrValuesLive',
                 'stripeMrrGrowthValuesLive',

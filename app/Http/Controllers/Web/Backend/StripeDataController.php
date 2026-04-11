@@ -30,6 +30,7 @@ class StripeDataController extends Controller
         $filters = [
             'start_date' => $request->get('start_date'),
             'end_date' => $request->get('end_date'),
+            'status' => $request->get('status'),
         ];
 
         $created = [];
@@ -59,38 +60,56 @@ class StripeDataController extends Controller
         $items = collect();
         $hasMore = false;
         $error = null;
+        $totalCount = 0;
 
         try {
             $res = $this->stripe->customers->all($params);
             $items = collect($res->data);
             $hasMore = $res->has_more;
+
+            $countParams = $params;
+            unset($countParams['starting_after'], $countParams['ending_before']);
+            $totalCount = $this->countStripeResources(
+                fn (array $pageParams) => $this->stripe->customers->all($pageParams),
+                $countParams
+            );
         } catch (Throwable $e) {
             $error = $e->getMessage();
         }
 
-        return view('backend.layouts.stripe.customers', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters'));
+        return view('backend.layouts.stripe.customers', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters', 'totalCount'));
     }
 
     public function subscriptions(Request $request)
     {
         [$params, $limit, $filters] = $this->paginateParams($request);
         $params['expand'] = ['data.customer', 'data.items.data.price'];
+        $params['status'] = $request->get('status', 'all');
+        $filters['status'] = $params['status'];
 
         $items = collect();
         $hasMore = false;
         $error = null;
+        $totalCount = 0;
 
         try {
 
             $res = $this->stripe->subscriptions->all($params);
             $items = collect($res->data);
             $hasMore = $res->has_more;
+
+            $countParams = $params;
+            unset($countParams['starting_after'], $countParams['ending_before'], $countParams['expand']);
+            $totalCount = $this->countStripeResources(
+                fn (array $pageParams) => $this->stripe->subscriptions->all($pageParams),
+                $countParams
+            );
         } catch (Throwable $e) {
             $error = $e->getMessage();
         }
         $firstId = $items->first()?->id;
 
-        return view('backend.layouts.stripe.subscriptions', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters', 'firstId'));
+        return view('backend.layouts.stripe.subscriptions', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters', 'firstId', 'totalCount'));
     }
 
     public function invoices(Request $request)
@@ -100,17 +119,25 @@ class StripeDataController extends Controller
         $items = collect();
         $hasMore = false;
         $error = null;
+        $totalCount = 0;
 
         try {
             $res = $this->stripe->invoices->all($params);
             $items = collect($res->data);
             $hasMore = $res->has_more;
+
+            $countParams = $params;
+            unset($countParams['starting_after'], $countParams['ending_before']);
+            $totalCount = $this->countStripeResources(
+                fn (array $pageParams) => $this->stripe->invoices->all($pageParams),
+                $countParams
+            );
         } catch (Throwable $e) {
             $error = $e->getMessage();
         }
         $firstId = $items->first()?->id;
 
-        return view('backend.layouts.stripe.invoices', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters', 'firstId'));
+        return view('backend.layouts.stripe.invoices', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters', 'firstId', 'totalCount'));
     }
 
     public function transactions(Request $request)
@@ -120,15 +147,38 @@ class StripeDataController extends Controller
         $items = collect();
         $hasMore = false;
         $error = null;
+        $totalCount = 0;
 
         try {
             $res = $this->stripe->balanceTransactions->all($params);
             $items = collect($res->data);
             $hasMore = $res->has_more;
+
+            $countParams = $params;
+            unset($countParams['starting_after'], $countParams['ending_before']);
+            $totalCount = $this->countStripeResources(
+                fn (array $pageParams) => $this->stripe->balanceTransactions->all($pageParams),
+                $countParams
+            );
         } catch (Throwable $e) {
             $error = $e->getMessage();
         }
 
-        return view('backend.layouts.stripe.transactions', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters'));
+        return view('backend.layouts.stripe.transactions', compact('items', 'hasMore', 'limit', 'error', 'params', 'filters', 'totalCount'));
+    }
+
+    private function countStripeResources(callable $fetcher, array $baseParams = [], int $pageSize = 100, int $max = 10000): int
+    {
+        $total = 0;
+
+        foreach ($fetcher(array_merge($baseParams, ['limit' => $pageSize]))->autoPagingIterator() as $_) {
+            $total++;
+
+            if ($total >= $max) {
+                break;
+            }
+        }
+
+        return $total;
     }
 }

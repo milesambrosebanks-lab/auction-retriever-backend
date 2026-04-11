@@ -21,12 +21,22 @@
             <div class="card mb-3">
                 <div class="card-body">
                     <form method="GET" action="{{ route('admin.stripe.subscriptions') }}" class="row g-3 align-items-end">
-                        <div class="col-sm-6 col-md-3">
+                        <div class="col-sm-6 col-md-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" id="status" class="form-select form-select-sm">
+                                @foreach(['all', 'active', 'trialing', 'past_due', 'canceled', 'unpaid', 'incomplete', 'incomplete_expired', 'paused'] as $status)
+                                    <option value="{{ $status }}" @selected(($filters['status'] ?? 'all') === $status)>
+                                        {{ ucfirst(str_replace('_', ' ', $status)) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-sm-6 col-md-2">
                             <label for="start_date" class="form-label">Start Date</label>
                             <input type="date" name="start_date" id="start_date" class="form-control form-control-sm"
                                 value="{{ $filters['start_date'] ?? '' }}">
                         </div>
-                        <div class="col-sm-6 col-md-3">
+                        <div class="col-sm-6 col-md-2">
                             <label for="end_date" class="form-label">End Date</label>
                             <input type="date" name="end_date" id="end_date" class="form-control form-control-sm"
                                 value="{{ $filters['end_date'] ?? '' }}">
@@ -40,7 +50,8 @@
                             </select>
                         </div>
                         <div class="col-sm-6 col-md-4 col-lg-3 d-flex align-items-end gap-2 flex-wrap">
-                            <button class="btn btn-success btn-sm px-3" type="submit"><i class="fe fe-filter me-1"></i>Apply</button>
+                            <button class="btn btn-success btn-sm px-3" type="submit">
+                                <i class="fe fe-filter me-1"></i>Apply</button>
                             <a href="{{ route('admin.stripe.subscriptions') }}" class="btn btn-light btn-sm px-3">Reset</a>
                         </div>
                     </form>
@@ -50,6 +61,7 @@
             <div class="card transaction-sales-main">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div><strong>Showing</strong> {{ $items->count() }} of {{ $limit }} requested</div>
+
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -70,7 +82,18 @@
                                         {{ $sub->customer->name ?? 'N/A' }}
                                         <div class="small text-muted">{{ $sub->customer->email ?? '' }}</div>
                                     </td>
-                                    <td><span class="badge bg-{{ $sub->status === 'active' ? 'success' : ($sub->status === 'trialing' ? 'info' : 'secondary') }}">{{ ucfirst($sub->status) }}</span></td>
+                                    @php
+                                        $statusColor = match($sub->status) {
+                                            'active' => 'success',
+                                            'trialing' => 'info',
+                                            'past_due' => 'warning text-dark',
+                                            'canceled' => 'danger',
+                                            'unpaid', 'incomplete', 'incomplete_expired' => 'secondary',
+                                            'paused' => 'dark',
+                                            default => 'secondary',
+                                        };
+                                    @endphp
+                                    <td><span class="badge bg-{{ $statusColor }}">{{ ucfirst(str_replace('_', ' ', $sub->status)) }}</span></td>
                                     <td class="small text-muted">{{ optional($sub->items->data[0]->price)->id ?? '—' }}</td>
                                     <td>{{ $sub->items->data[0]->quantity ?? 1 }}</td>
                                     <td>{{ \Carbon\Carbon::createFromTimestamp($sub->created)->format('d M Y, h:i A') }}</td>
@@ -83,13 +106,14 @@
                     </div>
                 </div>
                 <div class="card-footer d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                    <div class="text-muted small">Cursor pagination: use Previous / Next.</div>
+                    <div class="text-muted small">Cursor pagination: use Previous / Next. Total : {{ $totalCount }}</div>
                     <div class="d-flex gap-2">
                         @if(request('starting_after'))
                             <a class="btn btn-outline-secondary"
                             href="{{ route('admin.stripe.subscriptions', array_filter([
                                     'ending_before' => request('starting_after'),
                                     'limit' => $limit,
+                                    'status' => $filters['status'] ?? 'all',
                                     'start_date' => $filters['start_date'] ?? null,
                                     'end_date' => $filters['end_date'] ?? null,
                             ])) }}">
@@ -101,6 +125,7 @@
                             href="{{ route('admin.stripe.subscriptions', array_filter([
                                     'starting_after' => $items->last()->id,
                                     'limit' => $limit,
+                                    'status' => $filters['status'] ?? 'all',
                                     'start_date' => $filters['start_date'] ?? null,
                                     'end_date' => $filters['end_date'] ?? null,
                             ])) }}">

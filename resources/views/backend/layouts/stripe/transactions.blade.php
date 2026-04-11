@@ -90,7 +90,7 @@
                 </div>
                 <div
                     class="card-footer d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                    <div class="text-muted small">Cursor pagination: use Previous / Next. {{ $hasMore }}</div>
+                    <div class="text-muted small">Cursor pagination: use Previous / Next. Total : {{ $totalCount }}</div>
                     <div class="d-flex gap-2">
                         @if(request('ending_before')|| request('starting_after')) {{-- Show "Previous" if we're paginated in either direction --}}
                         <a class="btn btn-outline-secondary" href="{{ route('admin.stripe.transactions', array_filter([

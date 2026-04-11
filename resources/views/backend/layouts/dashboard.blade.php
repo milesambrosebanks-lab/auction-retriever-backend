@@ -59,6 +59,8 @@
                 $stripeSubscriptionRows = $useLiveStripe ? $stripeLiveSubscriptions : $stripeSubscriptions;
                 $stripeInvoiceRows = $useLiveStripe ? $stripeLiveInvoices : $stripeInvoices;
                 $stripeTxnRows = $useLiveStripe ? $stripeLiveBalanceTxns : $stripeInvoices;
+                $stripeMrrDelta = $stripeCards['mrr_delta_percentage'] ?? 0;
+                $stripeMrrDeltaPositive = $stripeMrrDelta >= 0;
                 // dd($stripeSubscriptionRows);
             @endphp
 
@@ -330,7 +332,12 @@
                             <div class="card-body">
                                 <div class="mb-2"><i class="fa-solid fa-bolt dashboard-stat-icon text-success"></i></div>
                                 <h3 class="mb-1 fw-bold text-success dashboard-stat-value">${{ number_format($stripeCards['mrr'], 2) }}</h3>
-                                <p class="text-muted mb-0 dashboard-stat-label">Current MRR</p>
+                                <p class="mb-1 dashboard-stat-label {{ $stripeMrrDeltaPositive ? 'text-success' : 'text-danger' }}">
+                                    {{ $stripeMrrDeltaPositive ? '+' : '' }}{{ number_format($stripeMrrDelta, 2) }}%
+                                </p>
+                                <p class="text-muted mb-0 dashboard-stat-label">
+                                    ${{ number_format($stripeCards['mrr_previous_period'] ?? 0, 2) }} previous period
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -412,7 +419,7 @@
                     <div class="col-xl-6">
                         <div class="card h-100">
                             <div class="card-header border-bottom d-flex align-items-center justify-content-between">
-                                <h5 class="mb-0"><i class="fa-solid fa-user-group me-1 text-info"></i> Subscriber Growth</h5>
+                                <h5 class="mb-0"><i class="fa-solid fa-user-group me-1 text-info"></i> Subscriber Movement</h5>
                                 <span class="badge bg-info">Monthly</span>
                             </div>
                             <div class="card-body">
@@ -642,6 +649,8 @@
         const stripeRevenuePending = @json($stripeRevenueChart['pending']);
         const stripeRevenueCount = @json($stripeRevenueChart['count']);
         const stripeSubscriberGrowth = @json($stripeSubscriberGrowthLive);
+        const stripeCanceledSubscribers = @json($stripeCanceledSubscriberLive);
+        const stripeNetSubscriberGrowth = @json($stripeNetSubscriberGrowthLive);
         const stripeActiveSubscribers = @json($stripeActiveSubscriberLive);
         const stripeMrrValues = @json($stripeMrrValuesLive);
         const stripeMrrGrowth = @json($stripeMrrGrowthValuesLive);
@@ -917,14 +926,35 @@
                 labels: stripeMonths,
                 datasets: [
                     {
-                        label: 'New Subs',
+                        label: 'New Subscribers',
                         data: stripeSubscriberGrowth,
                         backgroundColor: 'rgba(13, 202, 240, 0.75)',
                         borderColor: 'rgba(13, 202, 240, 1)',
                         borderWidth: 1,
+                        yAxisID: 'y',
                     },
                     {
-                        label: 'Active Snapshot',
+                        label: 'Canceled Subscribers',
+                        data: stripeCanceledSubscribers.map(value => value * -1),
+                        backgroundColor: 'rgba(220, 53, 69, 0.70)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Net Subscriber Change',
+                        data: stripeNetSubscriberGrowth,
+                        type: 'line',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        backgroundColor: 'rgba(255, 193, 7, 0.12)',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        fill: false,
+                        tension: 0.35,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Active Subscribers',
                         data: stripeActiveSubscribers,
                         type: 'line',
                         borderColor: 'rgba(111, 66, 193, 1)',
@@ -933,15 +963,38 @@
                         pointRadius: 4,
                         fill: false,
                         tension: 0.35,
+                        yAxisID: 'y1',
                     }
                 ]
             },
             options: {
                 responsive: true,
                 interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { position: 'top' } },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                if (ctx.dataset.label === 'Canceled Subscribers') {
+                                    return ctx.dataset.label + ': ' + Math.abs(ctx.parsed.y);
+                                }
+
+                                return ctx.dataset.label + ': ' + ctx.parsed.y;
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Subscribers' } }
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Monthly Change' }
+                    },
+                    y1: {
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        beginAtZero: true,
+                        title: { display: true, text: 'Active Subscribers' }
+                    }
                 }
             }
         });
