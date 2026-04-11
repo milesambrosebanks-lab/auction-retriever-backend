@@ -36,6 +36,16 @@ class CleanupEmptyAuctionListings extends Command
 
         $updatedTypes = 0;
 
+        $financedUpdated = AuctionListing::query()
+            ->where('type', 'Financed')
+            ->update([
+                'type' => 'Commercial',
+            ]);
+
+        if ($financedUpdated > 0) {
+            $updatedTypes += $financedUpdated;
+        }
+
         AuctionListing::query()
             ->where(function ($query) use ($validTypes) {
                 $query->whereNull('type')

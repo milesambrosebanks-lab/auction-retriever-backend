@@ -37,15 +37,15 @@ class AuctionListingController extends Controller
                 ->addColumn('image', function ($row) {
                     if ($row->image_url) {
                         return '<img src="' . e($row->image_url) . '"
-                                     alt="thumb"
-                                     style="width:60px; height:45px; object-fit:cover; border-radius:4px;"
-                                     onerror="this.src=\'https://cdn.bid4assets.com/app/mvc/images/photo_icon.png\'">';
+                                    alt="thumb"
+                                    style="width:60px; height:45px; object-fit:cover; border-radius:4px;"
+                                    onerror="this.src=\'https://cdn.bid4assets.com/app/mvc/images/photo_icon.png\'">';
                     }
                     return '<span class="text-muted">—</span>';
                 })
                 ->addColumn('title_col', function ($row) {
                     return '<a href="' . e($row->source_url) . '" target="_blank"
-                               title="' . e($row->title) . '">'
+                            title="' . e($row->title) . '">'
                         . \Str::limit($row->title, 50)
                         . '</a>';
                 })
@@ -76,7 +76,7 @@ class AuctionListingController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     return '<a href="' . route('admin.auction.listings.show', $row->id) . '"
-               class="btn btn-sm btn-success" title="View Detail">
+            class="btn btn-sm btn-success" title="View Detail">
                 <i class="fa fa-eye"></i>
             </a>';
                 })
@@ -91,7 +91,7 @@ class AuctionListingController extends Controller
         $stats = [
             'total'        => AuctionListing::count(),
             'land'         => AuctionListing::where('type', 'Land')->count(),
-            'financed'     => AuctionListing::where('type', 'Financed')->count(),
+            'Residential'     => AuctionListing::where('type', 'Residential')->count(),
             'last_scraped' => $time,
             'last_count'   => $count,
             'types'        => AuctionListing::select('type')
@@ -101,7 +101,7 @@ class AuctionListingController extends Controller
         ];
         $states = $this->getUsStates();
 
-        return view('backend.layouts.auction_listing.index', compact('stats','states'));
+        return view('backend.layouts.auction_listing.index', compact('stats', 'states'));
     }
 
     public function show(int $id)
@@ -146,7 +146,7 @@ class AuctionListingController extends Controller
                     'success' => true,
                     'message' => "Auction.com scraping started in background.",
                 ]);
-            }elseif ($source === 'realtybid') {
+            } elseif ($source === 'realtybid') {
                 if (config('app.server') == 'local') {
                     Artisan::call('scrape:realtybid');
                 } else {
@@ -157,7 +157,6 @@ class AuctionListingController extends Controller
                     'success' => true,
                     'message' => "realtybid scraping started in background.",
                 ]);
-
             } else {
                 return response()->json([
                     'success' => false,
