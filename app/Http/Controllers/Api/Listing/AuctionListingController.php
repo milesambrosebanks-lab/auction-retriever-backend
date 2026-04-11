@@ -90,13 +90,13 @@ class AuctionListingController extends Controller
             'types'   => [
                 ['name' => 'Land', 'value' => 'Land'],
                 ['name' => 'Commercial', 'value' => 'Commercial'],
-                ['name' => 'Residential', 'value' => 'single-family'],
+                ['name' => 'Residential', 'value' => 'Residential'],
             ],
             // 'types'   => AuctionListing::select('type')->distinct()->whereNotNull('type')->orderBy('type')->pluck('type'),
         ];
         $data = ['data' => $listings, 'filters' => $filters];
 
-        return jsonResponse(true, 'data retrive successfully done', 200, $data, $paginate, $listings);
+        return jsonResponse(true, 'data retrieve successfully done', 200, $data, $paginate, $listings);
 
 
 

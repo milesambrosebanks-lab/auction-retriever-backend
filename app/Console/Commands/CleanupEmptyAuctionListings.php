@@ -15,7 +15,7 @@ class CleanupEmptyAuctionListings extends Command
 
     public function handle(): int
     {
-        $validTypes = ['Single-Family', 'Commercial', 'Land'];
+        $validTypes = ['Residential', 'Commercial', 'Land'];
 
         $query = AuctionListing::query()
             ->whereNull('current_bid')
