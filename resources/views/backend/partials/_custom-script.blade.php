@@ -1,4 +1,4 @@
-// summernote
+{{-- // summernote --}}
 <script>
     $('.summernote').summernote({
         placeholder: 'text',
@@ -8,7 +8,7 @@
 </script>
 
 
-// disable submit button
+{{-- // disable submit button --}}
 <script>
     const form = document.querySelector('.form');
     const submitBtn = document.querySelector('.submit');
