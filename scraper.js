@@ -9,7 +9,12 @@ async function scrapeAuctions(limit = 50, offset = 0) {
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage'
+                '--disable-dev-shm-usage',
+
+                '--disable-gpu',
+                '--no-zygote',
+                '--single-process',
+
             ]
         });
 
