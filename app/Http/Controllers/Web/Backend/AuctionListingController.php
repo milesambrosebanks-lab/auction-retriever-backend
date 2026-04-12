@@ -143,7 +143,7 @@ class AuctionListingController extends Controller
 
                     $path = base_path();
 
-                    exec("cd {$path} && php artisan scrape:auction --limit=50 --max=500 > storage/logs/scrape.log 2>&1 &");
+                    exec('cd /home/scraper/htdocs/admin.auctionretriever.com && php artisan scrape:auction --limit=50 --max=500 > storage/logs/scrape.log 2>&1 &');
                 }
 
                 return response()->json([
