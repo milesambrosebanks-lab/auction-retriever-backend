@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Throwable;
 
 class UserController extends Controller
 {
@@ -140,23 +141,44 @@ class UserController extends Controller
 
     public function delete()
     {
-        $user = User::findOrFail(auth('api')->id());
-        $user->update([
-            'is_deleted' => true,
-            'last_activity_at' => now(),
-        ]);
-        Auth::guard('api')->logout();
-        return Helper::jsonResponse(true, 'Profile deleted successfully', 200);
+        return $this->deleteAccount();
     }
 
     public function destroy()
     {
-        $user = User::findOrFail(auth('api')->id());
-        $user->update([
-            'is_deleted' => true,
-            'last_activity_at' => now(),
-        ]);
-        Auth::guard('api')->logout();
-        return Helper::jsonResponse(true, 'Profile deleted successfully', 200);
+        return $this->deleteAccount();
+    }
+
+    private function deleteAccount()
+    {
+        $user = auth('api')->user();
+
+        if (! $user) {
+            return Helper::jsonResponse(false, 'Unauthorized', 401);
+        }
+
+        try {
+            $subscription = $user->subscription('default');
+
+            if ($subscription && ! $subscription->canceled()) {
+                $subscription->cancel();
+            }
+
+            DB::transaction(function () use ($user) {
+                if (! empty($user->getRawOriginal('avatar'))) {
+                    Helper::fileDelete(public_path($user->getRawOriginal('avatar')));
+                }
+
+                $user->firebaseTokens()->delete();
+                $user->subscriptions()->delete();
+                $user->delete();
+            });
+
+            Auth::guard('api')->logout();
+
+            return Helper::jsonResponse(true, 'Profile deleted successfully', 200);
+        } catch (Throwable $e) {
+            return Helper::jsonResponse(false, 'Failed to delete profile: ' . $e->getMessage(), 500);
+        }
     }
 }

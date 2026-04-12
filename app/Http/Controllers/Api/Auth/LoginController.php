@@ -44,9 +44,9 @@ class LoginController extends Controller
                 return Helper::jsonResponse(false, 'user is not active', 404);
             }
 
-            if ((bool) $user->is_deleted) {
-                return Helper::jsonErrorResponse('Your account has been deleted.', 403);
-            }
+            // if ((bool) $user->is_deleted) {
+            //     return Helper::jsonErrorResponse('Your account has been deleted.', 403);
+            // }
 
             //! Check the password
             if (!Hash::check($request->password, $user->password)) {
