@@ -141,12 +141,12 @@ class AuctionListingController extends Controller
                 } else {
                     // for our server environment, we need to use exec to run the command in background
                     // exec('export PATH=/home/thewarriors/.nvm/versions/node/v24.13.0/bin:/usr/local/bin:/usr/bin:/bin && cd /home/thewarriors/milesbanks.thewarriors.team && php artisan scrape:auction --limit=50 --max=500 > /dev/null 2>&1 &');
-                    Artisan::call('scrape:auction', ['--limit' => 50, '--max' => 500]);
+                    // Artisan::call('scrape:auction', ['--limit' => 50, '--max' => 500]);
 
                     // for client environment, we can run the command directly (but it will block the request until it finishes, which is not ideal for long scrapes)
-                    // $path = base_path();
+                    $path = base_path();
 
-                    // exec("cd {$path} && php artisan scrape:auction --limit=50 --max=500 > storage/logs/scrape.log 2>&1 &");
+                    exec("cd {$path} && php artisan scrape:auction --limit=50 --max=100 > storage/logs/scrape.log 2>&1 &");
                 }
 
                 return response()->json([
