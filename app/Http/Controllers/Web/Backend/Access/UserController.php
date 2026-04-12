@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Backend\Access;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\User;
@@ -189,7 +190,7 @@ class UserController extends Controller
 
                 </div>';
                 })
-                ->rawColumns(['name_col','status_badge','plan_col','trial_ends','sub_ends','last_login','created','action'])->make(true);
+                ->rawColumns(['name_col', 'status_badge', 'plan_col', 'trial_ends', 'sub_ends', 'last_login', 'created', 'action'])->make(true);
         }
 
         // Plan list for filter dropdown
@@ -303,12 +304,55 @@ class UserController extends Controller
         }
     }
 
+    // public function destroy($id)
+    // {
+    //     $user = User::withoutGlobalScope('active_account')->find($id);
+    //     DB::table('model_has_roles')->where('model_id', $id)->delete();
+
+    //     $user->delete();
+    //     return redirect()->route('admin.users.index')->with('t-success', 'User deleted t-successfully');
+    // }
+
     public function destroy($id)
     {
         $user = User::withoutGlobalScope('active_account')->find($id);
-        DB::table('model_has_roles')->where('model_id', $id)->delete();
-        $user->delete();
-        return redirect()->route('admin.users.index')->with('t-success', 'User deleted t-successfully');
+
+        if (! $user) {
+            return redirect()
+                ->route('admin.users.index')
+                ->with('t-error', 'User not found');
+        }
+
+        DB::transaction(function () use ($user) {
+
+            // roles delete
+            DB::table('model_has_roles')
+                ->where('model_id', $user->id)
+                ->delete();
+
+            // subscription cancel safely
+            $subscription = $user->subscription('default');
+
+            if ($subscription && ! $subscription->canceled()) {
+                $subscription->cancel();
+            }
+
+            // delete avatar file
+            if (! empty($user->getRawOriginal('avatar'))) {
+                Helper::fileDelete(public_path($user->getRawOriginal('avatar')));
+            }
+
+            // related data delete
+            $user->firebaseTokens()->delete();
+            $user->subscriptions()->delete();
+
+            // delete user
+            $user->delete();
+        });
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('t-success', 'User deleted successfully');
     }
 
     public function status(int $id)
