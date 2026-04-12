@@ -21,7 +21,11 @@ class AuctionListingController extends Controller
         $per_page = 18;
         $paginate = false;
 
-        $query = AuctionListing::query();
+        $query = AuctionListing::query()
+            ->where(function ($query) {
+                $query->whereNotNull('current_bid')
+                    ->orWhereNotNull('bid_amount');
+            });
 
         // ── Filters ──────────────────────────────────────────────────────
         if ($request->filled('state')) {
@@ -250,7 +254,13 @@ class AuctionListingController extends Controller
     {
         $today = now()->toDateString();
 
-        $listings = AuctionListing::whereDate('created_at', $today)->orderBy('scraped_at', 'desc')->get();
+        $listings = AuctionListing::whereDate('created_at', $today)
+            ->where(function ($query) {
+                $query->whereNotNull('current_bid')
+                    ->orWhereNotNull('bid_amount');
+            })
+            ->orderBy('scraped_at', 'desc')
+            ->get();
 
         return jsonResponse(true, 'Today\'s auctions retrieved successfully.', 200, [
             'data' => AuctionListingResource::collection($listings),
