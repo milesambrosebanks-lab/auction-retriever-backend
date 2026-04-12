@@ -201,6 +201,36 @@ class SubscriptionController extends Controller
         }
     }
 
+    public function resumeSubscription(Request $request)
+    {
+        $user = auth('api')->user();
+
+        $subscription = $user->subscription('default');
+
+        if (! $subscription) {
+            return $this->error([], 'No subscription found', 404);
+        }
+
+        if (! $subscription->canceled()) {
+            return $this->error([], 'Subscription is not canceled', 400);
+        }
+
+        if (! $subscription->onGracePeriod()) {
+            return $this->error([], 'Subscription can no longer be resumed', 400);
+        }
+
+        try {
+            $subscription->resume();
+
+            return $this->success([
+                'status'  => 'active',
+                'ends_at' => $subscription->fresh()->ends_at,
+            ], 'Subscription resumed successfully', 200);
+        } catch (\Exception $e) {
+            return $this->error([], 'Failed to resume subscription: ' . $e->getMessage(), 500);
+        }
+    }
+
     // status
     public function subscriptionStatus(Request $request)
     {
