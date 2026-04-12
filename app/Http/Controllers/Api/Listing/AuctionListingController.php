@@ -246,6 +246,17 @@ class AuctionListingController extends Controller
         // ]);
     }
 
+    public function todayAuctions(Request $request)
+    {
+        $today = now()->toDateString();
+
+        $listings = AuctionListing::whereDate('created_at', $today)->orderBy('scraped_at', 'desc')->get();
+
+        return jsonResponse(true, 'Today\'s auctions retrieved successfully.', 200, [
+            'data' => AuctionListingResource::collection($listings),
+        ]);
+    }
+
     // ── Filter options (state, county, type list) ─────────────────────────────
     public function filterOptions()
     {

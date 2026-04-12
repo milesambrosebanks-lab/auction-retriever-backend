@@ -70,6 +70,7 @@ Route::middleware(['auth:api', 'api-active-user'])->prefix('admin')->group(funct
 
 Route::middleware(['auth:api', 'api-active-user'])->prefix('auction')->group(function () {
     Route::get('/', [AuctionListingController::class, 'index']);
+    Route::get('/today', [AuctionListingController::class, 'todayAuctions']);
     Route::get('/filter-options', [AuctionListingController::class, 'filterOptions']);
     Route::get('/{id}/view', [AuctionListingController::class, 'show']);
 

@@ -5,15 +5,16 @@ async function scrapeAuctions(limit = 50, offset = 0) {
     try {
         browser = await puppeteer.launch({
             headless: 'new',
-            executablePath: '/usr/bin/chromium-browser',
+            // executablePath: '/usr/bin/chromium-browser',
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
 
-                '--disable-gpu',
-                '--no-zygote',
-                '--single-process',
+                // '--disable-gpu',
+                // '--no-zygote',
+                // '--single-process',
 
             ]
         });
