@@ -99,14 +99,19 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })->withSchedule(function (Schedule $schedule) {
         $schedule->command('weekly:digest')->weekly();
-        $schedule->command('scrape:bid4assets')->dailyAt('02:00');
+        $schedule->command('scrape:bid4assets')->dailyAt('06:15');
         $schedule->command('sync:auction-details --batch=100')->dailyAt('03:00');
         $schedule->command('auction-listings:cleanup')->dailyAt('03:30');
 
-        $schedule->command('scrape:auction --limit=50 --max=500')
-            ->dailyAt('04:00')
-            ->withoutOverlapping()
-            ->appendOutputTo(storage_path('logs/scrape-auction.log'));
+        // $schedule->command('scrape:auction --limit=50 --max=500')
+        //     ->dailyAt('04:00')
+        //     ->withoutOverlapping()
+        //     ->appendOutputTo(storage_path('logs/scrape-auction.log'));
+
+        $schedule->job(new \App\Jobs\ScrapeAuctionJob(50, 100))
+            ->dailyAt('06:10')
+            ->name('scrape-auction')
+            ->withoutOverlapping()->appendOutputTo(storage_path('logs/scrape-auction.log'));
 
         // if running more than 30 minuite then shuild be failed
         $schedule->call(function () {
