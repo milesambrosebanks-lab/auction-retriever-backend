@@ -108,7 +108,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //     ->withoutOverlapping()
         //     ->appendOutputTo(storage_path('logs/scrape-auction.log'));
 
-        $schedule->job(new \App\Jobs\ScrapeAuctionJob(50, 100))
+        $schedule->job(new \App\Jobs\ScrapeAuctionJob(50, 500))
             ->dailyAt('06:10')
             ->name('scrape-auction')
             ->withoutOverlapping()->appendOutputTo(storage_path('logs/scrape-auction.log'));
