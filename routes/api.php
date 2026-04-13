@@ -47,7 +47,7 @@ Route::get('/subscription/plans', [SubscriptionController::class, 'getPlanDetail
 Route::get('/countries', [CountryController::class, 'countries']);
 Route::get('/states', [CountryController::class, 'states']);
 Route::get('home/random/auction', [AuctionListingController::class, 'randomAuction']);
-Route::get('/auction/today', [AuctionListingController::class, 'todayAuctions']);
+Route::get('/auction/today', [AuctionListingController::class, 'todayAuctions'])->middleware('custom.api');
 
 
 

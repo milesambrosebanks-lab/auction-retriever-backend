@@ -10,6 +10,7 @@ use App\Http\Middleware\WebDeveloperMiddleware;
 use App\Http\Middleware\ApiOtpVerifiedMiddleware;
 use App\Http\Middleware\WebOtpVerifiedMiddleware;
 use App\Http\Middleware\ApiRetailerMiddleware;
+use App\Http\Middleware\CustomApiKeyMiddleware;
 use App\Http\Middleware\WebStaffMiddleware;
 use App\Models\ScrapeLog;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -61,7 +62,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'check'                 => WebAuthCheckMiddleware::class,
             'role'                  => RoleMiddleware::class,
             'permission'            => PermissionMiddleware::class,
-            'role_or_permission'    => RoleOrPermissionMiddleware::class
+            'role_or_permission'    => RoleOrPermissionMiddleware::class,
+
+            'custom.api' => CustomApiKeyMiddleware::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'payment/stripe/webhook',
@@ -99,7 +102,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })->withSchedule(function (Schedule $schedule) {
         $schedule->command('weekly:digest')->weekly();
-        $schedule->command('scrape:bid4assets')->dailyAt('06:15');
+        $schedule->command('scrape:bid4assets')->dailyAt('02:00');
         $schedule->command('sync:auction-details --batch=100')->dailyAt('03:00');
         $schedule->command('auction-listings:cleanup')->dailyAt('03:30');
 
@@ -109,7 +112,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //     ->appendOutputTo(storage_path('logs/scrape-auction.log'));
 
         $schedule->job(new \App\Jobs\ScrapeAuctionJob(50, 500))
-            ->dailyAt('06:10')
+            ->dailyAt('02:10')
             ->name('scrape-auction')
             ->withoutOverlapping()->appendOutputTo(storage_path('logs/scrape-auction.log'));
 

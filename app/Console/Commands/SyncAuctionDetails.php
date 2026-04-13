@@ -26,7 +26,6 @@ class SyncAuctionDetails extends Command
             if ($detail) {
                 $this->info("Detail fetched for #{$id}:");
                 $this->table(['Field', 'Value'], collect($detail)->map(fn($v, $k) => [$k, $v ?? 'null'])->toArray());
-            // Log::info($detail);
 
                 AuctionListing::where('auction_id', $id)->update($detail);
                 $this->info("Saved to database!");
@@ -52,7 +51,6 @@ class SyncAuctionDetails extends Command
             return;
         }
 
-        // $batch = (int) $this->option('batch');
         $this->info("Processing {$batch} listings...");
 
         $bar     = $this->output->createProgressBar($batch);
