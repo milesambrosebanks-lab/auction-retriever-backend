@@ -103,10 +103,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('sync:auction-details --batch=100')->dailyAt('03:00');
         $schedule->command('auction-listings:cleanup')->dailyAt('03:30');
 
-         $schedule->command('scrape:auction --limit=50 --max=500')
-             ->dailyAt('04:00')
-             ->withoutOverlapping()
-             ->appendOutputTo(storage_path('logs/scrape-auction.log'));
+        $schedule->command('scrape:auction --limit=50 --max=500')
+            ->dailyAt('04:00')
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/scrape-auction.log'));
 
         // if running more than 30 minuite then shuild be failed
         $schedule->call(function () {

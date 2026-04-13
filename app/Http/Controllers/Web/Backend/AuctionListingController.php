@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ScrapeAuctionJob;
 use App\Models\AuctionListing;
 use App\Models\ScrapeLog;
 use App\Services\Bid4AssetsScraper;
@@ -131,38 +132,32 @@ class AuctionListingController extends Controller
                     'total' => $total,
                 ]);
             } elseif ($source === 'auction_com') {
-                // Run the Auction.com scrape command
-                // Artisan::call('scrape:auction', ['--limit' => 5, '--max' => 10]);
-                // $output = [];
-                // $status = null;
 
                 if (config('app.server') == 'local') {
                     Artisan::call('scrape:auction', ['--limit' => 50, '--max' => 500]);
                 } else {
-                    // for our server environment, we need to use exec to run the command in background
-                    // exec('export PATH=/home/thewarriors/.nvm/versions/node/v24.13.0/bin:/usr/local/bin:/usr/bin:/bin && cd /home/thewarriors/milesbanks.thewarriors.team && php artisan scrape:auction --limit=50 --max=500 > /dev/null 2>&1 &');
-                    // Artisan::call('scrape:auction', ['--limit' => 50, '--max' => 500]);
-
-                    // for client environment, we can run the command directly (but it will block the request until it finishes, which is not ideal for long scrapes)
-                    $path = base_path();
-
-                    exec("cd {$path} && php artisan scrape:auction --limit=50 --max=100 > storage/logs/scrape.log 2>&1 &");
+                    ScrapeAuctionJob::dispatch(50, 100);
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Auction.com scraping started in background.",
+                    ]);
                 }
-
-                return response()->json([
-                    'success' => true,
-                    'message' => "Auction.com scraping started in background.",
-                ]);
             } elseif ($source === 'realtybid') {
+
                 if (config('app.server') == 'local') {
                     Artisan::call('scrape:realtybid');
                 } else {
-                    exec('export PATH=/home/thewarriors/.nvm/versions/node/v24.13.0/bin:/usr/local/bin:/usr/bin:/bin && cd /home/thewarriors/milesbanks.thewarriors.team && php artisan scrape:realtybid > /dev/null 2>&1 &');
+                    $path = base_path();
+                    $logPath = $path . '/storage/logs/scrape_realtybid.log';
+                    $phpBin = PHP_BINARY;
+
+                    $cmd = "cd {$path} && sudo -u scraper {$phpBin} artisan scrape:realtybid > {$logPath} 2>&1 &";
+                    exec($cmd);
                 }
 
                 return response()->json([
                     'success' => true,
-                    'message' => "realtybid scraping started in background.",
+                    'message' => "Realtybid scraping started in background.",
                 ]);
             } else {
                 return response()->json([
