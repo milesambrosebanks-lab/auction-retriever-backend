@@ -263,7 +263,7 @@ class AuctionListingController extends Controller
             ->get();
 
         return jsonResponse(true, 'Today\'s auctions retrieved successfully.', 200, [
-            'data' => AuctionListingResource::collection($listings),
+            AuctionListingResource::collection($listings),
         ]);
     }
 

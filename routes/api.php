@@ -47,6 +47,8 @@ Route::get('/subscription/plans', [SubscriptionController::class, 'getPlanDetail
 Route::get('/countries', [CountryController::class, 'countries']);
 Route::get('/states', [CountryController::class, 'states']);
 Route::get('home/random/auction', [AuctionListingController::class, 'randomAuction']);
+Route::get('/auction/today', [AuctionListingController::class, 'todayAuctions']);
+
 
 
 Route::middleware(['auth:api', 'api-active-user'])->prefix('auth')->group(function () {
@@ -70,7 +72,7 @@ Route::middleware(['auth:api', 'api-active-user'])->prefix('admin')->group(funct
 
 Route::middleware(['auth:api', 'api-active-user'])->prefix('auction')->group(function () {
     Route::get('/', [AuctionListingController::class, 'index']);
-    Route::get('/today', [AuctionListingController::class, 'todayAuctions']);
+    // Route::get('/today', [AuctionListingController::class, 'todayAuctions']);
     Route::get('/filter-options', [AuctionListingController::class, 'filterOptions']);
     Route::get('/{id}/view', [AuctionListingController::class, 'show']);
 

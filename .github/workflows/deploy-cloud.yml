@@ -22,4 +22,10 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /home/auctionretriever-admin/htdocs/admin.auctionretriever.com
-            git pull origin main
+            echo "🚀 Deploy started"
+
+            git fetch origin main
+            git reset --hard origin/main
+            php artisan optimize:clear
+            php artisan optimize
+            echo "✅ Deploy done"
