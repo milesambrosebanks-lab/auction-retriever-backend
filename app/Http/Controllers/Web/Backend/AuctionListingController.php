@@ -147,12 +147,7 @@ class AuctionListingController extends Controller
                 if (config('app.server') == 'local') {
                     Artisan::call('scrape:realtybid');
                 } else {
-                    $path = base_path();
-                    $logPath = $path . '/storage/logs/scrape_realtybid.log';
-                    $phpBin = PHP_BINARY;
-
-                    $cmd = "cd {$path} && sudo -u scraper {$phpBin} artisan scrape:realtybid > {$logPath} 2>&1 &";
-                    exec($cmd);
+                    Artisan::call('scrape:realtybid');
                 }
 
                 return response()->json([
