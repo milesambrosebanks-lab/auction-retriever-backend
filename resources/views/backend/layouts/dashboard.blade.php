@@ -364,7 +364,8 @@
                             <div class="card-body">
                                 <div class="mb-2"><i class="fa-solid fa-arrow-trend-down dashboard-stat-icon text-danger"></i></div>
                                 <h3 class="mb-1 fw-bold text-danger dashboard-stat-value">{{ number_format($stripeCards['churn_rate'], 2) }}%</h3>
-                                <p class="text-muted mb-0 dashboard-stat-label">Churn Rate</p>
+                                <p class="text-muted mb-0 dashboard-stat-label">Subscriber Churn Rate</p>
+                                <p class="text-muted mb-0 dashboard-stat-label">Previous period: {{ number_format($stripeCards['churn_rate_previous_period'] ?? 0, 2) }}%</p>
                             </div>
                         </div>
                     </div>
