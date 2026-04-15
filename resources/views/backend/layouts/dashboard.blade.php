@@ -61,6 +61,8 @@
                 $stripeTxnRows = $useLiveStripe ? $stripeLiveBalanceTxns : $stripeInvoices;
                 $stripeMrrDelta = $stripeCards['mrr_delta_percentage'] ?? 0;
                 $stripeMrrDeltaPositive = $stripeMrrDelta >= 0;
+                $stripeChurnedRevenueDelta = $stripeCards['churned_revenue_delta_percentage'] ?? 0;
+                $stripeChurnedRevenueDeltaPositive = $stripeChurnedRevenueDelta >= 0;
                 // dd($stripeSubscriptionRows);
             @endphp
 
@@ -363,9 +365,8 @@
                         <div class="card text-center h-100 dashboard-stat-card">
                             <div class="card-body">
                                 <div class="mb-2"><i class="fa-solid fa-arrow-trend-down dashboard-stat-icon text-danger"></i></div>
-                                <h3 class="mb-1 fw-bold text-danger dashboard-stat-value">{{ number_format($stripeCards['churn_rate'], 2) }}%</h3>
-                                <p class="text-muted mb-0 dashboard-stat-label">Subscriber Churn Rate</p>
-                                <p class="text-muted mb-0 dashboard-stat-label">Previous period: {{ number_format($stripeCards['churn_rate_previous_period'] ?? 0, 2) }}%</p>
+                                <h3 class="mb-1 fw-bold text-danger dashboard-stat-value">{{ number_format($stripeLiveKpis['churn_rate'] ?? 0, 2) }}%</h3>
+                                <p class="text-muted mb-0 dashboard-stat-label">Subscriber churn rate</p>
                             </div>
                         </div>
                     </div>

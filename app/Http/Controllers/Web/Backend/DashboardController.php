@@ -22,6 +22,7 @@ class DashboardController extends Controller
 
     public function index()
     {
+
         $activeTab = request('tab', 'overview');
         $stripeApiError = null;
 
@@ -70,7 +71,11 @@ class DashboardController extends Controller
         $stripeActiveSubscriberLive = array_fill(0, 12, 0);
         $stripeMrrValuesLive = array_fill(0, 12, 0);
         $stripeMrrGrowthValuesLive = array_fill(0, 12, 0);
-        $stripePayoutCounts = ['paid' => 0, 'pending' => 0, 'failed' => 0];
+        $stripePayoutCounts = [
+            'paid' => Transaction::whereIn('status', ['paid', 'succeeded'])->count(),
+            'pending' => Transaction::where('status', 'pending')->count(),
+            'failed' => Transaction::where('status', 'failed')->count(),
+        ];
 
         $revenueRows = Transaction::selectRaw('MONTH(created_at) as month_number')
             ->selectRaw("SUM(CASE WHEN status IN ('paid','succeeded') THEN amount ELSE 0 END) as paid_total")
@@ -187,10 +192,6 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        $stripeSubscriptionChurnSource = Subscription::select(['user_id', 'created_at', 'ends_at'])
-            ->whereHas('user.roles', fn($q) => $q->where('name', 'customer'))
-            ->get();
-
         $stripeInvoices = Transaction::select('id', 'title', 'invoice_id', 'customer_id', 'amount', 'currency', 'status', 'created_at')
             ->latest()
             ->take(10)
@@ -203,14 +204,11 @@ class DashboardController extends Controller
             'transactions_total'  => (int) Transaction::count(),
         ];
 
-        $now = now();
-
         $stripeKpis = [
             'mrr'              => round($currentMrr, 2),
             'arr'              => round($currentMrr * 12, 2),
             'active_customers' => $userStats['active'],
-            'churn_rate'       => $this->calculateLocalSubscriberChurnRate($stripeSubscriptionChurnSource, $now, 30),
-            'churn_rate_previous_period' => $this->calculateLocalSubscriberChurnRate($stripeSubscriptionChurnSource, $now->copy()->subDays(30), 30),
+            'churn_rate'       => $userStats['total'] > 0 ? round(($userStats['cancelled'] / $userStats['total']) * 100, 2) : 0,
             'pending_revenue'  => round($pendingAmount, 2),
             'mrr_previous_period' => round($previousPeriodMrr, 2),
             'mrr_delta_amount' => $mrrDeltaAmount,
@@ -237,6 +235,7 @@ class DashboardController extends Controller
         try {
             $stripe = new StripeClient(config('services.stripe.secret'));
 
+
             $stripeLiveCustomers = collect($stripe->customers->all([
                 'limit' => 14,
             ])->data);
@@ -251,33 +250,27 @@ class DashboardController extends Controller
                 'limit' => 13,
             ])->data);
 
-            $now = now();
-
             $stripeLiveKpis['active_subscribers'] = $stripeLiveSubscriptions
                 ->whereIn('status', ['active', 'trialing'])
                 ->count();
 
-            $stripeLiveKpis['churn_rate'] = $this->calculateStripeSubscriberChurnRate($stripeLiveSubscriptions, $now, 30);
-            $stripeLiveKpis['churn_rate_previous_period'] = $this->calculateStripeSubscriberChurnRate($stripeLiveSubscriptions, $now->copy()->subDays(30), 30);
+            $cancelled = $stripeLiveSubscriptions->where('status', 'canceled')->count();
+            $totalSubs = max($stripeLiveSubscriptions->count(), 1);
+            $stripeLiveKpis['churn_rate'] = round(($cancelled / $totalSubs) * 100, 2);
 
             $stripeLiveKpis['pending_revenue'] = $stripeLiveInvoices
-                ->whereIn('status', ['draft', 'open'])
+                ->whereIn('status', ['draft', 'open', 'pending'])
                 ->sum(function ($invoice) {
                     return ($invoice->amount_remaining ?? 0) / 100;
                 });
 
+            $now = now();
             $previousSnapshotAt = $now->copy()->subMonthNoOverflow();
 
             $stripeLiveKpis['mrr'] = $this->calculateStripeSnapshotMrr($stripeLiveSubscriptions, $now);
             $stripeLiveKpis['arr'] = $stripeLiveKpis['mrr'] * 12;
             $stripeLiveKpis['live_mode'] = true;
 
-            // $stripeTotals = [
-            //     'customers_total'     => $this->countStripeObjects(fn(array $params) => $stripe->customers->all($params)),
-            //     'subscriptions_total' => $this->countStripeObjects(fn(array $params) => $stripe->subscriptions->all($params)),
-            //     'invoices_total'      => $this->countStripeObjects(fn(array $params) => $stripe->invoices->all($params)),
-            //     'transactions_total'  => $this->countStripeObjects(fn(array $params) => $stripe->balanceTransactions->all($params)),
-            // ];
 
             // ── Stripe revenue chart (by invoice) ──
             foreach ($stripeLiveInvoices as $invoice) {
@@ -289,10 +282,11 @@ class DashboardController extends Controller
                 }
                 $idx = $ts->month - 1;
                 $amountTotal = isset($invoice->created_at) ? ($invoice->amount ?? 0) : (($invoice->total ?? 0) / 100);
-                if (($invoice->status ?? '') === 'paid') {
+                $invoiceStatus = strtolower($invoice->status ?? '');
+                if (in_array($invoiceStatus, ['paid', 'succeeded'])) {
                     $stripeRevenueChart['paid'][$idx] += (float) $amountTotal;
                     $stripePayoutCounts['paid']++;
-                } elseif (in_array(($invoice->status ?? ''), ['open', 'draft'])) {
+                } elseif (in_array($invoiceStatus, ['open', 'draft', 'pending'])) {
                     $stripeRevenueChart['pending'][$idx] += (float) $amountTotal;
                     $stripePayoutCounts['pending']++;
                 } else {
@@ -411,20 +405,6 @@ class DashboardController extends Controller
             ));
     }
 
-    private function countStripeObjects(callable $fetcher, int $pageSize = 100, int $max = 5000): int
-    {
-        $total = 0;
-
-        foreach ($fetcher(['limit' => $pageSize])->autoPagingIterator() as $_) {
-            $total++;
-
-            if ($total >= $max) {
-                break;
-            }
-        }
-
-        return $total;
-    }
 
     private function fetchStripeSubscriptions(StripeClient $stripe, int $pageSize = 100, int $max = 5000): Collection
     {
@@ -477,174 +457,6 @@ class DashboardController extends Controller
         return round($subscriptions
             ->filter(fn ($subscription) => $this->isStripeSubscriptionCountedInMrrAt($subscription, $asOf))
             ->sum(fn ($subscription) => $this->calculateStripeSubscriptionMonthlyRevenue($subscription)), 2);
-    }
-
-    private function calculateLocalSubscriberChurnRate(Collection $subscriptions, Carbon $asOf, int $days = 30): float
-    {
-        $periodEnd = $asOf;
-        $periodStart = $asOf->copy()->subDays($days);
-
-        return $this->calculateLocalSubscriberChurnRateForWindow($subscriptions, $periodStart, $periodEnd);
-    }
-
-    private function calculateLocalSubscriberChurnRateForWindow(Collection $subscriptions, Carbon $periodStart, Carbon $periodEnd): float
-    {
-        $subscriptionsByUser = $subscriptions->groupBy(fn ($subscription) => $subscription->user_id);
-
-        $churned = 0;
-        $activeAtStart = 0;
-        $newSubscribers = 0;
-
-        foreach ($subscriptionsByUser as $userId => $userSubscriptions) {
-            if (!$userId) {
-                continue;
-            }
-
-            $firstCreatedAt = $userSubscriptions
-                ->pluck('created_at')
-                ->filter()
-                ->min();
-
-            if (!$firstCreatedAt) {
-                continue;
-            }
-
-            $isNew = $firstCreatedAt->between($periodStart, $periodEnd);
-            $hasActiveAtStart = $userSubscriptions->contains(fn ($subscription) => $this->isLocalSubscriptionActiveAt($subscription, $periodStart));
-            $hasActiveAtEnd = $userSubscriptions->contains(fn ($subscription) => $this->isLocalSubscriptionActiveAt($subscription, $periodEnd));
-
-            if ($hasActiveAtStart) {
-                $activeAtStart++;
-            }
-
-            if ($isNew) {
-                $newSubscribers++;
-            }
-
-            if ($hasActiveAtStart && !$hasActiveAtEnd) {
-                $churned++;
-            }
-        }
-
-        $denominator = max($activeAtStart + $newSubscribers, 1);
-
-        return round(($churned / $denominator) * 100, 2);
-    }
-
-    private function calculateStripeSubscriberChurnRate(Collection $subscriptions, Carbon $asOf, int $days = 30): float
-    {
-        $periodEnd = $asOf;
-        $periodStart = $asOf->copy()->subDays($days);
-
-        return $this->calculateStripeSubscriberChurnRateForWindow($subscriptions, $periodStart, $periodEnd);
-    }
-
-    private function calculateStripeSubscriberChurnRateForWindow(Collection $subscriptions, Carbon $periodStart, Carbon $periodEnd): float
-    {
-        $subscriptionsByCustomer = $subscriptions->groupBy(fn ($subscription) => $this->getStripeSubscriptionCustomerId($subscription));
-
-        $churned = 0;
-        $activeAtStart = 0;
-        $newSubscribers = 0;
-
-        foreach ($subscriptionsByCustomer as $customerId => $customerSubscriptions) {
-            if (!$customerId) {
-                continue;
-            }
-
-            $firstCreatedAt = $customerSubscriptions
-                ->map(fn ($subscription) => isset($subscription->created) ? Carbon::createFromTimestamp($subscription->created) : null)
-                ->filter()
-                ->min();
-
-            if (!$firstCreatedAt) {
-                continue;
-            }
-
-            $isNew = $firstCreatedAt->between($periodStart, $periodEnd);
-            $hasActiveAtStart = $customerSubscriptions->contains(fn ($subscription) => $this->isStripeSubscriptionActiveAt($subscription, $periodStart));
-            $hasActiveAtEnd = $customerSubscriptions->contains(fn ($subscription) => $this->isStripeSubscriptionActiveAt($subscription, $periodEnd));
-
-            if ($hasActiveAtStart) {
-                $activeAtStart++;
-            }
-
-            if ($isNew) {
-                $newSubscribers++;
-            }
-
-            if ($hasActiveAtStart && !$hasActiveAtEnd) {
-                $churned++;
-            }
-        }
-
-        $denominator = max($activeAtStart + $newSubscribers, 1);
-
-        return round(($churned / $denominator) * 100, 2);
-    }
-
-    private function getStripeSubscriptionCustomerId(object $subscription): ?string
-    {
-        if (is_object($subscription->customer)) {
-            return $subscription->customer->id ?? null;
-        }
-
-        return $subscription->customer ?? null;
-    }
-
-    private function isLocalSubscriptionActiveAt(object $subscription, Carbon $asOf): bool
-    {
-        $createdAt = $subscription->created_at;
-
-        if (!$createdAt || $createdAt->gt($asOf)) {
-            return false;
-        }
-
-        if ($subscription->ends_at && $subscription->ends_at->lte($asOf)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private function isLocalSubscriptionCanceledDuringWindow(object $subscription, Carbon $periodStart, Carbon $asOf): bool
-    {
-        if (!$subscription->ends_at) {
-            return false;
-        }
-
-        $endsAt = $subscription->ends_at instanceof Carbon ? $subscription->ends_at : Carbon::parse($subscription->ends_at);
-
-        return $endsAt->between($periodStart, $asOf);
-    }
-
-    private function isStripeSubscriptionActiveAt(object $subscription, Carbon $asOf): bool
-    {
-        $createdAt = isset($subscription->created) ? Carbon::createFromTimestamp($subscription->created) : null;
-
-        if (!$createdAt || $createdAt->gt($asOf)) {
-            return false;
-        }
-
-        $canceledAt = !empty($subscription->canceled_at) ? Carbon::createFromTimestamp($subscription->canceled_at) : null;
-        $currentPeriodEnd = !empty($subscription->current_period_end) ? Carbon::createFromTimestamp($subscription->current_period_end) : null;
-
-        if ($canceledAt && $canceledAt->lte($asOf)) {
-            return false;
-        }
-
-        if (!empty($subscription->cancel_at_period_end) && $currentPeriodEnd && $currentPeriodEnd->lte($asOf)) {
-            return false;
-        }
-
-        return in_array($subscription->status, ['active', 'trialing', 'past_due'], true);
-    }
-
-    private function isStripeSubscriptionCanceledDuringWindow(object $subscription, Carbon $periodStart, Carbon $asOf): bool
-    {
-        $canceledAt = !empty($subscription->canceled_at) ? Carbon::createFromTimestamp($subscription->canceled_at) : null;
-
-        return $canceledAt && $canceledAt->between($periodStart, $asOf);
     }
 
     private function isStripeSubscriptionCountedInMrrAt(object $subscription, Carbon $asOf): bool
