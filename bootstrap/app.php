@@ -41,7 +41,6 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['web'])->prefix('admin')->name('admin.')->group(base_path('routes/web-admin.php'));
             Route::middleware(['api'])->group(base_path('routes/api-stripe.php'));
             require base_path('routes/cmd.php');
-            // require base_path('routes/plugins.php');
         }
     )
     ->withBroadcasting(
@@ -102,14 +101,12 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })->withSchedule(function (Schedule $schedule) {
         $schedule->command('weekly:digest')->weekly();
-        $schedule->command('scrape:bid4assets')->dailyAt('02:00');
+
+        $schedule->command('scrape:bid4assets')->dailyAt('02:00')
+        ->withoutOverlapping()->appendOutputTo(storage_path('logs/scrape-auction.log'));
+
         $schedule->command('sync:auction-details --batch=100')->dailyAt('03:00');
         $schedule->command('auction-listings:cleanup')->dailyAt('03:30');
-
-        // $schedule->command('scrape:auction --limit=50 --max=500')
-        //     ->dailyAt('04:00')
-        //     ->withoutOverlapping()
-        //     ->appendOutputTo(storage_path('logs/scrape-auction.log'));
 
         $schedule->job(new \App\Jobs\ScrapeAuctionJob(50, 500))
             ->dailyAt('02:10')

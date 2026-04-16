@@ -9,6 +9,5 @@ Artisan::command('inspire', function () {
 
 
 // প্রতিদিন রাত ২টায় auto scrape
-Schedule::command('scrape:bid4assets')->dailyAt('02:00');
+// Schedule::command('scrape:bid4assets')->dailyAt('02:00');
 
-// Schedule::command('scrape:bid4assets')->everySixHours();
