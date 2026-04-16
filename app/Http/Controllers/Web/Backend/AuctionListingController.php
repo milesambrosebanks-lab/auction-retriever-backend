@@ -136,7 +136,7 @@ class AuctionListingController extends Controller
                 if (config('app.server') == 'local') {
                     Artisan::call('scrape:auction', ['--limit' => 50, '--max' => 500]);
                 } else {
-                    ScrapeAuctionJob::dispatch(50, 100);
+                    ScrapeAuctionJob::dispatch(50, 500);
                     return response()->json([
                         'success' => true,
                         'message' => "Auction.com scraping started in background.",
