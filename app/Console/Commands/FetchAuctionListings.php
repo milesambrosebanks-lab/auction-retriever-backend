@@ -111,7 +111,7 @@ class FetchAuctionListings extends Command
                             'auction_started_at' => $auctionStartedAt,
                             'image_url' => $item['primary_photo'] ?? null,
                             'source_url' => 'https://www.auction.com' . ($item['listing_page_path'] ?? ''),
-                            'source' => $this->source,
+                            'source' => 'auction',
                             'city' => $city,
                             'state' => $state,
                             'zip' => $zip,
