@@ -4,7 +4,7 @@ async function scrapeAuctions(limit = 50, offset = 0) {
     let browser;
     try {
         browser = await puppeteer.launch({
-            executablePath: '/usr/bin/chromium-browser',
+            executablePath: '/snap/bin/chromium',
             headless: 'new',
             args: [
                 '--no-sandbox',

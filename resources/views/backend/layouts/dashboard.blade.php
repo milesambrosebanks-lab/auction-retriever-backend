@@ -365,7 +365,7 @@
                         <div class="card text-center h-100 dashboard-stat-card">
                             <div class="card-body">
                                 <div class="mb-2"><i class="fa-solid fa-arrow-trend-down dashboard-stat-icon text-danger"></i></div>
-                                <h3 class="mb-1 fw-bold text-danger dashboard-stat-value">{{ number_format($stripeLiveKpis['churn_rate'] ?? 0, 2) }}%</h3>
+                                <h3 class="mb-1 fw-bold text-danger dashboard-stat-value">{{ number_format($stripeCards['churn_rate'] ?? 0, 2) }}%</h3>
                                 <p class="text-muted mb-0 dashboard-stat-label">Subscriber churn rate</p>
                             </div>
                         </div>
