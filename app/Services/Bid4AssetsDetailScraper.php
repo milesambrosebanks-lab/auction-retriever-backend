@@ -12,6 +12,8 @@ class Bid4AssetsDetailScraper
 {
     protected string $baseUrl = 'https://www.bid4assets.com';
     protected Client $client;
+    protected string $source    = 'bid4assets';
+
 
     // US State codes
     protected array $stateCodes = [
@@ -88,7 +90,7 @@ class Bid4AssetsDetailScraper
     {
         // যেগুলোর state নেই সেগুলো fetch করুন
         $listings = AuctionListing::whereNull('state')
-            ->whereNotNull('auction_id')
+            ->whereNotNull('auction_id')->where('source', $this->source)
             ->limit($batchSize)->orderBY('id','asc')
             ->get();
 

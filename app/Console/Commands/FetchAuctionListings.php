@@ -12,6 +12,8 @@ class FetchAuctionListings extends Command
 {
     protected $signature = 'scrape:auction {--limit=50} {--max=500}';
     protected $description = 'Scrape auction listings using Puppeteer (browser automation)';
+    protected string $source    = 'auction';
+
 
     public function handle()
     {
@@ -109,6 +111,7 @@ class FetchAuctionListings extends Command
                             'auction_started_at' => $auctionStartedAt,
                             'image_url' => $item['primary_photo'] ?? null,
                             'source_url' => 'https://www.auction.com' . ($item['listing_page_path'] ?? ''),
+                            'source' => $this->source,
                             'city' => $city,
                             'state' => $state,
                             'zip' => $zip,

@@ -19,6 +19,7 @@ class AuctionListing extends Model
         'auction_date',
         'image_url',
         'source_url',
+        'source',
         'channel_code',
         'category_code',
         'scraped_at',

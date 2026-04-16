@@ -348,6 +348,7 @@ class Bid4AssetsScraper
                 'time_left'     => $item['time_left'],
                 'image_url'     => $item['image_url'],
                 'source_url'    => $item['source_url'],
+                'source'        => $this->source,
                 'channel_code'  => $channelCode,
                 'category_code' => $categoryCode,
                 'scraped_at'    => now(),
