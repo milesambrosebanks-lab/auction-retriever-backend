@@ -11,7 +11,9 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
+use Stripe\Stripe;
 use Stripe\StripeClient;
+use Stripe\Subscription as StripeSubscription;
 
 class DashboardController extends Controller
 {
@@ -22,7 +24,6 @@ class DashboardController extends Controller
 
     public function index()
     {
-
         $activeTab = request('tab', 'overview');
         $stripeApiError = null;
 
@@ -30,24 +31,24 @@ class DashboardController extends Controller
         $userStats = [
             'total'     => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))->count(),
             'trial'     => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))
-                            ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'trialing'))
-                            ->count(),
+                ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'trialing'))
+                ->count(),
             'active'    => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))
-                            ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'active'))
-                            ->count(),
+                ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'active'))
+                ->count(),
             'cancelled' => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))
-                            ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'canceled'))
-                            ->count(),
+                ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'canceled'))
+                ->count(),
             'past_due'  => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))
-                            ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'past_due'))
-                            ->count(),
-                            'subscriptions' => Subscription::count(),
+                ->whereHas('subscriptions', fn($q) => $q->where('stripe_status', 'past_due'))
+                ->count(),
+            'subscriptions' => Subscription::count(),
         ];
 
         // ── Transaction Stats ────────────────────────────────────────
         $transactionStats = [
             'total'       => Transaction::count(),
-            'total_amount'=> Transaction::whereIn('status', ['paid', 'succeeded'])->sum('amount'),
+            'total_amount' => Transaction::whereIn('status', ['paid', 'succeeded'])->sum('amount'),
             'paid'        => Transaction::whereIn('status', ['paid', 'succeeded'])->count(),
             'pending'     => Transaction::where('status', 'pending')->count(),
             'failed'      => Transaction::where('status', 'failed')->count(),
@@ -59,7 +60,7 @@ class DashboardController extends Controller
             return Carbon::create($currentYear, $month, 1)->startOfMonth();
         });
 
-        $chartLabels = $months->map(fn ($month) => $month->format('M'))->values();
+        $chartLabels = $months->map(fn($month) => $month->format('M'))->values();
         $stripeRevenueChart = [
             'paid' => array_fill(0, 12, 0),
             'pending' => array_fill(0, 12, 0),
@@ -120,7 +121,7 @@ class DashboardController extends Controller
             $monthEnd = $month->copy()->endOfMonth();
 
             $newSubscribers = $subscriptions
-                ->filter(fn ($subscription) => $subscription->created_at && $subscription->created_at->between($monthStart, $monthEnd))
+                ->filter(fn($subscription) => $subscription->created_at && $subscription->created_at->between($monthStart, $monthEnd))
                 ->count();
 
             $activeSubscriptions = $subscriptions->filter(function ($subscription) use ($monthEnd) {
@@ -176,8 +177,7 @@ class DashboardController extends Controller
         $previousPeriodMrr = $previousMonthIndex !== null ? ($mrrValues[$previousMonthIndex] ?? 0) : 0;
         $mrrDeltaAmount = round($currentMrr - $previousPeriodMrr, 2);
         $mrrDeltaPercentage = $previousPeriodMrr > 0
-            ? round((($currentMrr - $previousPeriodMrr) / $previousPeriodMrr) * 100, 2)
-            : ($currentMrr > 0 ? 100 : 0);
+            ? round((($currentMrr - $previousPeriodMrr) / $previousPeriodMrr) * 100, 2) : ($currentMrr > 0 ? 100 : 0);
 
         // ── Stripe Snapshot Data (for sidebar tab) ───────────────────
         $stripeCustomers = User::select('id', 'name', 'email', 'stripe_id', 'created_at')
@@ -256,7 +256,7 @@ class DashboardController extends Controller
 
             $cancelled = $stripeLiveSubscriptions->where('status', 'canceled')->count();
             $totalSubs = max($stripeLiveSubscriptions->count(), 1);
-            $stripeLiveKpis['churn_rate'] = round(($cancelled / $totalSubs) * 100, 2);
+            $stripeLiveKpis['churn_rate'] = $this->getStripeChurnRate();
 
             $stripeLiveKpis['pending_revenue'] = $stripeLiveInvoices
                 ->whereIn('status', ['draft', 'open', 'pending'])
@@ -368,7 +368,8 @@ class DashboardController extends Controller
             $stripeApiError = $e->getMessage();
         }
 
-        return view('backend.layouts.dashboard',
+        return view(
+            'backend.layouts.dashboard',
             compact(
                 'activeTab',
                 'userStats',
@@ -402,7 +403,8 @@ class DashboardController extends Controller
                 'stripeMrrGrowthValuesLive',
                 'stripePayoutCounts',
                 // 'stripeTotals'
-            ));
+            )
+        );
     }
 
 
@@ -410,11 +412,13 @@ class DashboardController extends Controller
     {
         $subscriptions = collect();
 
-        foreach ($stripe->subscriptions->all([
-            'limit' => $pageSize,
-            'status' => 'all',
-            'expand' => ['data.items.data.price', 'data.customer'],
-        ])->autoPagingIterator() as $subscription) {
+        foreach (
+            $stripe->subscriptions->all([
+                'limit' => $pageSize,
+                'status' => 'all',
+                'expand' => ['data.items.data.price', 'data.customer'],
+            ])->autoPagingIterator() as $subscription
+        ) {
             $subscriptions->push($subscription);
 
             if ($subscriptions->count() >= $max) {
@@ -455,8 +459,8 @@ class DashboardController extends Controller
     private function calculateStripeSnapshotMrr(Collection $subscriptions, Carbon $asOf): float
     {
         return round($subscriptions
-            ->filter(fn ($subscription) => $this->isStripeSubscriptionCountedInMrrAt($subscription, $asOf))
-            ->sum(fn ($subscription) => $this->calculateStripeSubscriptionMonthlyRevenue($subscription)), 2);
+            ->filter(fn($subscription) => $this->isStripeSubscriptionCountedInMrrAt($subscription, $asOf))
+            ->sum(fn($subscription) => $this->calculateStripeSubscriptionMonthlyRevenue($subscription)), 2);
     }
 
     private function isStripeSubscriptionCountedInMrrAt(object $subscription, Carbon $asOf): bool
@@ -492,5 +496,180 @@ class DashboardController extends Controller
         }
 
         return true;
+    }
+
+    // public function getStripeChurnRate()
+    // {
+    //     Stripe::setApiKey(config('services.stripe.secret'));
+
+    //     // ✅ precise time window (hour-level like Stripe)
+    //     $now   = Carbon::now()->endOfHour();
+    //     $start = Carbon::now()->subDays(30)->startOfHour();
+
+    //     $allSubs = [];
+    //     $churned = 0;
+
+    //     // ✅ fetch all সাবস্ক্রিপশন
+    //     $subscriptions = StripeSubscription::all([
+    //         'limit'  => 100,
+    //         'status' => 'all',
+    //     ]);
+
+    //     foreach ($subscriptions->autoPagingIterator() as $sub) {
+
+    //         $created = Carbon::createFromTimestamp($sub->created);
+
+    //         // ❌ invalid remove
+    //         if ($sub->status === 'incomplete_expired') continue;
+
+    //         // ----------------------------
+    //         // 🔥 REAL CANCEL TIME (Stripe logic)
+    //         // ----------------------------
+    //         $canceledAt = null;
+
+    //         if ($sub->canceled_at) {
+    //             $canceledAt = Carbon::createFromTimestamp($sub->canceled_at);
+    //         } elseif ($sub->cancel_at_period_end && $sub->current_period_end) {
+    //             $canceledAt = Carbon::createFromTimestamp($sub->current_period_end);
+    //         }
+
+    //         // ❌ ignore very short-lived সাব (<24h)
+    //         if ($canceledAt && $created->diffInHours($canceledAt) < 24) {
+    //             continue;
+    //         }
+
+    //         $allSubs[] = [
+    //             'created'     => $created,
+    //             'canceled_at' => $canceledAt,
+    //         ];
+
+    //         // ----------------------------
+    //         // ✅ VALID CHURN (Stripe-like)
+    //         // ----------------------------
+    //         $wasExistingBeforeWindow = $created->lt($start);
+
+    //         if (
+    //             $canceledAt &&
+    //             $canceledAt->between($start, $now) &&
+    //             $wasExistingBeforeWindow
+    //         ) {
+    //             $churned++;
+    //         }
+    //     }
+
+    //     // ----------------------------
+    //     // 📊 TIME-WEIGHTED ACTIVE USERS
+    //     // ----------------------------
+    //     $dailyActiveCounts = [];
+
+    //     for ($i = 0; $i <= 30; $i++) {
+
+    //         $date = $start->copy()->addDays($i);
+    //         $activeCount = 0;
+
+    //         foreach ($allSubs as $sub) {
+
+    //             if (
+    //                 $sub['created']->lte($date) &&
+    //                 (
+    //                     is_null($sub['canceled_at']) ||
+    //                     $sub['canceled_at']->gt($date)
+    //                 )
+    //             ) {
+    //                 $activeCount++;
+    //             }
+    //         }
+
+    //         $dailyActiveCounts[] = $activeCount;
+    //     }
+
+    //     $avgActive = count($dailyActiveCounts)
+    //         ? array_sum($dailyActiveCounts) / count($dailyActiveCounts)
+    //         : 0;
+
+    //     // 🧪 debug (ekbar check kore off kore dite paro)
+    //     logger()->info('FINAL PERFECT CHURN', [
+    //         'churned'   => $churned,
+    //         'avgActive' => $avgActive,
+    //         'result'    => $avgActive ? round(($churned / $avgActive) * 100, 2) : 0
+    //     ]);
+
+    //     if ($avgActive == 0) return 0;
+
+    //     return round(($churned / $avgActive) * 100, 2);
+    // }
+
+
+
+    public function getStripeChurnRate()
+    {
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        $now   = Carbon::now();
+
+        // ✅ KEY FIX: rolling 30 days না, calendar month শুরু থেকে
+        // Stripe dashboard সবসময় এটাই দেখায়
+        $start = Carbon::now()->startOfMonth();
+
+        $allSubs = [];
+
+        foreach (
+            StripeSubscription::all(['limit' => 100, 'status' => 'all'])
+                ->autoPagingIterator() as $sub
+        ) {
+
+            if (in_array($sub->status, ['incomplete', 'incomplete_expired'])) continue;
+
+            $created    = Carbon::createFromTimestamp($sub->created);
+            $canceledAt = null;
+
+            if ($sub->canceled_at) {
+                $canceledAt = Carbon::createFromTimestamp($sub->canceled_at);
+            } elseif ($sub->cancel_at_period_end && $sub->current_period_end) {
+                $canceledAt = Carbon::createFromTimestamp($sub->current_period_end);
+            }
+
+            if ($canceledAt && $created->diffInHours($canceledAt) < 24) continue;
+
+            $effectiveStart = $sub->trial_start
+                ? Carbon::createFromTimestamp($sub->trial_start)
+                : $created;
+
+            $allSubs[] = [
+                'id'          => $sub->id,
+                'created'     => $effectiveStart,
+                'canceled_at' => $canceledAt,
+            ];
+        }
+
+        // ✅ denominator: মাসের শুরুতে কতজন active ছিল
+        $activeAtStart = collect($allSubs)
+            ->filter(
+                fn($s) =>
+                $s['created']->lte($start) &&
+                    (is_null($s['canceled_at']) || $s['canceled_at']->gt($start))
+            )->count();
+
+        // ✅ numerator: এই মাসে churn হওয়া পুরনো সাব
+        $churned = collect($allSubs)
+            ->filter(
+                fn($s) =>
+                !is_null($s['canceled_at']) &&
+                    $s['canceled_at']->between($start, $now) &&
+                    $s['created']->lte($start)  // ✅ এই মাসে join করে churn = বাদ
+            )->count();
+
+        logger()->info('STRIPE CHURN FINAL', [
+            'window_start'  => $start->toDateString(),   // 2026-03-01 হবে
+            'activeAtStart' => $activeAtStart,            // এখন ~7 হওয়া উচিত
+            'churned'       => $churned,                  // 1 থাকবে
+            'rate'          => $activeAtStart
+                ? round(($churned / $activeAtStart) * 100, 2)
+                : 0,                       // ~14.28 হওয়া উচিত
+        ]);
+
+        if ($activeAtStart === 0) return 0;
+
+        return round(($churned / $activeAtStart) * 100, 2);
     }
 }
