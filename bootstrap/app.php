@@ -105,11 +105,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('scrape:bid4assets')->dailyAt('02:00')
         ->withoutOverlapping()->appendOutputTo(storage_path('logs/scrape-auction.log'));
 
-        $schedule->command('sync:auction-details --batch=100')->dailyAt('03:00');
-        $schedule->command('auction-listings:cleanup')->dailyAt('03:30');
+        $schedule->command('sync:auction-details --batch=100')->dailyAt('02:10');
+        $schedule->command('auction-listings:cleanup')->dailyAt('02:30');
 
         $schedule->job(new \App\Jobs\ScrapeAuctionJob(50, 500))
-            ->dailyAt('02:10')
+            ->dailyAt('02:20')
             ->name('scrape-auction')
             ->withoutOverlapping()->appendOutputTo(storage_path('logs/scrape-auction.log'));
 
