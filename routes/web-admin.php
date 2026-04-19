@@ -49,7 +49,7 @@ use App\Http\Controllers\Web\Backend\ReportController;
 use Illuminate\Support\Facades\Artisan;
 
 
-Route::get("dashboard", [DashboardController::class, 'index'])->name('dashboard')->middleware(['role:admin|staff']);
+Route::get("dashboard", [DashboardController::class, 'index'])->name('dashboard')->middleware(['web-admin','role:admin|staff']);
 
 Route::group(['middleware' => ['web-admin']], function () {
 

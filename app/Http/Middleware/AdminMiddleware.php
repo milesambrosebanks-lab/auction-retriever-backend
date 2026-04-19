@@ -13,7 +13,6 @@ class AdminMiddleware
         if (Auth::guard('web')->check() && Auth::guard('web')->user()->hasRole('admin')) {
             return $next($request);
         }
-
         abort(403, 'Unauthorized action.');
     }
 }

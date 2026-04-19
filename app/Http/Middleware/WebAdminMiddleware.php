@@ -13,8 +13,7 @@ class WebAdminMiddleware
         if (Auth::guard('web')->check() && Auth::guard('web')->user()->hasRole('admin') && Auth::guard('web')->user()->status == 'active') {
             return $next($request);
         }
-
-        abort(403, 'Unauthorized action.');
+        return redirect()->route('login');
+        // abort(403, 'Unauthorized action.');
     }
 }
-
