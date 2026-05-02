@@ -1,5 +1,3 @@
-{{-- resources/views/backend/layouts/cms/auction-listings/scrape-logs.blade.php --}}
-
 @extends('backend.app', ['title' => 'Scrape Logs'])
 
 @push('styles')

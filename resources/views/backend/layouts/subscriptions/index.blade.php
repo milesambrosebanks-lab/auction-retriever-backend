@@ -1,5 +1,3 @@
-{{-- resources/views/backend/layouts/subscriptions/index.blade.php --}}
-
 @extends('backend.app', ['title' => 'Subscriptions'])
 
 @push('styles')

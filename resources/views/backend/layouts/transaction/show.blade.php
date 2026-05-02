@@ -1,5 +1,3 @@
-{{-- resources/views/backend/layouts/transaction/show.blade.php --}}
-
 @extends('backend.app', ['title' => 'Transaction Detail'])
 
 @section('content')
@@ -29,21 +27,20 @@
 
                     <div class="card">
                         <div class="card-header border-bottom d-flex align-items-center gap-3">
-                            <a href="{{ route('admin.transaction.index') }}"
-                               class="btn btn-sm btn-primary">
+                            <a href="{{ route('admin.transaction.index') }}" class="btn btn-sm btn-primary">
                                 <i class="fa fa-arrow-left"></i>
                             </a>
                             <h5 class="mb-0">Transaction Detail</h5>
 
                             @php
-                                $statusColors = [
-                                    'paid'      => 'success',
-                                    'succeeded' => 'success',
-                                    'failed'    => 'danger',
-                                    'pending'   => 'warning',
-                                    'refunded'  => 'info',
-                                ];
-                                $statusColor = $statusColors[strtolower($transaction->status ?? '')] ?? 'secondary';
+                            $statusColors = [
+                            'paid' => 'success',
+                            'succeeded' => 'success',
+                            'failed' => 'danger',
+                            'pending' => 'warning',
+                            'refunded' => 'info',
+                            ];
+                            $statusColor = $statusColors[strtolower($transaction->status ?? '')] ?? 'secondary';
                             @endphp
 
                             <span class="badge bg-{{ $statusColor }} ms-auto fs-12">
@@ -70,13 +67,13 @@
                                 <div class="col-md-6">
                                     <p class="text-muted small mb-1">User</p>
                                     @if($transaction->user)
-                                        <a href="{{ route('admin.users.show', $transaction->user->id) }}">
-                                            <strong>{{ $transaction->user->name }}</strong>
-                                        </a>
-                                        <br>
-                                        <small class="text-muted">{{ $transaction->user->email }}</small>
+                                    <a href="{{ route('admin.users.show', $transaction->user->id) }}">
+                                        <strong>{{ $transaction->user->name }}</strong>
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ $transaction->user->email }}</small>
                                     @else
-                                        <span class="text-muted">—</span>
+                                    <span class="text-muted">—</span>
                                     @endif
                                 </div>
 
@@ -110,17 +107,18 @@
                                     <p class="text-muted small mb-1">Date</p>
                                     <strong>
                                         {{ $transaction->created_at
-                                            ? $transaction->created_at->format('d M Y, h:i A')
-                                            : '—' }}
+                                        ? $transaction->created_at->format('d M Y, h:i A')
+                                        : '—' }}
                                     </strong>
                                 </div>
 
                                 {{-- Metadata --}}
                                 @if($transaction->metadata)
-                                    <div class="col-md-12">
-                                        <p class="text-muted small mb-1">Metadata</p>
-                                        <pre class="bg-light p-2 rounded small">{{ json_encode(json_decode($transaction->metadata), JSON_PRETTY_PRINT) }}</pre>
-                                    </div>
+                                <div class="col-md-12">
+                                    <p class="text-muted small mb-1">Metadata</p>
+                                    <pre
+                                        class="bg-light p-2 rounded small">{{ json_encode(json_decode($transaction->metadata), JSON_PRETTY_PRINT) }}</pre>
+                                </div>
                                 @endif
 
                             </div>
@@ -129,26 +127,23 @@
                         {{-- Invoice Actions --}}
                         <div class="card-footer border-top d-flex gap-2">
                             @if($transaction->hosted_invoice_url)
-                                <a href="{{ $transaction->hosted_invoice_url }}"
-                                   target="_blank"
-                                   class="btn btn-primary btn-sm">
-                                    <i class="fa fa-eye me-1"></i> View Invoice
-                                </a>
+                            <a href="{{ $transaction->hosted_invoice_url }}" target="_blank"
+                                class="btn btn-primary btn-sm">
+                                <i class="fa fa-eye me-1"></i> View Invoice
+                            </a>
                             @endif
 
                             @if($transaction->invoice_pdf)
-                                <a href="{{ $transaction->invoice_pdf }}"
-                                   target="_blank"
-                                   class="btn btn-danger btn-sm">
-                                    <i class="fa fa-file-pdf me-1"></i> Download PDF
-                                </a>
+                            <a href="{{ $transaction->invoice_pdf }}" target="_blank" class="btn btn-danger btn-sm">
+                                <i class="fa fa-file-pdf me-1"></i> Download PDF
+                            </a>
                             @endif
 
                             @if($transaction->user)
-                                <a href="{{ route('admin.users.show', $transaction->user->id) }}"
-                                   class="btn btn-info btn-sm ms-auto">
-                                    <i class="fa fa-user me-1"></i> View User
-                                </a>
+                            <a href="{{ route('admin.users.show', $transaction->user->id) }}"
+                                class="btn btn-info btn-sm ms-auto">
+                                <i class="fa fa-user me-1"></i> View User
+                            </a>
                             @endif
                         </div>
                     </div>

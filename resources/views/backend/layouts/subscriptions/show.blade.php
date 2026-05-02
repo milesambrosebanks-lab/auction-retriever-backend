@@ -1,5 +1,3 @@
-{{-- resources/views/backend/layouts/subscriptions/show.blade.php --}}
-
 @extends('backend.app', ['title' => 'Subscription Detail'])
 
 @section('content')

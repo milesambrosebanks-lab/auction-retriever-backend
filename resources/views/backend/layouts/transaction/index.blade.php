@@ -1,5 +1,3 @@
-{{-- resources/views/backend/layouts/transaction/index.blade.php --}}
-
 @extends('backend.app', ['title' => 'Transactions'])
 
 @push('styles')

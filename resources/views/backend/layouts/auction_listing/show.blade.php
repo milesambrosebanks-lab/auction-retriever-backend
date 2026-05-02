@@ -1,5 +1,3 @@
-{{-- resources/views/backend/layouts/cms/auction-listings/show.blade.php --}}
-
 @extends('backend.app', ['title' => 'Listing Detail'])
 
 @section('content')
