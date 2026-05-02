@@ -1,4 +1,3 @@
-// resources/views/backend/layouts/cms/auction-listings/index.blade.php
 @extends('backend.app', ['title' => 'Auction Listings'])
 
 @push('styles')
