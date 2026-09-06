@@ -1,0 +1,26 @@
+name: Deploy Backend to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy (git pull + migrate + clear caches + restart queue worker)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 187.124.251.38
+          username: github-deploy
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd /home/github-deploy/htdocs/admin.auctionretriever.com
+            git pull origin main
+            php8.5 artisan migrate --force
+            php8.5 artisan config:clear
+            php8.5 artisan cache:clear
+            php8.5 artisan queue:restart
+            echo "Deploy complete: $(git rev-parse --short HEAD)"
