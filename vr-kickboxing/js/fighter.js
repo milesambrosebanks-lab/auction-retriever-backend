@@ -13,6 +13,9 @@ const _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
 const _m = new THREE.Matrix4();
 const _e1 = new THREE.Euler(), _e2 = new THREE.Euler(), _e3 = new THREE.Euler();
 const _ftL = new THREE.Vector3(), _ftR = new THREE.Vector3();
+const _pw = new THREE.Vector3(), _mInv = new THREE.Matrix4();
+const ssm = (u) => u * u * (3 - 2 * u);
+function wrapA(a) { while (a > Math.PI) a -= Math.PI * 2; while (a < -Math.PI) a += Math.PI * 2; return a; }
 
 let sharedMat = null;
 function material() {
@@ -76,9 +79,9 @@ export class Fighter {
     const s = this.s = def.height / 1.8;
     const b = this.b = def.build || 1;
     this.dims = {
-      thigh: 0.45 * s, shin: 0.45 * s, upper: 0.29 * s, fore: 0.27 * s,
+      thigh: 0.425 * s, shin: 0.425 * s, upper: 0.29 * s, fore: 0.27 * s,
       torso: 0.5 * s, shoulderW: 0.19 * s * (0.85 + 0.15 * b), hipW: 0.095 * s,
-      headR: 0.105 * s, hipY: 0.94 * s, neck: 0.15 * s,
+      headR: 0.105 * s, hipY: 0.975 * s, neck: 0.15 * s,
     };
 
     this.root = new THREE.Group();     // world placement (x, z, yaw)
@@ -110,6 +113,16 @@ export class Fighter {
     this.lookTarget = null;             // world-space point to look at
     this.downAmt = 0; this.downTarget = 0;
     this.flash = 0;
+
+    // ---- Body mechanics ----
+    this.weight = 0; this.weightCur = 0;          // -1 = on rear foot, +1 = on lead foot
+    this.heel = { L: 0.25, R: 0.25 }; this.heelCur = { L: 0.25, R: 0.25 };   // 0 flat .. 1 up on the ball
+    this.footYaw = { L: 0, R: 0 }; this.footYawCur = { L: 0, R: 0 };       // pivot on the ball of the foot
+    this.footFree = { L: false, R: false };       // leg is striking: not planted
+    this.planting = true;
+    const mkPlant = () => ({ pos: new THREE.Vector3(), from: new THREE.Vector3(), to: new THREE.Vector3(), t: 1, dur: 0.2, yaw: 0, fromYaw: 0, toYaw: 0, init: false, lift: 0 });
+    this.plant = { L: mkPlant(), R: mkPlant() };
+    this.lastRoot = new THREE.Vector3(); this.rootVel = new THREE.Vector3(); this.hasLast = false;
 
     this.headSpring = new Spring(160, 16);
     this.bodySpring = new Spring(110, 13);
@@ -271,8 +284,12 @@ export class Fighter {
     this.handRate.L = this.handRate.R = 16;
     this.footRate.L = this.footRate.R = 16;
     this.torsoYaw = -0.3; this.hipYaw = -0.35; this.lean = 0.08 + 0.06 * guard; this.roll = 0;
-    this.crouch = 0.05 + 0.02 * guard;
+    this.crouch = 0.035 + 0.02 * guard;
     this.hipShift.set(0, 0, 0);
+    this.weight = 0;
+    this.heel.L = this.heel.R = 0.25;
+    this.footYaw.L = this.footYaw.R = 0;
+    this.footFree.L = this.footFree.R = false;
     void D;
   }
 
@@ -281,6 +298,9 @@ export class Fighter {
   setWorld(x, z, yaw) {
     this.root.position.set(x, 0, z);
     this.root.rotation.set(0, yaw, 0);
+    // teleport: re-plant feet at the new spot instead of stepping across the arena
+    this.plant.L.init = this.plant.R.init = false;
+    this.hasLast = false; this.rootVel.set(0, 0, 0);
   }
 
   get pos() { return this.root.position; }
@@ -318,8 +338,18 @@ export class Fighter {
 
     // Smooth scalars
     const k = damp(10, dt);
-    this.torsoYawCur += (this.torsoYaw - this.torsoYawCur) * damp(14, dt);
-    this.hipYawCur += (this.hipYaw - this.hipYawCur) * damp(9, dt);
+    // hips lead, shoulders follow (kinetic chain)
+    this.torsoYawCur += (this.torsoYaw - this.torsoYawCur) * damp(11, dt);
+    this.hipYawCur += (this.hipYaw - this.hipYawCur) * damp(17, dt);
+    this.weightCur += (this.weight - this.weightCur) * damp(9, dt);
+    for (const sd of ['L', 'R']) {
+      this.heelCur[sd] += (this.heel[sd] - this.heelCur[sd]) * damp(14, dt);
+      this.footYawCur[sd] += (this.footYaw[sd] - this.footYawCur[sd]) * damp(14, dt);
+    }
+    if (dt > 0) {
+      if (this.hasLast) { _pw.subVectors(this.root.position, this.lastRoot).divideScalar(dt); this.rootVel.lerp(_pw, damp(10, dt)); }
+      this.lastRoot.copy(this.root.position); this.hasLast = true;
+    }
     this.leanCur += (this.lean - this.leanCur) * k;
     this.rollCur += (this.roll - this.rollCur) * damp(12, dt);
     this.crouchCur += (this.crouch - this.crouchCur) * k;
@@ -327,15 +357,17 @@ export class Fighter {
     this.headSpring.update(dt);
     this.bodySpring.update(dt);
 
-    // Hands / feet approach targets
-    for (const sd of ['L', 'R']) {
-      this.handCur[sd].lerp(this.hand[sd], damp(this.handRate[sd], dt));
-      this.footCur[sd].lerp(this.foot[sd], damp(this.footRate[sd], dt));
-    }
+    // Hands approach targets; feet are planted and step (see _feet)
+    for (const sd of ['L', 'R']) this.handCur[sd].lerp(this.hand[sd], damp(this.handRate[sd], dt));
+    this._feet(dt);
 
     // ---- Spine
     const bob = Math.sin(t * 5.2) * 0.012 * this.bobAmt;
-    j.hip.set(0, D.hipY - this.crouchCur + bob, 0).add(this.hipShiftCur).addScaledVector(this.bodySpring.x, 0.25);
+    // weight transfer: hips travel over the loaded foot
+    const wx = (0.11 + 0.14) * s * this.weightCur * 0.32, wz = (0.2 + 0.22) * s * this.weightCur * 0.32;
+    // up on the balls of the feet raises the hips slightly
+    const heelUp = (this.heelCur.L + this.heelCur.R) * 0.012 * s;
+    j.hip.set(wx - 0.015 * s, D.hipY - this.crouchCur + bob + heelUp, wz - 0.01 * s).add(this.hipShiftCur).addScaledVector(this.bodySpring.x, 0.25);
     _q.setFromEuler(_e1.set(this.leanCur, this.torsoYawCur, this.rollCur, 'YXZ'));
     // body spring tilts the torso
     const bs = this.bodySpring.x;
@@ -358,8 +390,8 @@ export class Fighter {
     solveIK(j.shL, this.handCur.L, D.upper, D.fore, this.armPole.L, j.elL, j.haL);
     solveIK(j.shR, this.handCur.R, D.upper, D.fore, this.armPole.R, j.elR, j.haR);
     // ---- Legs
-    _ftL.copy(this.footCur.L); _ftL.y += 0.08 * s;
-    _ftR.copy(this.footCur.R); _ftR.y += 0.08 * s;
+    _ftL.copy(this.footCur.L); _ftL.y += (0.08 + this.heelCur.L * 0.045) * s;
+    _ftR.copy(this.footCur.R); _ftR.y += (0.08 + this.heelCur.R * 0.045) * s;
     solveIK(j.hpL, _ftL, D.thigh, D.shin, this.legPole.L, j.knL, j.anL);
     solveIK(j.hpR, _ftR, D.thigh, D.shin, this.legPole.R, j.knR, j.anR);
 
@@ -392,8 +424,11 @@ export class Fighter {
       placeSeg(this.mShin[sd], kn, an);
       const fm = this.mFoot[sd];
       fm.position.copy(an);
-      // foot: flat & forward in stance, pointed along shin when kicking
-      _q.setFromAxisAngle(UP, this.hipYawCur * 0.6 + (sd === 'L' ? 0.25 : 0.55));
+      // foot: planted yaw (doesn't spin with the body) + pivot, heel raised = toes down
+      const P = this.plant[sd];
+      const baseYaw = (sd === 'L' ? 0.25 : 0.55) + this.footYawCur[sd];
+      const yawL = P.init ? wrapA(P.yaw - this.root.rotation.y) + baseYaw : this.hipYawCur * 0.6 + baseYaw;
+      _q.setFromEuler(_e1.set(this.heelCur[sd] * 0.45, yawL, 0, 'YXZ'));
       if (this.kickAmt[sd] > 0.01) {
         _c.subVectors(an, kn).normalize();
         _q2.setFromUnitVectors(FWD, _c);
@@ -416,6 +451,73 @@ export class Fighter {
       this.thighW[sd].lerpVectors(sd === 'L' ? j.hpL : j.hpR, sd === 'L' ? j.knL : j.knR, 0.55).applyMatrix4(mw);
     }
   }
+
+  /** Planted-foot stepping: feet stay put on the canvas and step when the body leaves them behind. */
+  _feet(dt) {
+    const sides = ['L', 'R'];
+    const usePlant = this.planting && this.downAmt < 0.05;
+    this.pivot.updateWorldMatrix(true, false);
+    const mw = this.pivot.matrixWorld;
+    _mInv.copy(mw).invert();
+    const rootYaw = this.root.rotation.y;
+    const want = {};
+    for (const sd of sides) {
+      const P = this.plant[sd];
+      if (!usePlant || this.footFree[sd]) {
+        this.footCur[sd].lerp(this.foot[sd], damp(this.footRate[sd], dt));
+        P.init = false;
+        continue;
+      }
+      if (!P.init) {
+        // (re)plant where the foot currently is, e.g. after a kick lands back down
+        P.pos.copy(this.footCur[sd]).setY(0).applyMatrix4(mw); P.pos.y = 0;
+        P.yaw = rootYaw; P.t = 1; P.init = true;
+      }
+      _pw.copy(this.foot[sd]).setY(0).applyMatrix4(mw); _pw.y = 0;
+      want[sd] = { pos: _pw.clone(), err: Math.hypot(_pw.x - P.pos.x, _pw.z - P.pos.z), yawErr: Math.abs(wrapA(rootYaw - P.yaw)) };
+    }
+    // start at most one step at a time; the foot that is furthest out of place goes first
+    const busy = sides.some((sd) => want[sd] && this.plant[sd].t < 1);
+    if (!busy) {
+      let pick = null, best = 0;
+      for (const sd of sides) {
+        const w = want[sd];
+        if (!w) continue;
+        const need = w.err / 0.085 + w.yawErr / 0.45;
+        if (need > 1 && need > best) { best = need; pick = sd; }
+      }
+      if (pick) {
+        const P = this.plant[pick], w = want[pick];
+        P.from.copy(P.pos); P.fromYaw = P.yaw;
+        // anticipate body motion so the foot lands under where the hips are going
+        _pw.copy(this.rootVel).multiplyScalar(0.12); _pw.y = 0;
+        if (_pw.length() > 0.12) _pw.setLength(0.12);
+        P.to.copy(w.pos).add(_pw); P.to.y = 0;
+        P.toYaw = rootYaw;
+        P.dur = clamp(0.14 + w.err * 0.3, 0.14, 0.26);
+        P.lift = clamp(0.03 + w.err * 0.12, 0.03, 0.08) * this.s;
+        P.t = 0;
+      }
+    }
+    for (const sd of sides) {
+      const P = this.plant[sd];
+      if (!want[sd]) continue;
+      let lift = 0;
+      if (P.t < 1) {
+        P.t = Math.min(1, P.t + dt / P.dur);
+        const e = ssm(P.t);
+        P.pos.lerpVectors(P.from, P.to, e);
+        P.yaw = P.fromYaw + wrapA(P.toYaw - P.fromYaw) * e;
+        lift = Math.sin(P.t * Math.PI) * P.lift;
+      }
+      this.footCur[sd].copy(P.pos).applyMatrix4(_mInv);
+      this.footCur[sd].y = this.foot[sd].y + lift;
+      if (P.t < 1) this.heelCur[sd] = Math.max(this.heelCur[sd], 0.5);
+    }
+  }
+
+  /** Is a foot currently mid-step? */
+  stepping() { return this.plant.L.t < 1 || this.plant.R.t < 1; }
 
   _aimHead(dt) {
     const head = this.mHead;
