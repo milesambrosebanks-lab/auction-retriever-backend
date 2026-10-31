@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0e13" />
+  <meta name="description" content="Iron Shin VR — a WebXR kickboxing game for Meta Quest. Fight AI opponents in the octagon, ring, stadium or street, or train on mitts, Thai pads and the heavy bag. Immersive or passthrough." />
+  <title>Iron Shin VR</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ff3b30'/%3E%3Cpath d='M18 40c0-12 6-20 16-20 8 0 12 5 12 11 0 5-3 8-8 9l2 6H22z' fill='%23fff'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #0b0e13; --panel: #131922; --panel-2: #1a2230; --line: #263142;
+      --text: #f2f5f9; --dim: #9aa7b8; --accent: #ff3b30; --accent-2: #ffc83d; --good: #34d399;
+      --radius: 18px;
+      color-scheme: dark;
+    }
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) { --bg: #0b0e13; } /* the game is intentionally dark in both themes */
+    }
+    :root[data-theme="dark"] { --bg: #0b0e13; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body { overflow: hidden; }
+    #app, #app canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+    body.passthrough { background: #1b2028; }
+
+    #overlay {
+      position: fixed; inset: 0; overflow-y: auto; z-index: 10;
+      background:
+        radial-gradient(1200px 600px at 85% -10%, rgba(255,59,48,0.28), transparent 60%),
+        radial-gradient(900px 500px at -10% 110%, rgba(255,200,61,0.16), transparent 60%),
+        rgba(8,10,14,0.88);
+      backdrop-filter: blur(6px);
+      padding: max(24px, env(safe-area-inset-top)) 16px 32px;
+    }
+    #overlay.hidden { display: none; }
+    .wrap { max-width: 1040px; margin: 0 auto; }
+    header.hero { display: grid; gap: 18px; padding: 28px 0 8px; }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand .mark { width: 54px; height: 54px; border-radius: 14px; background: var(--accent); display: grid; place-items: center; box-shadow: 0 10px 30px rgba(255,59,48,0.35); }
+    .brand .mark svg { width: 34px; height: 34px; }
+    h1 { margin: 0; font-size: clamp(40px, 8vw, 84px); font-weight: 900; font-style: italic; letter-spacing: -0.02em; line-height: 0.95; }
+    h1 span { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .tag { margin: 0; color: var(--dim); font-size: clamp(16px, 2.4vw, 20px); max-width: 640px; line-height: 1.5; }
+
+    .cta { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 18px; }
+    @media (min-width: 720px) { .cta { grid-template-columns: 1.4fr 1fr; align-items: stretch; } }
+    .card { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+    .btn {
+      appearance: none; border: 0; border-radius: 14px; font: inherit; font-weight: 800; letter-spacing: 0.02em;
+      cursor: pointer; transition: transform .08s ease, box-shadow .2s ease, background .2s ease; min-height: 56px; padding: 0 22px;
+    }
+    .btn:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 3px; }
+    .btn:active { transform: translateY(1px) scale(0.99); }
+    .btn-primary { width: 100%; min-height: 76px; font-size: 24px; color: #fff; background: linear-gradient(180deg, #ff4d42, #e0261c); box-shadow: 0 12px 30px rgba(255,59,48,0.35); }
+    .btn-primary:hover { box-shadow: 0 14px 38px rgba(255,59,48,0.5); }
+    .btn-primary:disabled { background: #2a3140; color: #6b7686; box-shadow: none; cursor: not-allowed; }
+    .btn-secondary { width: 100%; background: transparent; color: var(--text); border: 1px solid var(--line); font-size: 17px; }
+    .btn-secondary:hover { background: rgba(255,255,255,0.05); }
+    .status { margin: 12px 2px 0; color: var(--dim); font-size: 14px; line-height: 1.45; min-height: 20px; }
+    .status::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-2); margin-right: 8px; vertical-align: 1px; }
+
+    .label { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
+    .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .seg button { min-height: 64px; background: rgba(255,255,255,0.03); color: var(--text); border: 1px solid var(--line); text-align: left; padding: 10px 14px; }
+    .seg button strong { display: block; font-size: 16px; }
+    .seg button small { display: block; color: var(--dim); font-weight: 500; font-size: 13px; margin-top: 2px; }
+    .seg button[aria-pressed="true"] { border-color: var(--accent); background: rgba(255,59,48,0.12); box-shadow: inset 0 0 0 1px var(--accent); }
+    .note { color: var(--dim); font-size: 13px; margin: 12px 0 0; line-height: 1.45; }
+
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+    @media (min-width: 720px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+    .feature h3 { margin: 0 0 6px; font-size: 17px; }
+    .feature p { margin: 0; color: var(--dim); font-size: 14px; line-height: 1.5; }
+    .feature .num { font-size: 34px; font-weight: 900; font-style: italic; color: var(--accent-2); line-height: 1; margin-bottom: 8px; }
+
+    .controls { margin-top: 12px; }
+    .controls table { width: 100%; border-collapse: collapse; font-size: 15px; }
+    .controls td { padding: 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .controls td:first-child { width: 38%; font-weight: 800; padding-right: 12px; }
+    .controls td:last-child { color: var(--dim); }
+    .cols { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 720px) { .cols { grid-template-columns: 1fr 1fr; } }
+    footer { color: var(--dim); font-size: 13px; text-align: center; margin: 22px 0 8px; line-height: 1.6; }
+    kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; background: #222b38; border: 1px solid #334155; border-bottom-width: 2px; border-radius: 6px; padding: 1px 6px; color: var(--text); }
+
+    #desktop-hud { position: fixed; left: 12px; bottom: 12px; z-index: 5; max-width: min(460px, calc(100% - 24px)); background: rgba(10,12,16,0.82); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-size: 13px; color: var(--dim); line-height: 1.7; }
+    #desktop-hud.hidden { display: none; }
+    #desktop-hud b { color: var(--text); }
+    #desktop-hud .row b { white-space: nowrap; }
+    #desktop-hud .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px; }
+    #desktop-hud button { min-height: 34px; font-size: 13px; padding: 0 12px; }
+    #desktop-hud details summary { cursor: pointer; color: var(--text); font-weight: 700; }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <div id="app" aria-hidden="true"></div>
+
+  <main id="overlay">
+    <div class="wrap">
+      <header class="hero">
+        <div class="brand">
+          <div class="mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64"><path d="M14 42c0-14 8-24 20-24 10 0 15 6 15 13 0 6-4 10-10 11l2 7H18z" fill="#fff"/><rect x="18" y="47" width="25" height="7" rx="2" fill="#fff" opacity=".85"/></svg>
+          </div>
+          <div class="label" style="margin:0">WebXR · Meta Quest 3 / 3S</div>
+        </div>
+        <h1>IRON SHIN <span>VR</span></h1>
+        <p class="tag">Kickboxing in your headset. Throw real punches, elbows, kicks and knees against five fighters across the octagon, ring, stadium and street — or sharpen up with Coach Ray on the mitts, pads and heavy bag.</p>
+      </header>
+
+      <section class="cta">
+        <div class="card">
+          <button id="enter-vr" class="btn btn-primary" disabled>Enter VR</button>
+          <p id="xr-status" class="status" role="status" aria-live="polite">Checking for a headset…</p>
+          <button id="desktop" class="btn btn-secondary" style="margin-top:12px">Desktop preview (mouse &amp; keyboard)</button>
+        </div>
+        <div class="card">
+          <p class="label">Start in</p>
+          <div class="seg" role="group" aria-label="View mode">
+            <button class="btn" data-view="immersive" aria-pressed="true"><strong>Immersive</strong><small>Full virtual arena</small></button>
+            <button class="btn" data-view="passthrough" aria-pressed="false"><strong>Passthrough</strong><small>Fight in your room</small></button>
+          </div>
+          <p class="note">You can switch any time from the in-headset menu — no need to leave VR. Clear a 2 × 2 m space and tighten your wrist straps.</p>
+        </div>
+      </section>
+
+      <section class="grid" aria-label="Features">
+        <div class="card feature"><div class="num">5</div><h3>Opponents</h3><p>Boxer, Muay Thai clinch fighter, heavy brawler, head-kick specialist and a patient counter-striker — each fights differently.</p></div>
+        <div class="card feature"><div class="num">4+1</div><h3>Arenas</h3><p>Caged octagon, classic boxing ring, packed stadium and a rainy back alley — plus a full training gym.</p></div>
+        <div class="card feature"><div class="num">3</div><h3>Difficulties</h3><p>Rookie (telegraphed shots with glowing hints), Contender and Champion — faster, smarter, harder hitting.</p></div>
+        <div class="card feature"><div class="num">5</div><h3>Training drills</h3><p>Mitt work with called combos, Thai pads, heavy bag with power readouts, reflex targets and a slip &amp; block defense drill.</p></div>
+        <div class="card feature"><div class="num">HD</div><h3>Haptics everywhere</h3><p>Impact-scaled vibration on every punch, kick, block and hit you take — plus a heartbeat when you're hurt.</p></div>
+        <div class="card feature"><div class="num">120</div><h3>Built for frame rate</h3><p>Fixed foveation, merged geometry, GPU-animated crowds and a 72 / 90 / 120 Hz setting.</p></div>
+      </section>
+
+      <section class="cols controls">
+        <div class="card">
+          <p class="label">Striking</p>
+          <table>
+            <tr><td>Punches</td><td>Swing for real. Speed = power. Jab, cross, hook and uppercut are detected automatically.</td></tr>
+            <tr><td>Elbows</td><td>Hand near your head, swing the elbow through the target.</td></tr>
+            <tr><td><kbd>A</kbd> / <kbd>B</kbd></td><td>Right roundhouse (body) / right high kick</td></tr>
+            <tr><td><kbd>X</kbd> / <kbd>Y</kbd></td><td>Left teep (push kick) / left low kick</td></tr>
+            <tr><td>Triggers</td><td>Knee strike (left / right)</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <p class="label">Defense &amp; movement</p>
+          <table>
+            <tr><td>Slip / duck</td><td>Move your real head off the line when you see the windup.</td></tr>
+            <tr><td>Block</td><td>Gloves up by your face; elbows tight for the body.</td></tr>
+            <tr><td>Left stick</td><td>Move (comfort vignette optional)</td></tr>
+            <tr><td>Right stick</td><td>Snap or smooth turn</td></tr>
+            <tr><td>Pause</td><td>Tap the MENU button on your left wrist with your right hand.</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <footer>Best in the Meta Quest Browser. All fighters are fictional. Stay inside your guardian and fight responsibly.</footer>
+    </div>
+  </main>
+
+  <aside id="desktop-hud" class="hidden" aria-label="Desktop controls">
+    <div class="row"><b>Desktop preview</b><button id="show-overlay" class="btn btn-secondary">Start page</button></div>
+    <details>
+      <summary>Keyboard &amp; mouse controls</summary>
+      Drag to look · <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · click menu buttons<br />
+      Punch L / R: <kbd>F</kbd> / <kbd>J</kbd> · hooks <kbd>R</kbd> / <kbd>U</kbd> · uppercuts <kbd>V</kbd> / <kbd>N</kbd> · elbows <kbd>T</kbd> / <kbd>Y</kbd><br />
+      Kicks: right <kbd>1</kbd> body, <kbd>2</kbd> head · left <kbd>3</kbd> teep, <kbd>4</kbd> low · knees <kbd>Q</kbd> / <kbd>E</kbd> · <kbd>Esc</kbd> pause
+    </details>
+  </aside>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
