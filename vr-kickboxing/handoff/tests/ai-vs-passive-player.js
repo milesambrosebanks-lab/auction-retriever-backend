@@ -1,0 +1,20 @@
+const { chromium } = require('playwright');
+const OPP = process.argv[2] || 'rico';
+const DIFF = process.argv[3] || 'medium';
+const SECS = +(process.argv[4] || 30);
+(async () => {
+  const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  const page = await browser.newPage({ viewport: { width: 480, height: 300 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push('pageerror: ' + e.message + '\n' + e.stack));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 500)); });
+  await page.goto((process.env.BASE_URL || 'http://localhost:8765') + '/index.html');
+  await page.waitForTimeout(1200);
+  await page.click('#desktop');
+  await page.evaluate(([o, d]) => { window.__dbg = []; return import('./js/settings.js').then((m) => { m.setSetting('arena', 'octagon'); m.setSetting('opponent', o); m.setSetting('difficulty', d); m.setSetting('roundSeconds', 180); m.setSetting('rounds', 1); window.__game.startFight(); }); }, [OPP, DIFF]);
+  await page.waitForTimeout(SECS * 1000);
+  const r = await page.evaluate(() => { const g = window.__game, f = g.fight; return { t: g.time.toFixed(1), state: f.state, ai: f.ai.stats, pHp: Math.round(g.player.hp), dbg: window.__dbg }; });
+  console.log(JSON.stringify(r, null, 0));
+  console.log('ERRORS:', errors.join('\n'));
+  await browser.close();
+})();

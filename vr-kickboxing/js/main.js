@@ -49,7 +49,7 @@ const fx = new ScreenFX(camera);
 const game = {
   scene, camera, rig, renderer, input, player, pointers, floating, announcer, scoreboard, fx,
   arena: null, outline: null, mode: null, paused: false, time: 0, fight: null,
-  passthroughSupported: false, session: null, lastModeOpts: null,
+  passthroughSupported: false, session: null, lastModeOpts: null, timeScale: 1,
 
   setArena(id) {
     if (this.arena && this.arena.id === id) { this.applyView(); return; }
@@ -349,7 +349,7 @@ game.placePlayer(0, 1.2, 0);
 menu.open('main');
 
 renderer.setAnimationLoop(() => {
-  const dt = Math.min(clock.getDelta(), 0.05);
+  const dt = Math.min(clock.getDelta(), 0.05) * game.timeScale; // timeScale: debug slow-motion
   game.time += dt;
   fpsFrames++; fpsT += dt;
   if (fpsT >= 0.5) { fps = Math.round(fpsFrames / fpsT); fpsFrames = 0; fpsT = 0; }

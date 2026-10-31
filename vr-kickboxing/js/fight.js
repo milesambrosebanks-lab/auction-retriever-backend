@@ -21,6 +21,47 @@ function bezier(a, c, b, t, out) {
 }
 const ss = (u) => u * u * (3 - 2 * u);
 
+/** Guard position of a hand (fighter-local), matching Fighter.setStance(0). */
+function guardOf(f, sd, out) {
+  const s = f.s, headY = f.standingHeadY();
+  return sd === 'L' ? out.set(0.11 * s, headY - 0.1, 0.27 * s) : out.set(-0.1 * s, headY - 0.09, 0.16 * s);
+}
+
+// Whole-body mechanics per strike: values at end of windup (W) and at impact (T).
+// hip/torso = yaw (+ turns the rear side forward), weight (+ onto lead foot), heelL/R (up on the ball),
+// fyL/fyR = foot pivot, crouch = level change, lean (+ forward), roll (+ tilts toward fighter's right), push = hips forward.
+const BASE = { hip: -0.35, torso: -0.3, weight: 0, lean: 0.08, crouch: 0.035, roll: 0, heelL: 0.25, heelR: 0.25, fyL: 0, fyR: 0, push: 0 };
+const MECH = {
+  jab:      { W: { hip: -0.38, torso: -0.38, weight: 0.05 },              T: { hip: -0.5, torso: -0.7, weight: 0.35, lean: 0.12, heelR: 0.45 } },
+  cross:    { W: { hip: -0.42, torso: -0.42, weight: -0.15, crouch: 0.07 }, T: { hip: 0.3, torso: 0.52, weight: 0.45, lean: 0.16, heelR: 1, fyR: 0.75 } },
+  hookL:    { W: { hip: -0.45, torso: -0.72, weight: 0.18, crouch: 0.07 }, T: { hip: 0.25, torso: 0.45, weight: -0.05, heelL: 0.95, fyL: -0.85, heelR: 0.2 } },
+  hookR:    { W: { hip: -0.5, torso: -0.58, weight: -0.22, crouch: 0.07 }, T: { hip: 0.45, torso: 0.58, weight: 0.3, heelR: 1, fyR: 0.85 } },
+  upper:    { W: { hip: -0.42, torso: -0.22, weight: -0.12, crouch: 0.17, roll: -0.1 }, T: { hip: 0.3, torso: 0.45, weight: 0.3, crouch: 0.0, lean: 0.02, heelR: 1, fyR: 0.6 } },
+  bodyJab:  { W: { hip: -0.38, torso: -0.38, crouch: 0.15, roll: 0.06 },   T: { hip: -0.5, torso: -0.68, weight: 0.4, crouch: 0.2, lean: 0.2, roll: 0.08, heelR: 0.5 } },
+  bodyHook: { W: { hip: -0.5, torso: -0.55, weight: -0.2, crouch: 0.17, roll: -0.08 }, T: { hip: 0.45, torso: 0.55, weight: 0.25, crouch: 0.2, lean: 0.18, roll: -0.12, heelR: 1, fyR: 0.8 } },
+  elbow:    { W: { hip: -0.45, torso: -0.42, weight: 0.2 },              T: { hip: 0.45, torso: 0.68, weight: 0.4, lean: 0.18, heelR: 1, fyR: 0.8 } },
+  knee:     { W: { weight: 0.5, lean: 0.05, heelL: 0.4, hip: -0.2 },     T: { weight: 0.6, lean: -0.2, hip: 0.1, heelL: 0.85, push: 0.13 } },
+  teep:     { W: { weight: -0.5, lean: -0.14, heelR: 0.1 },              T: { weight: -0.35, lean: -0.26, push: 0.09, heelR: 0.4, hip: -0.15 } },
+  lowKick:  { W: { weight: 0.5, hip: 0.1, torso: -0.1, heelL: 0.45, fyL: -0.45, crouch: 0.07 }, T: { weight: 0.55, hip: 0.85, torso: 0.6, lean: -0.1, roll: -0.12, heelL: 0.75, fyL: -0.95, crouch: 0.07 } },
+  bodyKick: { W: { weight: 0.55, hip: 0.2, torso: 0.0, lean: -0.08, heelL: 0.6, fyL: -0.6 }, T: { weight: 0.6, hip: 1.15, torso: 0.75, lean: -0.22, roll: -0.2, heelL: 0.95, fyL: -1.3 } },
+  headKick: { W: { weight: 0.6, hip: 0.25, torso: 0.0, lean: -0.12, heelL: 0.65, fyL: -0.7, crouch: -0.02 }, T: { weight: 0.65, hip: 1.25, torso: 0.8, lean: -0.36, roll: -0.26, heelL: 1, fyL: -1.4, crouch: -0.06 } },
+};
+
+function applyMechanics(f, m, inW, inT, uW, uT) {
+  const M = MECH[m.key];
+  if (!M || (!inW && !inT)) return; // recovery: stance values ease back via the fighter's smoothing
+  const v = {};
+  for (const k in BASE) {
+    const w = M.W[k] ?? BASE[k], tt = M.T[k] ?? w;
+    // hips fire first, shoulders follow, weight arrives with the shot
+    const u = k === 'hip' || k === 'fyL' || k === 'fyR' || k === 'heelL' || k === 'heelR' ? Math.pow(uT, 0.6) : k === 'torso' ? Math.pow(uT, 1.15) : uT;
+    v[k] = inW ? BASE[k] + (w - BASE[k]) * ss(uW) : w + (tt - w) * ss(u);
+  }
+  f.hipYaw = v.hip; f.torsoYaw = v.torso; f.weight = v.weight; f.lean = v.lean; f.crouch = v.crouch; f.roll = v.roll;
+  f.heel.L = v.heelL; f.heel.R = v.heelR; f.footYaw.L = v.fyL; f.footYaw.R = v.fyR;
+  f.hipShift.z = v.push;
+}
+
 let glowTex = null;
 function telegraphSprite() {
   if (!glowTex) glowTex = canvasTexture(64, 64, (ctx, w, h) => {
@@ -61,6 +102,7 @@ export class OpponentAI {
     this.glow = telegraphSprite();
     game.scene.add(this.glow);
     this.vel = new THREE.Vector3();
+    this.knock = new THREE.Vector3();
     this.celebrate = false;
     this.lastHitT = -10;
     this.stats = { thrown: 0, landed: 0, blockedByYou: 0, dodgedByYou: 0, damage: 0 };
@@ -178,6 +220,7 @@ export class OpponentAI {
       case 'strike': this.updateStrike(dt, dist); break;
       case 'hit': {
         f.bobAmt = 0.2;
+        f.weight = -0.55; f.heel.L = 0.6; f.heel.R = 0; f.lean = 0.02; f.crouch = 0.08;
         if (this.stateT > this.hitDur) {
           this.toNeutral(rand(0.3, 0.8));
           // shell up after eating shots
@@ -189,6 +232,7 @@ export class OpponentAI {
         f.bobAmt = 0.1; f.crouch = 0.12;
         f.hand.L.y -= 0.18; f.hand.R.y -= 0.2; f.hand.L.z -= 0.05;
         f.roll = Math.sin(t * 2.4) * 0.12; f.lean = 0.12 + Math.sin(t * 1.7) * 0.06;
+        f.weight = Math.sin(t * 2.4) * 0.5; f.heel.L = f.heel.R = 0; f.crouch = 0.14 + Math.sin(t * 3.1) * 0.03;
         // drift backward
         const nx = dx / (dist || 1), nz = dz / (dist || 1);
         if (dist < 1.4) _v.set(-nx * 0.25, 0, -nz * 0.25);
@@ -249,21 +293,22 @@ export class OpponentAI {
     if (d2 < minD && d2 > 1e-4) { this.pos.x = head.pos.x + dx2 / d2 * minD; this.pos.z = head.pos.z + dz2 / d2 * minD; }
     if (this.game.arena && this.game.arena.clamp(this.pos, 0.35)) this.strafe = -this.strafe || 1;
 
-    // step animation from local velocity
+    // knockback from big shots: the body is pushed, planted feet then stumble-step to catch it
+    if (this.knock.lengthSq() > 1e-5) {
+      this.pos.addScaledVector(this.knock, dt);
+      this.knock.multiplyScalar(Math.exp(-5 * dt));
+    }
+    // footwork: move in the direction of travel, lean slightly into it
     const sp = this.vel.length();
-    _v2.copy(this.vel).applyQuaternion(_qInv.copy(f.root.quaternion).invert());
-    this.stepPhase += sp * dt * 11;
-    if (sp > 0.05 && this.state !== 'down' && this.state !== 'ko') {
-      const amp = Math.min(1, sp / 0.5);
-      const nx = _v2.x / (sp || 1), nz = _v2.z / (sp || 1);
-      for (const [sd, off] of [['L', 0], ['R', Math.PI]]) {
-        if (this.move && this.move.isLeg && this.move.side === sd) continue;
-        const s = Math.sin(this.stepPhase + off);
-        f.foot[sd].x += nx * 0.07 * s * amp;
-        f.foot[sd].z += nz * 0.07 * s * amp;
-        f.foot[sd].y += Math.max(0, Math.cos(this.stepPhase + off)) * 0.05 * amp;
-      }
-      f.bobAmt += amp * 0.6;
+    if (sp > 0.05 && this.state === 'neutral') {
+      _v2.copy(this.vel).applyQuaternion(_qInv.copy(f.root.quaternion).invert());
+      f.weight += clamp(_v2.z * 0.35, -0.3, 0.3);
+      f.bobAmt += Math.min(1, sp / 0.5) * 0.3;
+    }
+    if (this.state === 'neutral' || this.state === 'idle') {
+      // rhythm: light weight rocking, bouncing on the balls of the feet
+      f.weight += Math.sin(t * 1.6 + this.def.height * 10) * 0.12;
+      f.heel.L = f.heel.R = 0.3 + 0.1 * Math.sin(t * 5.2);
     }
 
     // telegraph glow (Rookie hints)
@@ -412,6 +457,25 @@ export class OpponentAI {
       if (!inW && !inT) { f.footRate[sd] = 10; f.kickAmt[sd] = 0; }
     }
 
+    // ---- whole-body mechanics (overrides the simple torso values above)
+    const uR = clamp((m.t - m.durW - m.durT) / m.durR, 0, 1);
+    applyMechanics(f, m, inW, inT, uW, uT);
+    if (!m.isLeg) {
+      if (!inW && !inT) {
+        // retract along the same line it went out on, back to guard
+        if (!m.endL) m.endL = f.handCur[sd].clone();
+        f.hand[sd].copy(m.endL).lerp(guardOf(f, sd, _v3), ss(uR));
+        f.handRate[sd] = 30;
+      }
+    } else {
+      // kicking leg is off the floor; after impact it re-chambers, then sets down and re-plants
+      f.footFree[sd] = inW || inT || uR < 0.55;
+      if (!inW && !inT) {
+        if (!m.endF) m.endF = f.footCur[sd].clone();
+        if (uR < 0.55) { f.foot[sd].lerpVectors(m.endF, m.chamber, ss(uR / 0.55)); f.footRate[sd] = 28; f.kickAmt[sd] = 1 - uR / 0.55; }
+      }
+    }
+
     // capture origin when travel starts
     if (prevT < m.durW && m.t >= m.durW) {
       m.originW.copy(m.isLeg ? f.footW[sd] : f.glove[sd]);
@@ -501,6 +565,8 @@ export class OpponentAI {
     // reaction
     const imp = blocked ? 0.25 : clamp(dmg / 10, 0.25, 1.8);
     f.impulse(hit.dir, imp, zone === 'leg' ? 'body' : zone);
+    _v.copy(hit.dir); _v.y = 0;
+    if (_v.lengthSq() > 1e-4) this.knock.addScaledVector(_v.normalize(), (blocked ? 0.25 : 0.35 + imp * 0.45) * (this.def.id === 'viktor' ? 0.6 : 1));
     if (!blocked) {
       this.stun += zone === 'head' ? dmg * 0.022 : dmg * 0.01;
       if (this.hp <= 0) return { blocked, dmg, down: true };
